@@ -3,18 +3,35 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>我的第一个网站</title>
-  <style>
-    body { font-family: sans-serif; text-align: center; margin-top: 80px; }
-    button { padding: 10px 20px; font-size: 16px; cursor: pointer; }
-  </style>
+  <title>小游乐场 - 在线小游戏合集</title>
+  <link rel="stylesheet" href="/assets/style.css" />
 </head>
 <body>
-  <h1>欢迎来到我的网站！</h1>
-  <p>后续这里会放更多在线小游戏 🎮</p>
-  <button onclick="count++; document.getElementById('num').innerText = count;">
-    点我测试：<span id="num">0</span>
-  </button>
-  <script>let count = 0;</script>
+  <header id="site-header" class="site-header"></header>
+
+  <main class="container">
+    <section class="hero">
+      <div class="hero-card">
+        <h1 class="hero-title">随时随地来一局轻游戏 🎮</h1>
+        <p class="hero-desc">
+          打开即玩、无需下载安装，支持电脑键盘/鼠标与手机触屏操作，自动记录你的个人最高分。
+        </p>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-head">
+        <h2 class="section-title">全部游戏</h2>
+        <span id="games-count" class="section-count"></span>
+      </div>
+      <div id="games-grid" class="games-grid"></div>
+    </section>
+  </main>
+
+  <footer id="site-footer" class="site-footer"></footer>
+
+  <script src="/assets/games.js"></script>
+  <script src="/assets/app.js"></script>
+  <script>initSitePage('all');</script>
 </body>
 </html>

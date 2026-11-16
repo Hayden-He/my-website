@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>益智休闲 - 小游乐场</title>
+  <link rel="stylesheet" href="/assets/style.css" />
+</head>
+<body>
+  <header id="site-header" class="site-header"></header>
+
+  <main class="container">
+    <section class="hero">
+      <div class="hero-card">
+        <h1 class="hero-title">益智休闲 🧩</h1>
+        <p class="hero-desc">轻松动脑、节奏自在的经典数字与逻辑游戏，适合碎片时间放松一下。</p>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-head">
+        <h2 class="section-title">益智休闲游戏</h2>
+        <span id="games-count" class="section-count"></span>
+      </div>
+      <div id="games-grid" class="games-grid"></div>
+    </section>
+  </main>
+
+  <footer id="site-footer" class="site-footer"></footer>
+
+  <script src="/assets/games.js"></script>
+  <script src="/assets/app.js"></script>
+  <script>initSitePage('puzzle');</script>
+</body>
+</html>
