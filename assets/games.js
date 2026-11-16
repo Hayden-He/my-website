@@ -25,7 +25,7 @@ window.SITE_CONFIG = {
       icon: '🏀',
       category: 'arcade',
       categoryName: '动作街机',
-      description: '点击屏幕让篮球跳跃投向左侧篮筐，支持空心入网与打板，进球重置倒计时！',
+      description: '点击或按空格起跳，把球投进左侧篮筐。每次进球重置倒计时。',
       url: '/games/basketball/',
       storageKey: 'game_best_basketball',
       tags: ['点击/空格', '限时挑战'],

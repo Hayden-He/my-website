@@ -222,7 +222,7 @@
         <div id="score-el" class="hud-value">0</div>
       </div>
       <div class="hud-box">
-        <div class="hud-label">单球限时</div>
+        <div class="hud-label">进球倒计时</div>
         <div id="time-el" class="hud-value">10.0s</div>
       </div>
       <div class="hud-box">
@@ -259,6 +259,7 @@
     <div class="controls-row">
       <div class="hint-block">
         <span class="hint-text">操作：点击游戏区空白处 / 空格 / ↑ / W 起跳，P 暂停</span>
+        <span class="hint-text">计时：首次起跳开始计时，进球后重置，出界补球沿用剩余时间</span>
         <span class="hint-text">规则：连续空心触发火焰球，25 分后出现防守护盾</span>
       </div>
       <div class="btn-group">
@@ -436,7 +437,7 @@
       let lastTickSec = -1;
 
       function getShotTimeLimit(score) {
-        return Math.max(4.0, 10.0 - Math.floor(score / 6) * 0.6);
+        return Math.max(7.0, 10.0 - Math.floor(score / 6) * 0.6);
       }
 
       function spawnBall() {
@@ -911,18 +912,137 @@
         updateHud();
       }
 
+      function drawNightGlow(x, y, radiusX, radiusY, color, opacity) {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.scale(1, radiusY / radiusX);
+        const glow = ctx.createRadialGradient(0, 0, 0, 0, 0, radiusX);
+        glow.addColorStop(0, `rgba(${color}, ${opacity})`);
+        glow.addColorStop(0.5, `rgba(${color}, ${opacity * 0.38})`);
+        glow.addColorStop(1, `rgba(${color}, 0)`);
+        ctx.fillStyle = glow;
+        ctx.beginPath();
+        ctx.arc(0, 0, radiusX, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+
+      function drawFloodlight(x, groundX, color) {
+        const lampY = 61;
+        const beam = ctx.createLinearGradient(x, lampY, groundX, FLOOR_Y);
+        beam.addColorStop(0, `rgba(${color}, 0.27)`);
+        beam.addColorStop(0.44, `rgba(${color}, 0.10)`);
+        beam.addColorStop(1, `rgba(${color}, 0.02)`);
+        ctx.fillStyle = beam;
+        ctx.beginPath();
+        ctx.moveTo(x - 13, lampY);
+        ctx.lineTo(x + 13, lampY);
+        ctx.lineTo(groundX + 124, FLOOR_Y);
+        ctx.lineTo(groundX - 124, FLOOR_Y);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.fillStyle = '#253b4c';
+        ctx.fillRect(x - 2, lampY, 4, FLOOR_Y - lampY);
+        ctx.fillStyle = '#425b66';
+        ctx.fillRect(x - 2, lampY, 1, FLOOR_Y - lampY);
+        drawNightGlow(x, lampY, 51, 43, color, 0.48);
+        ctx.fillStyle = '#122332';
+        ctx.beginPath();
+        ctx.roundRect(x - 21, lampY - 12, 42, 15, 4);
+        ctx.fill();
+        ctx.fillStyle = `rgb(${color})`;
+        for (let panel = -1; panel <= 1; panel++) {
+          ctx.fillRect(x + panel * 12 - 5, lampY - 7, 10, 6);
+        }
+      }
+
+      function drawCourtClouds(color) {
+        ctx.fillStyle = color;
+        for (let i = 0; i < 3; i++) {
+          const x = ((state.skyTime * (6 + i * 2) + i * 230) % (W + 180)) - 90;
+          ctx.beginPath();
+          ctx.ellipse(x, 58 + i * 32, 64 + i * 12, 12, 0, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      function drawNightCourt() {
+        const sky = ctx.createLinearGradient(0, 0, 0, FLOOR_Y);
+        sky.addColorStop(0, '#060e1c');
+        sky.addColorStop(0.57, '#152c43');
+        sky.addColorStop(1, '#345366');
+        ctx.fillStyle = sky;
+        ctx.fillRect(0, 0, W, FLOOR_Y);
+        drawNightGlow(365, 238, 280, 132, '112, 162, 180', 0.19);
+        drawCourtClouds('rgba(125, 166, 185, 0.04)');
+
+        // 远层楼顶穿插于原有天际线后，近层只保留少量亮窗。
+        ctx.fillStyle = '#203b50';
+        SKYLINE.forEach((building, i) => {
+          const roof = FLOOR_Y - building.h - 16 - (i % 3) * 12;
+          ctx.fillRect(building.x - 17, roof, building.w - 6, FLOOR_Y - roof);
+        });
+        SKYLINE.forEach((building, i) => {
+          const roof = FLOOR_Y - building.h;
+          ctx.fillStyle = i % 2 ? '#0e2131' : '#102637';
+          ctx.fillRect(building.x, roof, building.w, building.h);
+          ctx.fillStyle = '#263e4a';
+          ctx.fillRect(building.x + 1, roof, building.w - 2, 2);
+          for (let row = 0; roof + 14 + row * 17 < FLOOR_Y - 56; row++) {
+            for (let column = 0; 10 + column * 13 < building.w - 7; column++) {
+              if ((i * 11 + row * 13 + column * 7) % 17 < 4) {
+                ctx.fillStyle = (i + row + column) % 3 === 0 ? '#715947' : '#4b4942';
+                ctx.fillRect(building.x + 10 + column * 13, roof + 14 + row * 17, 4, 7);
+              }
+            }
+          }
+        });
+
+        const warm = '255, 224, 173';
+        const cool = '162, 219, 239';
+        drawFloodlight(185, 142, warm);
+        drawFloodlight(514, 506, cool);
+
+        const fenceTop = FLOOR_Y - 49;
+        ctx.strokeStyle = 'rgba(96, 130, 142, 0.20)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        for (let x = -49; x < W + 49; x += 16) {
+          ctx.moveTo(x, fenceTop);
+          ctx.lineTo(x + 49, FLOOR_Y);
+          ctx.moveTo(x + 49, fenceTop);
+          ctx.lineTo(x, FLOOR_Y);
+        }
+        ctx.stroke();
+        ctx.fillStyle = '#48606b';
+        ctx.fillRect(0, fenceTop, W, 2);
+        ctx.fillStyle = '#253d4b';
+        for (let x = 34; x < W; x += 101) ctx.fillRect(x, fenceTop - 2, 3, 51);
+
+        // 光区裁在地面内，避免光晕盖住围栏或投篮区。
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(0, FLOOR_Y, W, H - FLOOR_Y);
+        ctx.clip();
+        const floor = ctx.createLinearGradient(0, FLOOR_Y, 0, H);
+        floor.addColorStop(0, '#26454c');
+        floor.addColorStop(0.48, '#20363e');
+        floor.addColorStop(1, '#101e29');
+        ctx.fillStyle = floor;
+        ctx.fillRect(0, FLOOR_Y, W, H - FLOOR_Y);
+        drawNightGlow(142, FLOOR_Y + 23, 185, 47, warm, 0.27);
+        drawNightGlow(506, FLOOR_Y + 20, 170, 42, cool, 0.24);
+        ctx.restore();
+        drawCourtMarkings('#a6bcb8', 'rgba(216, 231, 220, 0.55)');
+      }
+
       function drawSunsetCourt() {
-        const isDusk = state.score >= 15 && state.score < 30;
-        const isNight = state.score >= 30;
+        const isDusk = state.score >= 15;
 
         // 随分数段渐进切换天空氛围（黄昏 -> 暮色 -> 霓虹夜场）
         const sky = ctx.createLinearGradient(0, 0, 0, FLOOR_Y);
-        if (isNight) {
-          sky.addColorStop(0, '#020617');
-          sky.addColorStop(0.5, '#0f172a');
-          sky.addColorStop(0.85, '#1e1b4b');
-          sky.addColorStop(1, '#312e81');
-        } else if (isDusk) {
+        if (isDusk) {
           sky.addColorStop(0, '#0f172a');
           sky.addColorStop(0.45, '#1e1b4b');
           sky.addColorStop(0.82, '#4338ca');
@@ -936,64 +1056,25 @@
         ctx.fillStyle = sky;
         ctx.fillRect(0, 0, W, FLOOR_Y);
 
-        if (!isNight) {
-          // 落日/暮光余晖圆盘
-          const sunGrad = ctx.createRadialGradient(480, isDusk ? 255 : 235, 10, 480, isDusk ? 255 : 235, 95);
-          sunGrad.addColorStop(0, isDusk ? 'rgba(221, 214, 254, 0.45)' : 'rgba(254, 240, 138, 0.92)');
-          sunGrad.addColorStop(0.5, isDusk ? 'rgba(139, 92, 246, 0.22)' : 'rgba(251, 146, 60, 0.35)');
-          sunGrad.addColorStop(1, 'rgba(251, 146, 60, 0)');
-          ctx.fillStyle = sunGrad;
-          ctx.beginPath();
-          ctx.arc(480, isDusk ? 255 : 235, 95, 0, Math.PI * 2);
-          ctx.fill();
-        } else {
-          // 夜场顶部柔和聚光灯束
-          ctx.save();
-          const beam1 = ctx.createLinearGradient(120, 0, 200, FLOOR_Y);
-          beam1.addColorStop(0, 'rgba(254, 249, 195, 0.14)');
-          beam1.addColorStop(1, 'rgba(254, 249, 195, 0)');
-          ctx.fillStyle = beam1;
-          ctx.beginPath();
-          ctx.moveTo(95, 0);
-          ctx.lineTo(135, 0);
-          ctx.lineTo(270, FLOOR_Y);
-          ctx.lineTo(60, FLOOR_Y);
-          ctx.closePath();
-          ctx.fill();
+        const sunY = isDusk ? 255 : 235;
+        const sunGrad = ctx.createRadialGradient(480, sunY, 10, 480, sunY, 95);
+        sunGrad.addColorStop(0, isDusk ? 'rgba(221, 214, 254, 0.45)' : 'rgba(254, 240, 138, 0.92)');
+        sunGrad.addColorStop(0.5, isDusk ? 'rgba(139, 92, 246, 0.22)' : 'rgba(251, 146, 60, 0.35)');
+        sunGrad.addColorStop(1, 'rgba(251, 146, 60, 0)');
+        ctx.fillStyle = sunGrad;
+        ctx.beginPath();
+        ctx.arc(480, sunY, 95, 0, Math.PI * 2);
+        ctx.fill();
 
-          const beam2 = ctx.createLinearGradient(510, 0, 450, FLOOR_Y);
-          beam2.addColorStop(0, 'rgba(186, 230, 253, 0.12)');
-          beam2.addColorStop(1, 'rgba(186, 230, 253, 0)');
-          ctx.fillStyle = beam2;
-          ctx.beginPath();
-          ctx.moveTo(490, 0);
-          ctx.lineTo(530, 0);
-          ctx.lineTo(590, FLOOR_Y);
-          ctx.lineTo(350, FLOOR_Y);
-          ctx.closePath();
-          ctx.fill();
-          ctx.restore();
-        }
+        if (isDusk) drawCourtClouds('rgba(226, 232, 240, 0.08)');
 
-        // 极淡的远景缓动薄云（15分后暮色/夜场）
-        if (isDusk || isNight) {
-          ctx.fillStyle = isNight ? 'rgba(148, 163, 184, 0.06)' : 'rgba(226, 232, 240, 0.08)';
-          for (let i = 0; i < 3; i++) {
-            const cx = ((state.skyTime * (6 + i * 2) + i * 230) % (W + 180)) - 90;
-            const cy = 58 + i * 32;
-            ctx.beginPath();
-            ctx.ellipse(cx, cy, 64 + i * 12, 12, 0, 0, Math.PI * 2);
-            ctx.fill();
-          }
-        }
-
-        // 城市剪影（暮色/夜场亮起暖色窗灯）
-        ctx.fillStyle = isNight ? 'rgba(15, 23, 42, 0.85)' : 'rgba(30, 27, 75, 0.65)';
+        // 城市剪影（暮色亮起暖色窗灯）
+        ctx.fillStyle = 'rgba(30, 27, 75, 0.65)';
         SKYLINE.forEach((b, idx) => {
           const topY = FLOOR_Y - b.h;
           ctx.fillRect(b.x, topY, b.w, b.h);
-          if (isDusk || isNight) {
-            ctx.fillStyle = isNight ? 'rgba(253, 224, 71, 0.35)' : 'rgba(253, 186, 116, 0.28)';
+          if (isDusk) {
+            ctx.fillStyle = 'rgba(253, 186, 116, 0.28)';
             for (let wy = topY + 14; wy < FLOOR_Y - 84; wy += 16) {
               for (let wx = b.x + 8; wx < b.x + b.w - 10; wx += 14) {
                 if ((wx + wy + idx) % 3 !== 0) {
@@ -1001,7 +1082,7 @@
                 }
               }
             }
-            ctx.fillStyle = isNight ? 'rgba(15, 23, 42, 0.85)' : 'rgba(30, 27, 75, 0.65)';
+            ctx.fillStyle = 'rgba(30, 27, 75, 0.65)';
           }
         });
 
@@ -1022,18 +1103,15 @@
 
         // 街头塑胶/木纹球场地面
         const floorGrad = ctx.createLinearGradient(0, FLOOR_Y, 0, H);
-        if (isNight) {
-          floorGrad.addColorStop(0, '#9a3412');
-          floorGrad.addColorStop(0.28, '#7c2d12');
-          floorGrad.addColorStop(1, '#290d04');
-        } else {
-          floorGrad.addColorStop(0, '#c2410c');
-          floorGrad.addColorStop(0.25, '#9a3412');
-          floorGrad.addColorStop(1, '#431407');
-        }
+        floorGrad.addColorStop(0, '#c2410c');
+        floorGrad.addColorStop(0.25, '#9a3412');
+        floorGrad.addColorStop(1, '#431407');
         ctx.fillStyle = floorGrad;
         ctx.fillRect(0, FLOOR_Y, W, H - FLOOR_Y);
+        drawCourtMarkings('rgba(254, 243, 199, 0.85)', 'rgba(255, 255, 255, 0.38)');
+      }
 
+      function drawCourtMarkings(boundary, lines) {
         // 极淡木地板横向拼接线
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.06)';
         ctx.lineWidth = 1;
@@ -1057,10 +1135,10 @@
         ctx.fill();
 
         // 场边主线 + 简洁透视标线（三秒区框线 + 右侧分界线）
-        ctx.fillStyle = 'rgba(254, 243, 199, 0.85)';
+        ctx.fillStyle = boundary;
         ctx.fillRect(0, FLOOR_Y, W, 3);
 
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.38)';
+        ctx.strokeStyle = lines;
         ctx.lineWidth = 2;
         ctx.beginPath();
         // 三秒区上、右、下框线
@@ -1388,13 +1466,16 @@
       function render() {
         ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
         ctx.save();
+        const isNight = state.score >= 30;
+        // 夜场先铺满画布，进球震屏时边缘仍由完整背景覆盖。
+        if (isNight) drawNightCourt();
         if (state.shake > 0.2) {
           const sx = (Math.random() - 0.5) * state.shake * 2;
           const sy = (Math.random() - 0.5) * state.shake * 2;
           ctx.translate(sx, sy);
         }
 
-        drawSunsetCourt();
+        if (!isNight) drawSunsetCourt();
         drawHoop(false);
         drawBlocker();
         drawBall();

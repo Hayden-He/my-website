@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>页面未找到 - 小游乐场</title>
+  <meta name="robots" content="noindex" />
+  <meta name="author" content="Hayden-He" />
+  <meta name="theme-color" content="#2563eb" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E%F0%9F%8E%AE%3C/text%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="/assets/style.css" />
+  <style>
+    .not-found-wrap {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 48px 20px;
+    }
+
+    .not-found-card {
+      width: 100%;
+      max-width: 540px;
+      text-align: center;
+      background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 40px 32px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .not-found-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 68px;
+      height: 68px;
+      border-radius: 18px;
+      background: var(--primary-soft);
+      font-size: 2.1rem;
+      margin-bottom: 16px;
+    }
+
+    .not-found-code {
+      display: inline-block;
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      color: var(--primary);
+      background: var(--primary-soft);
+      padding: 4px 12px;
+      border-radius: 999px;
+      margin-bottom: 12px;
+    }
+
+    .not-found-title {
+      font-size: 1.6rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-bottom: 10px;
+    }
+
+    .not-found-desc {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      margin-bottom: 24px;
+    }
+
+    .not-found-actions {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .not-found-actions .play-btn {
+      width: auto;
+      min-width: 150px;
+      padding: 11px 22px;
+    }
+
+    .secondary-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 11px 18px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      font-size: 0.95rem;
+      font-weight: 600;
+      transition: background 0.15s ease, border-color 0.15s ease;
+    }
+
+    .secondary-btn:hover {
+      background: #f1f5f9;
+      border-color: #cbd5e1;
+    }
+
+    @media (max-width: 600px) {
+      .not-found-wrap {
+        padding: 28px 20px;
+      }
+
+      .not-found-card {
+        padding: 32px 22px;
+      }
+
+      .not-found-title {
+        font-size: 1.35rem;
+      }
+
+      .not-found-actions .play-btn,
+      .not-found-actions .secondary-btn {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/">
+        <span class="brand-badge" aria-hidden="true">🎮</span>
+        <span>小游乐场</span>
+      </a>
+      <nav class="nav-links" aria-label="主导航">
+        <a class="nav-link" href="/">全部游戏</a>
+        <a class="nav-link" href="/categories/arcade.html">动作街机</a>
+        <a class="nav-link" href="/categories/puzzle.html">益智休闲</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container not-found-wrap">
+    <section class="not-found-card" aria-labelledby="not-found-heading">
+      <div class="not-found-icon" aria-hidden="true">🕹️</div>
+      <div><span class="not-found-code">404</span></div>
+      <h1 id="not-found-heading" class="not-found-title">找不到这个页面</h1>
+      <p class="not-found-desc">链接可能已失效，或网址有误。</p>
+      <div class="not-found-actions">
+        <a href="/" class="play-btn">返回全部游戏</a>
+        <a href="/games/basketball/" class="secondary-btn">🏀 来一局投篮</a>
+      </div>
+    </section>
+  </main>
+
+  <footer id="site-footer" class="site-footer">
+    <div class="container site-credit">
+      小游乐场 · <a href="https://github.com/Hayden-He/my-website">Hayden-He</a>
+    </div>
+  </footer>
+</body>
+</html>
