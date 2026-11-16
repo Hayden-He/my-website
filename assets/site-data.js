@@ -21,6 +21,65 @@
     } catch {}
   }
 
+  // ---- 共用音频：解决 iOS Safari 等浏览器的自动播放限制 ----
+  // 音频上下文全站唯一；在页面第一次触摸/点击/按键时创建并解锁，而不是等到第一次发声时才创建。
+  let audioCtx = null;
+
+  function getAudioContext() {
+    if (!audioCtx) {
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      if (!Ctx) return null;
+      try {
+        audioCtx = new Ctx();
+      } catch {
+        return null;
+      }
+    }
+    return audioCtx;
+  }
+
+  function unlockAudio() {
+    const ac = getAudioContext();
+    if (!ac || ac.state === 'running') return;
+    try {
+      const p = ac.resume();
+      if (p && p.catch) p.catch(() => {});
+      // iOS 需要在手势内真正播放一段（静音）内容才算解锁
+      const src = ac.createBufferSource();
+      src.buffer = ac.createBuffer(1, 1, 22050);
+      src.connect(ac.destination);
+      src.start(0);
+    } catch {}
+  }
+
+  // 在任意常见的用户手势上尝试解锁；已运行时 unlockAudio 会直接返回，开销很小
+  ['pointerdown', 'pointerup', 'touchend', 'click', 'keydown'].forEach((evt) => {
+    document.addEventListener(evt, unlockAudio, { capture: true, passive: true });
+  });
+  // 页面从后台恢复或被系统中断后，下一次手势会再次尝试恢复
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && audioCtx && audioCtx.state !== 'running') {
+      try { audioCtx.resume().catch(() => {}); } catch {}
+    }
+  });
+
+  // 在音频可用时执行 fn(ac)。若上下文尚未运行，则尝试恢复并等待；
+  // 超过 300ms 仍未就绪则放弃该次发声，避免解锁后一次性冲出一堆过期音效。
+  function withAudio(fn) {
+    const ac = getAudioContext();
+    if (!ac) return;
+    if (ac.state === 'running') {
+      fn(ac);
+      return;
+    }
+    const t0 = performance.now();
+    try {
+      ac.resume().then(() => {
+        if (ac.state === 'running' && performance.now() - t0 < 300) fn(ac);
+      }).catch(() => {});
+    } catch {}
+  }
+
   function clearAll() {
     try {
       const keys = [];
@@ -66,7 +125,7 @@
     return el;
   }
 
-  window.SiteData = { getSound, setSound, clearAll, createClearButton, createCredit };
+  window.SiteData = { getSound, setSound, clearAll, createClearButton, createCredit, getAudioContext, unlockAudio, withAudio };
 
   // 游戏页：自动在页面底部追加入口（列表页由 app.js 在页脚渲染）
   document.addEventListener('DOMContentLoaded', () => {

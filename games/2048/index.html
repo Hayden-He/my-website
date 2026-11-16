@@ -335,17 +335,12 @@
 
       let soundEnabled = window.SiteData ? SiteData.getSound() : true;
       soundBtn.textContent = soundEnabled ? '音效: 开' : '音效: 关';
-      let audioCtx = null;
 
       function playMergeTone(maxVal) {
         if (!soundEnabled) return;
+        if (!window.SiteData) return;
+        SiteData.withAudio((audioCtx) => {
         try {
-          if (!audioCtx) {
-            const Ctx = window.AudioContext || window.webkitAudioContext;
-            if (Ctx) audioCtx = new Ctx();
-          }
-          if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
-          if (!audioCtx) return;
           const osc = audioCtx.createOscillator();
           const gain = audioCtx.createGain();
           const base = maxVal > 0 ? Math.min(880, 260 + Math.log2(maxVal) * 48) : 220;
@@ -357,6 +352,7 @@
           osc.start();
           osc.stop(audioCtx.currentTime + 0.08);
         } catch {}
+        });
       }
 
       let bestScore = 0;

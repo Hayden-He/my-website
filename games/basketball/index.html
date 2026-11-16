@@ -337,27 +337,15 @@
 
       let soundEnabled = window.SiteData ? SiteData.getSound() : true;
       soundBtn.textContent = soundEnabled ? '音效: 开' : '音效: 关';
-      let audioCtx = null;
 
-      function ensureAudio() {
-        if (!soundEnabled) return null;
-        try {
-          if (!audioCtx) {
-            const Ctx = window.AudioContext || window.webkitAudioContext;
-            if (Ctx) audioCtx = new Ctx();
-          }
-          if (audioCtx && audioCtx.state === 'suspended') {
-            audioCtx.resume();
-          }
-          return audioCtx;
-        } catch {
-          return null;
-        }
+      // 通过全站共用的音频上下文发声（见 assets/site-data.js），避免 iOS 等浏览器的自动播放限制
+      function withAudio(fn) {
+        if (!soundEnabled || !window.SiteData) return;
+        SiteData.withAudio(fn);
       }
 
       function playTone(freq, duration, type, volume, slideTo) {
-        const ac = ensureAudio();
-        if (!ac) return;
+        withAudio((ac) => {
         try {
           const osc = ac.createOscillator();
           const gain = ac.createGain();
@@ -373,11 +361,11 @@
           osc.start();
           osc.stop(ac.currentTime + duration);
         } catch {}
+        });
       }
 
       function playNoise(duration, filterFreq, volume) {
-        const ac = ensureAudio();
-        if (!ac) return;
+        withAudio((ac) => {
         try {
           const bufSize = Math.floor(ac.sampleRate * duration);
           const buf = ac.createBuffer(1, bufSize, ac.sampleRate);
@@ -400,6 +388,7 @@
           src.start();
           src.stop(ac.currentTime + duration);
         } catch {}
+        });
       }
 
       function playSound(kind, combo) {
