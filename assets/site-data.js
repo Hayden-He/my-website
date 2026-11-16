@@ -1,10 +1,10 @@
 /**
  * 本站本地数据管理：音效开关（全站共用）与“清除本地数据”入口。
- * 仅处理本站使用的 localStorage 键：game_best_*（最高分）、game_skin_*（球色）、site_sound（音效）。
+ * 处理本站保存的最高分、球色、2048 棋局与音效设置。
  */
 (function () {
   const SOUND_KEY = 'site_sound';
-  const PREFIXES = ['game_best_', 'game_skin_'];
+  const PREFIXES = ['game_best_', 'game_skin_', 'game_save_2048_'];
   const EXACT_KEYS = [SOUND_KEY];
 
   function getSound() {
@@ -100,7 +100,7 @@
     btn.className = 'data-clear-btn';
     btn.textContent = '清除本地数据';
     btn.addEventListener('click', () => {
-      if (!confirm('将清除本站保存在此浏览器中的全部最高分、球色与音效设置，且无法恢复。确定继续吗？')) return;
+      if (!confirm('将清除本站保存在此浏览器中的最高分、2048 棋局进度、球色和音效设置。此操作无法恢复，确定清除吗？')) return;
       const ok = clearAll();
       alert(ok ? '已清除' : '清除失败：浏览器禁止访问本地存储');
       if (ok) location.reload();

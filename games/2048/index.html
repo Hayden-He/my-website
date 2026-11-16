@@ -319,6 +319,9 @@
   <script>
     (function () {
       const STORAGE_KEY = 'game_best_2048';
+      const SAVE_PREFIX = 'game_save_2048_';
+      const MODE_KEY = SAVE_PREFIX + 'mode';
+      const temporarySaves = new Map();
       const gridEl = document.getElementById('grid');
       const scoreEl = document.getElementById('score-el');
       const maxEl = document.getElementById('max-el');
@@ -355,16 +358,21 @@
         });
       }
 
-      let bestScore = 0;
-      try {
-        bestScore = parseInt(localStorage.getItem(STORAGE_KEY) || '0', 10) || 0;
-      } catch {}
+      function readBestScore() {
+        try {
+          return parseInt(localStorage.getItem(STORAGE_KEY) || '0', 10) || 0;
+        } catch {
+          return 0;
+        }
+      }
+
+      let bestScore = readBestScore();
 
       let size = 4;
       let board = [];
       let score = 0;
       let prevState = null;
-      let wonShown = false;
+      let victory = null;
       let lastSpawn = null;
       let lastMerged = new Set();
 
@@ -372,21 +380,75 @@
         return b.map((row) => row.slice());
       }
 
+      function readProgress(key) {
+        if (temporarySaves.has(key)) return temporarySaves.get(key);
+        try {
+          return localStorage.getItem(key);
+        } catch {
+          return null;
+        }
+      }
+
+      function writeProgress(key, value) {
+        try {
+          localStorage.setItem(key, value);
+          temporarySaves.delete(key);
+        } catch {
+          temporarySaves.set(key, value);
+        }
+      }
+
+      function saveGame() {
+        writeProgress(SAVE_PREFIX + size, JSON.stringify({ board, score, prevState, victory }));
+      }
+
+      function isValidPosition(position) {
+        return position && Number.isSafeInteger(position.score) && position.score >= 0 &&
+          Array.isArray(position.board) && position.board.length === size &&
+          position.board.every((row) => Array.isArray(row) && row.length === size && row.every((tile) => (
+            tile === 0 || (Number.isSafeInteger(tile) && tile >= 2 && tile === 2 ** Math.floor(Math.log2(tile)))
+          ))) && position.board.some((row) => row.some((tile) => tile !== 0));
+      }
+
+      function openGame(saveFresh = true) {
+        size4Btn.classList.toggle('active', size === 4);
+        size5Btn.classList.toggle('active', size === 5);
+        gridEl.style.gridTemplateColumns = 'repeat(' + size + ', 1fr)';
+        gridEl.style.gridTemplateRows = 'repeat(' + size + ', 1fr)';
+
+        let saved;
+        try {
+          saved = JSON.parse(readProgress(SAVE_PREFIX + size));
+        } catch {
+          // 无法读取的存档可用新棋局替换。
+        }
+        if (!isValidPosition(saved)) {
+          initGame();
+          if (saveFresh) saveGame();
+          return;
+        }
+        board = saved.board;
+        score = saved.score;
+        prevState = isValidPosition(saved.prevState) ? saved.prevState : null;
+        victory = saved.victory === 'acknowledged' ? 'acknowledged' : 'pending';
+        if (getMaxTile() < 2048) victory = null;
+        lastSpawn = null;
+        lastMerged = new Set();
+        render();
+        showOutcome();
+      }
+
       function initGame() {
         board = Array.from({ length: size }, () => Array(size).fill(0));
         score = 0;
         prevState = null;
-        wonShown = false;
+        victory = null;
         lastSpawn = null;
         lastMerged = new Set();
-        overlay.classList.remove('show');
-        keepBtn.style.display = 'none';
-        undoBtn.disabled = true;
-        gridEl.style.gridTemplateColumns = 'repeat(' + size + ', 1fr)';
-        gridEl.style.gridTemplateRows = 'repeat(' + size + ', 1fr)';
         addRandomTile();
         addRandomTile();
         render();
+        showOutcome();
       }
 
       function addRandomTile() {
@@ -468,7 +530,6 @@
         playMergeTone(highestMerged);
 
         prevState = { board: snapshotBoard, score: snapshotScore };
-        undoBtn.disabled = false;
         lastMerged = mergedCells;
 
         score += totalGained;
@@ -480,22 +541,26 @@
         }
 
         addRandomTile();
+        if (victory === null && getMaxTile() >= 2048) victory = 'pending';
         render();
+        showOutcome();
+        saveGame();
+      }
 
-        if (!wonShown && getMaxTile() >= 2048) {
-          wonShown = true;
+      function showOutcome() {
+        if (victory === 'pending') {
           overlayTitle.textContent = '恭喜合成 2048！🎉';
           overlayDesc.textContent = '当前得分：' + score + '，你可以继续挑战更高数字！';
           keepBtn.style.display = 'inline-block';
           overlay.classList.add('show');
-          return;
-        }
-
-        if (!canMove()) {
+        } else if (!canMove()) {
           overlayTitle.textContent = '没有可移动的方块了';
           overlayDesc.textContent = '本局得分：' + score + '（历史最高：' + bestScore + '）';
           keepBtn.style.display = 'none';
           overlay.classList.add('show');
+        } else {
+          keepBtn.style.display = 'none';
+          overlay.classList.remove('show');
         }
       }
 
@@ -520,6 +585,7 @@
         scoreEl.textContent = score;
         maxEl.textContent = getMaxTile();
         bestEl.textContent = bestScore;
+        undoBtn.disabled = !prevState;
         gridEl.innerHTML = '';
         for (let r = 0; r < size; r++) {
           for (let c = 0; c < size; c++) {
@@ -547,29 +613,29 @@
         score = prevState.score;
         prevState = null;
         // 撤回后按棋盘实际状态重置“已提示胜利”标记，避免回到 2048 之前后再次合成不再提示
-        wonShown = getMaxTile() >= 2048;
+        victory = getMaxTile() >= 2048 ? 'acknowledged' : null;
         lastSpawn = null;
         lastMerged = new Set();
-        undoBtn.disabled = true;
-        overlay.classList.remove('show');
         render();
+        showOutcome();
+        saveGame();
       });
 
-      keepBtn.addEventListener('click', () => overlay.classList.remove('show'));
-
-      size4Btn.addEventListener('click', () => {
-        size = 4;
-        size4Btn.classList.add('active');
-        size5Btn.classList.remove('active');
-        initGame();
+      keepBtn.addEventListener('click', () => {
+        victory = 'acknowledged';
+        showOutcome();
+        saveGame();
       });
 
-      size5Btn.addEventListener('click', () => {
-        size = 5;
-        size5Btn.classList.add('active');
-        size4Btn.classList.remove('active');
-        initGame();
-      });
+      function switchMode(nextSize) {
+        if (size === nextSize) return;
+        size = nextSize;
+        writeProgress(MODE_KEY, String(size));
+        openGame();
+      }
+
+      size4Btn.addEventListener('click', () => switchMode(4));
+      size5Btn.addEventListener('click', () => switchMode(5));
 
       soundBtn.addEventListener('click', () => {
         soundEnabled = !soundEnabled;
@@ -614,10 +680,37 @@
         }
       }, { passive: true });
 
-      document.getElementById('restart-btn').addEventListener('click', initGame);
-      document.getElementById('overlay-btn').addEventListener('click', initGame);
+      function restartGame() {
+        if (!confirm(`重开 ${size}×${size} 棋局？当前进度将被清除。`)) return;
+        initGame();
+        saveGame();
+      }
 
-      initGame();
+      document.getElementById('restart-btn').addEventListener('click', restartGame);
+      document.getElementById('overlay-btn').addEventListener('click', restartGame);
+
+      window.addEventListener('pageshow', (event) => {
+        if (event.persisted) {
+          bestScore = readBestScore();
+          openGame(false);
+        }
+      });
+
+      window.addEventListener('storage', (event) => {
+        if (event.key === null || event.key === STORAGE_KEY) {
+          bestScore = readBestScore();
+          bestEl.textContent = bestScore;
+          showOutcome();
+        }
+        const saveKey = SAVE_PREFIX + size;
+        if (event.key === null || event.key === saveKey) {
+          temporarySaves.delete(saveKey);
+          openGame(false);
+        }
+      });
+
+      size = readProgress(MODE_KEY) === '5' ? 5 : 4;
+      openGame();
     })();
   </script>
 </body>
