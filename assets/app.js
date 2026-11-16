@@ -58,7 +58,7 @@
     const card = createEl('article', 'game-card');
 
     const top = createEl('div', 'game-card-top');
-    top.appendChild(createEl('div', 'game-icon', game.icon));
+    top.appendChild(createEl('div', 'game-icon ' + game.category, game.icon));
     top.appendChild(
       createEl('span', 'game-category-pill ' + game.category, game.categoryName)
     );
@@ -109,18 +109,30 @@
   function renderFooter() {
     const footer = document.getElementById('site-footer');
     if (!footer || !window.SITE_CONFIG) return;
-    const container = createEl(
-      'div',
-      'container',
-      '© ' + new Date().getFullYear() + ' ' + window.SITE_CONFIG.siteTitle + ' · 电脑与手机均可直接游玩'
-    );
+    const container = createEl('div', 'container');
+    if (window.SiteData) {
+      container.appendChild(window.SiteData.createCredit());
+      container.appendChild(createEl('div', 'site-tagline', '电脑与手机均可直接游玩'));
+    } else {
+      container.textContent =
+        '© ' + new Date().getFullYear() + ' ' + window.SITE_CONFIG.siteTitle + ' · 电脑与手机均可直接游玩';
+    }
     footer.innerHTML = '';
     footer.appendChild(container);
+    if (window.SiteData) {
+      const wrap = createEl('div', 'container data-clear-wrap');
+      wrap.appendChild(window.SiteData.createClearButton());
+      footer.appendChild(wrap);
+    }
   }
 
   window.initSitePage = function (activeKey) {
     renderHeader(activeKey);
     renderGamesGrid(activeKey);
     renderFooter();
+    // 从游戏页后退（bfcache 恢复）时，刷新卡片上的最高分
+    window.addEventListener('pageshow', (e) => {
+      if (e.persisted) renderGamesGrid(activeKey);
+    });
   };
 })();

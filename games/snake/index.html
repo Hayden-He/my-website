@@ -4,7 +4,13 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>经典贪吃蛇 - 小游乐场</title>
+  <meta name="description" content="经典贪吃蛇：支持键盘与触屏，含经典撞墙与自由穿墙模式。" />
+  <meta name="author" content="Hayden-He" />
+  <meta name="theme-color" content="#2563eb" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E%F0%9F%8E%AE%3C/text%3E%3C/svg%3E" />
   <link rel="stylesheet" href="/assets/style.css" />
+  <script src="/assets/site-data.js"></script>
+  <script src="/assets/canvas-polyfill.js"></script>
   <style>
     .game-wrap {
       max-width: 560px;
@@ -177,6 +183,13 @@
       color: var(--text-muted);
       text-align: center;
     }
+
+    /* 方向键仅在触屏设备显示，桌面端使用键盘 */
+    @media (hover: hover) and (pointer: fine) {
+      .dpad {
+        display: none;
+      }
+    }
   </style>
 </head>
 <body>
@@ -249,7 +262,8 @@
       const GRID = 28;
       const CELL = canvas.width / GRID;
 
-      let soundEnabled = true;
+      let soundEnabled = window.SiteData ? SiteData.getSound() : true;
+      soundBtn.textContent = soundEnabled ? '音效: 开' : '音效: 关';
       let audioCtx = null;
 
       function playTone(freq, duration, slideTo) {
@@ -283,15 +297,18 @@
       let snake, dir, nextDirs, food, bonusItem, score, eatenCount, speedOffset, started, paused, gameOver, timer;
       let wrapMode = false;
 
+      // 枚举所有空格后随机选取，避免蛇接近占满棋盘时随机撞格造成死循环；无空格时返回 null
       function randomEmptyCell() {
-        while (true) {
-          const x = Math.floor(Math.random() * GRID);
-          const y = Math.floor(Math.random() * GRID);
-          const onSnake = snake.some((s) => s.x === x && s.y === y);
-          const onFood = food && food.x === x && food.y === y;
-          const onBonus = bonusItem && bonusItem.x === x && bonusItem.y === y;
-          if (!onSnake && !onFood && !onBonus) return { x, y };
+        const empty = [];
+        for (let y = 0; y < GRID; y++) {
+          for (let x = 0; x < GRID; x++) {
+            const onSnake = snake.some((s) => s.x === x && s.y === y);
+            const onFood = food && food.x === x && food.y === y;
+            const onBonus = bonusItem && bonusItem.x === x && bonusItem.y === y;
+            if (!onSnake && !onFood && !onBonus) empty.push({ x, y });
+          }
         }
+        return empty.length ? empty[Math.floor(Math.random() * empty.length)] : null;
       }
 
       function initGame() {
@@ -368,7 +385,12 @@
           return;
         }
 
-        if (snake.some((s) => s.x === nx && s.y === ny)) {
+        // 不吃果子时尾巴本步会移开，允许蛇头进入尾巴当前所在格（经典规则）
+        const willGrow =
+          (nx === food.x && ny === food.y) ||
+          (bonusItem && nx === bonusItem.x && ny === bonusItem.y);
+        const bodyToCheck = willGrow ? snake : snake.slice(0, -1);
+        if (bodyToCheck.some((s) => s.x === nx && s.y === ny)) {
           endGame();
           return;
         }
@@ -383,16 +405,30 @@
           score += 10;
           playTone(520, 0.08, 760);
           food = randomEmptyCell();
+          if (!food) {
+            // 棋盘已被占满，通关
+            scoreEl.textContent = score;
+            if (score > bestScore) {
+              bestScore = score;
+              bestEl.textContent = bestScore;
+              try { localStorage.setItem(STORAGE_KEY, String(bestScore)); } catch {}
+            }
+            food = { x: -1, y: -1 };
+            endGame('通关！🎉');
+            return;
+          }
 
           // 每吃 4 个普通果子，刷新一个限时奖励果（金星或冰果）
           if (eatenCount % 4 === 0 && !bonusItem) {
             const pos = randomEmptyCell();
-            bonusItem = {
-              x: pos.x,
-              y: pos.y,
-              type: Math.random() < 0.7 ? 'star' : 'ice',
-              ttl: 45,
-            };
+            if (pos) {
+              bonusItem = {
+                x: pos.x,
+                y: pos.y,
+                type: Math.random() < 0.7 ? 'star' : 'ice',
+                ttl: 45,
+              };
+            }
           }
         } else if (bonusItem && head.x === bonusItem.x && head.y === bonusItem.y) {
           grew = true;
@@ -431,10 +467,10 @@
         timer = setTimeout(tick, delay);
       }
 
-      function endGame() {
+      function endGame(title) {
         gameOver = true;
         playTone(220, 0.22, 95);
-        overlayTitle.textContent = '游戏结束';
+        overlayTitle.textContent = title || '游戏结束';
         overlayDesc.textContent = '本局得分：' + score + '（历史最高：' + bestScore + '）';
         overlay.classList.add('show');
         draw();
@@ -577,9 +613,15 @@
       soundBtn.addEventListener('click', () => {
         soundEnabled = !soundEnabled;
         soundBtn.textContent = soundEnabled ? '音效: 开' : '音效: 关';
+        if (window.SiteData) SiteData.setSound(soundEnabled);
       });
 
       pauseBtn.addEventListener('click', togglePause);
+
+      // 切到后台时自动暂停，避免蛇在后台继续移动
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden && started && !paused && !gameOver) togglePause();
+      });
       document.getElementById('restart-btn').addEventListener('click', initGame);
       document.getElementById('overlay-btn').addEventListener('click', initGame);
 

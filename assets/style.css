@@ -352,3 +352,64 @@ a {
     font-size: 0.86rem;
   }
 }
+
+/* 清除本地数据入口 */
+.data-clear-wrap {
+  text-align: center;
+  padding: 6px 0 18px;
+}
+
+.data-clear-btn {
+  background: none;
+  border: none;
+  padding: 4px 8px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.data-clear-btn:hover {
+  color: #ef4444;
+}
+
+/* 页脚贴底：仅列表页（含 #site-footer）启用，避免影响游戏页布局 */
+body:has(#site-footer) {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+body:has(#site-footer) > main {
+  flex: 1 0 auto;
+}
+
+/* 游戏卡片图标按分类着色 */
+.game-icon.arcade {
+  background: var(--primary-soft);
+}
+
+.game-icon.puzzle {
+  background: var(--accent-soft);
+}
+
+/* 作者标识 */
+.site-credit a {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.site-credit a:hover {
+  text-decoration: underline;
+}
+
+.site-tagline {
+  margin-top: 2px;
+  font-size: 0.8rem;
+}
+
+.data-clear-wrap .site-credit {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-bottom: 2px;
+}

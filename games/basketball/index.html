@@ -4,7 +4,13 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>街头投篮 - 小游乐场</title>
+  <meta name="description" content="街头投篮：点击或按空格起跳，空心入网、打板进球，挑战你的最高分。" />
+  <meta name="author" content="Hayden-He" />
+  <meta name="theme-color" content="#1e1b4b" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E%F0%9F%8F%80%3C/text%3E%3C/svg%3E" />
+  <script src="/assets/canvas-polyfill.js"></script>
   <link rel="stylesheet" href="/assets/style.css" />
+  <script src="/assets/site-data.js"></script>
   <style>
     .game-wrap {
       max-width: 700px;
@@ -43,6 +49,19 @@
       font-size: 1.12rem;
       font-weight: 800;
       color: var(--text);
+    }
+
+    .hud-sub {
+      font-size: 0.62rem;
+      color: var(--text-muted);
+      line-height: 1.2;
+    }
+
+    .hint-block {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      flex: 1 1 260px;
     }
 
     .hud-value.accent {
@@ -207,12 +226,14 @@
         <div id="time-el" class="hud-value">10.0s</div>
       </div>
       <div class="hud-box">
-        <div class="hud-label">空心 (+4)</div>
+        <div class="hud-label">空心入网</div>
         <div id="swish-el" class="hud-value accent">0</div>
+        <div class="hud-sub">+4 · 连击+5</div>
       </div>
       <div class="hud-box">
-        <div class="hud-label">打板 (+3)</div>
+        <div class="hud-label">打板进球</div>
         <div id="bank-el" class="hud-value">0</div>
+        <div class="hud-sub">+3</div>
       </div>
       <div class="hud-box">
         <div class="hud-label">最高分</div>
@@ -231,14 +252,19 @@
         <p id="final-summary">本局得分：0</p>
         <p id="final-stats"></p>
         <button id="overlay-restart" class="btn-small">再来一局</button>
+        <p style="font-size:0.8rem">按空格或回车也可重开</p>
       </div>
     </div>
 
     <div class="controls-row">
-      <span class="hint-text">点击游戏区或空格跳跃（手机可点画布下方防遮挡）；连续空心触发火焰球，25分后出现防守护盾</span>
+      <div class="hint-block">
+        <span class="hint-text">操作：点击游戏区空白处 / 空格 / ↑ / W 起跳，P 暂停</span>
+        <span class="hint-text">规则：连续空心触发火焰球，25 分后出现防守护盾</span>
+      </div>
       <div class="btn-group">
         <button id="skin-btn" class="btn-small secondary">球色: 经典橙</button>
         <button id="sound-btn" class="btn-small secondary">音效: 开</button>
+        <button id="pause-btn" class="btn-small secondary">暂停</button>
         <button id="restart-btn" class="btn-small">重开</button>
       </div>
     </div>
@@ -258,13 +284,18 @@
       const bestEl = document.getElementById('best-el');
       const timerBar = document.getElementById('timer-bar');
       const skinBtn = document.getElementById('skin-btn');
+      const pauseBtn = document.getElementById('pause-btn');
       const soundBtn = document.getElementById('sound-btn');
       const overlay = document.getElementById('game-overlay');
       const finalSummary = document.getElementById('final-summary');
       const finalStats = document.getElementById('final-stats');
 
-      const W = canvas.width;
-      const H = canvas.height;
+      const W = 640;
+      const H = 420;
+      // 适配高清屏：内部分辨率按设备像素比放大，逻辑坐标仍为 640x420
+      const DPR = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = W * DPR;
+      canvas.height = H * DPR;
       const FLOOR_Y = 354;
       const GRAVITY = 1080;
       const JUMP_VY = -425;
@@ -304,7 +335,8 @@
         { x: 554, w: 86, h: 130 },
       ];
 
-      let soundEnabled = true;
+      let soundEnabled = window.SiteData ? SiteData.getSound() : true;
+      soundBtn.textContent = soundEnabled ? '音效: 开' : '音效: 关';
       let audioCtx = null;
 
       function ensureAudio() {
@@ -402,6 +434,14 @@
         bestScore = parseInt(localStorage.getItem(STORAGE_KEY) || '0', 10) || 0;
       } catch {}
 
+      function setText(el, v) {
+        v = String(v);
+        if (el._v !== v) { el._v = v; el.textContent = v; }
+      }
+      function setClass(el, v) {
+        if (el._c !== v) { el._c = v; el.className = v; }
+      }
+
       let state = {};
       let lastTime = 0;
       let lastTickSec = -1;
@@ -411,8 +451,9 @@
       }
 
       function spawnBall() {
-        const isGold = state.shotIndex > 0 && state.shotIndex % 5 === 0;
-        state.shotIndex += 1;
+        // 金球：每累计 5 个进球后出现一次（若未投进，则不补发）
+        const isGold = state.goldPending;
+        state.goldPending = false;
         state.ball = {
           x: 565,
           y: FLOOR_Y - BALL_R,
@@ -439,7 +480,11 @@
           bankCount: 0,
           normalCount: 0,
           combo: 0,
-          shotIndex: 0,
+          goalCount: 0,
+          goldPending: false,
+          paused: false,
+          endedAt: 0,
+          prevRimY: 186,
           started: false,
           ended: false,
           timeLimit: limit,
@@ -466,6 +511,7 @@
         };
         spawnBall();
         overlay.classList.remove('show');
+        pauseBtn.textContent = '暂停';
         updateHud();
       }
 
@@ -479,16 +525,17 @@
       }
 
       function updateHud() {
-        scoreEl.textContent = state.score;
-        timeEl.textContent = state.timeLeft.toFixed(1) + 's';
-        timeEl.className = 'hud-value' + (state.timeLeft <= 2.5 ? ' danger' : '');
-        swishEl.textContent = state.swishCount;
-        bankEl.textContent = state.bankCount;
-        bestEl.textContent = bestScore;
+        setText(scoreEl, state.score);
+        setText(timeEl, state.timeLeft.toFixed(1) + 's');
+        setClass(timeEl, 'hud-value' + (state.timeLeft <= 2.5 ? ' danger' : ''));
+        setText(swishEl, state.swishCount);
+        setText(bankEl, state.bankCount);
+        setText(bestEl, bestScore);
 
         const pct = Math.max(0, Math.min(100, (state.timeLeft / state.timeLimit) * 100));
-        timerBar.style.width = pct + '%';
-        timerBar.className = 'timer-bar' + (state.timeLeft <= 2.5 ? ' low' : '');
+        const pctStr = pct.toFixed(1) + '%';
+        if (timerBar._w !== pctStr) { timerBar._w = pctStr; timerBar.style.width = pctStr; }
+        setClass(timerBar, 'timer-bar' + (state.timeLeft <= 2.5 ? ' low' : ''));
       }
 
       function addPopup(text, x, y, color) {
@@ -516,7 +563,7 @@
       }
 
       function jumpBall() {
-        if (state.ended) return;
+        if (state.ended || state.paused) return;
         if (!state.started) state.started = true;
         const b = state.ball;
         if (b.scored) return;
@@ -534,18 +581,44 @@
 
       const gameWrap = document.querySelector('.game-wrap');
       gameWrap.addEventListener('pointerdown', (e) => {
-        if (e.target.closest('button, a, .overlay')) return;
+        if (e.target.closest('button, a, .overlay, .hud, .hint-text')) return;
         e.preventDefault();
+        if (state.paused) { setPaused(false); return; }
         jumpBall();
       });
 
+      function setPaused(flag) {
+        if (!state.started || state.ended) return;
+        if (state.paused === flag) return;
+        state.paused = flag;
+        pauseBtn.textContent = flag ? '继续' : '暂停';
+        lastTime = 0;
+      }
+
       document.addEventListener('keydown', (e) => {
         if (e.repeat) return;
-        if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'KeyW') {
+        if (e.code === 'KeyP') {
+          setPaused(!state.paused);
+          return;
+        }
+        if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'KeyW' || e.code === 'Enter') {
+          if (e.code === 'Enter' && !state.ended) return;
           e.preventDefault();
+          if (state.ended) {
+            // 结算后短暂锁定，避免连续按键误触直接重开
+            if ((e.code === 'Space' || e.code === 'Enter') && performance.now() - state.endedAt > 600) initGame();
+            return;
+          }
+          if (e.code === 'Enter') return;
+          if (state.paused) { setPaused(false); return; }
           jumpBall();
         }
       });
+
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden) setPaused(true);
+      });
+      pauseBtn.addEventListener('click', () => setPaused(!state.paused));
 
       function collidePoint(b, px, py, radius) {
         const dx = b.x - px;
@@ -570,7 +643,9 @@
       }
 
       function update(dt) {
-        if (state.started && !state.ended) {
+        if (state.paused) return;
+        // 进球后的冷却期内暂停倒计时，下一球出现后再继续
+        if (state.started && !state.ended && !state.ball.scored) {
           state.timeLeft -= dt;
           if (state.timeLeft <= 3.0 && state.timeLeft > 0) {
             const sec = Math.ceil(state.timeLeft);
@@ -582,6 +657,7 @@
           if (state.timeLeft <= 0) {
             state.timeLeft = 0;
             state.ended = true;
+            state.endedAt = performance.now();
             playSound('buzzer');
             saveBest();
             updateHud();
@@ -596,6 +672,7 @@
         state.skyTime += dt;
 
         // 平滑过渡篮筐高度变化（15 分后叠加缓慢连续上下浮动）
+        state.prevRimY = state.rimY;
         state.baseRimY += (state.targetRimY - state.baseRimY) * Math.min(1, dt * 6);
         let floatOffset = 0;
         if (state.score >= 15 && state.started && !state.ended) {
@@ -693,7 +770,8 @@
             if (!b.scored) b.vx = BASE_VX;
           }
 
-          if (b.x > RIM_RIGHT_X + BALL_R + 12) {
+          if (b.x > RIM_RIGHT_X + BALL_R + 12 || b.y < state.rimY - BALL_R) {
+            // 球离开篮网下方区域，或已回到篮筐上方：清除“底部进入”标记，保证之后自上而下的进球正常计分
             b.bottomEntry = false;
           }
 
@@ -723,16 +801,18 @@
             const bTop = state.blockerY - 28;
             const bBot = state.blockerY + 28;
             if (b.x + BALL_R > bx - 6 && b.x - BALL_R < bx + 6 && b.y + BALL_R > bTop && b.y - BALL_R < bBot) {
-              if (b.vx < 0) {
+              // 双向碰撞：球在护盾右侧向左飞，或在左侧向右飞（如被篮板弹回）时都会被挡下
+              const fromRight = b.x >= bx;
+              if ((fromRight && b.vx < 0) || (!fromRight && b.vx > 0)) {
                 const relHit = (b.y - state.blockerY) / 28;
-                b.x = bx + 6 + BALL_R;
-                b.vx = Math.abs(b.vx) * 0.54;
+                b.x = fromRight ? bx + 6 + BALL_R : bx - 6 - BALL_R;
+                b.vx = (fromRight ? 1 : -1) * Math.abs(b.vx) * 0.54;
                 b.vy = relHit < 0 ? -210 + relHit * 60 : -110 + relHit * 70;
                 b.squash = 0.12;
                 state.blockerFlash = 1.0;
                 state.shake = Math.max(state.shake, 3);
-                addRing(bx + 4, b.y, 'rgba(248, 113, 113, 0.9)', 26);
-                spawnBurst(bx + 4, b.y, '#fca5a5', 6);
+                addRing(bx + (fromRight ? 4 : -4), b.y, 'rgba(248, 113, 113, 0.9)', 26);
+                spawnBurst(bx + (fromRight ? 4 : -4), b.y, '#fca5a5', 6);
                 playSound('shield');
               }
             }
@@ -752,7 +832,7 @@
           }
 
           // 软篮网底部阻挡：防止从篮筐底部穿入再掉下造成乌龙球
-          if (!b.scored && b.vy < 0 && b.prevY >= state.rimY + 8 && b.y < state.rimY + 8) {
+          if (!b.scored && b.vy < 0 && b.prevY - state.prevRimY >= 8 && b.y - state.rimY < 8) {
             if (b.x > RIM_LEFT_X - 4 && b.x < RIM_RIGHT_X + 4) {
               b.y = state.rimY + 8;
               b.vy = Math.max(Math.abs(b.vy) * 0.35, 70);
@@ -763,8 +843,9 @@
             }
           }
 
-          if (!b.scored && !b.bottomEntry && b.vy > 0 && b.prevY <= state.rimY && b.y >= state.rimY) {
-            if (b.x > RIM_LEFT_X + 4 && b.x < RIM_RIGHT_X - 4) {
+          // 使用“相对篮筐”的位置判断穿越，避免篮筐移动时同一帧漏判
+          if (!b.scored && !b.bottomEntry && b.vy > 0 && b.prevY - state.prevRimY <= 0 && b.y - state.rimY >= 0) {
+            if (b.x > RIM_LEFT_X + 1 && b.x < RIM_RIGHT_X - 1) {
               b.scored = true;
               b.vx *= 0.2;
               b.vy = Math.max(b.vy * 0.5, 140);
@@ -811,6 +892,8 @@
 
               const gained = b.isGold ? base * 2 : base;
               state.score += gained;
+              state.goalCount += 1;
+              if (state.goalCount % 5 === 0) state.goldPending = true;
               saveBest();
 
               state.timeLimit = getShotTimeLimit(state.score);
@@ -1063,15 +1146,19 @@
           ctx.ellipse(30, FLOOR_Y + 4, 34, 5, 0, 0, Math.PI * 2);
           ctx.fill();
 
-          ctx.fillStyle = '#0f172a';
+          // 底座：使用较亮的填充与浅色描边，避免在夜场与深色楼群剪影融为一体
+          ctx.fillStyle = '#334155';
+          ctx.strokeStyle = '#94a3b8';
+          ctx.lineWidth = 2;
           ctx.beginPath();
           ctx.roundRect(6, FLOOR_Y - 26, 48, 26, 5);
           ctx.fill();
+          ctx.stroke();
 
-          ctx.fillStyle = '#334155';
+          ctx.fillStyle = '#64748b';
           ctx.fillRect(12, FLOOR_Y - 22, 36, 4);
 
-          ctx.strokeStyle = '#475569';
+          ctx.strokeStyle = '#64748b';
           ctx.lineWidth = 5;
           ctx.beginPath();
           ctx.moveTo(46, FLOOR_Y - 24);
@@ -1310,6 +1397,7 @@
       }
 
       function render() {
+        ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
         ctx.save();
         if (state.shake > 0.2) {
           const sx = (Math.random() - 0.5) * state.shake * 2;
@@ -1355,6 +1443,15 @@
           ctx.fillText('点击画面或按空格键起跳投篮 🏀', W / 2, 148);
         }
 
+        if (state.paused) {
+          ctx.fillStyle = 'rgba(15, 23, 42, 0.6)';
+          ctx.fillRect(0, 0, W, H);
+          ctx.fillStyle = '#fff';
+          ctx.font = 'bold 26px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('已暂停（P / 点击继续）', W / 2, H / 2);
+        }
+
         state.popups.forEach((p) => {
           ctx.save();
           ctx.globalAlpha = Math.max(0, p.life);
@@ -1372,7 +1469,9 @@
         if (!lastTime) lastTime = ts;
         const dt = Math.min((ts - lastTime) / 1000, 0.04);
         lastTime = ts;
-        update(dt);
+        // 物理子步进：单步不超过 1/90 秒，降低低帧率下穿模风险
+        const steps = Math.max(1, Math.ceil(dt / (1 / 90)));
+        for (let i = 0; i < steps; i++) update(dt / steps);
         render();
         requestAnimationFrame(loop);
       }
@@ -1387,6 +1486,10 @@
       soundBtn.addEventListener('click', () => {
         soundEnabled = !soundEnabled;
         soundBtn.textContent = soundEnabled ? '音效: 开' : '音效: 关';
+        if (window.SiteData) SiteData.setSound(soundEnabled);
+      });
+      document.querySelectorAll('button').forEach((btn) => {
+        btn.addEventListener('click', () => btn.blur());
       });
       document.getElementById('restart-btn').addEventListener('click', initGame);
       document.getElementById('overlay-restart').addEventListener('click', initGame);
