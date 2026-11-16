@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>我的第一个网站</title>
+  <style>
+    body { font-family: sans-serif; text-align: center; margin-top: 80px; }
+    button { padding: 10px 20px; font-size: 16px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <h1>欢迎来到我的网站！</h1>
+  <p>后续这里会放更多在线小游戏 🎮</p>
+  <button onclick="count++; document.getElementById('num').innerText = count;">
+    点我测试：<span id="num">0</span>
+  </button>
+  <script>let count = 0;</script>
+</body>
+</html>
