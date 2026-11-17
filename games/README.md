@@ -14,12 +14,17 @@ assets/
   icons.svg         自绘 SVG 图标 sprite（品牌/5 个游戏/分类/UI）
   icon.svg          站点图标源文件（favicon）
   icons/            PWA 192/512 与 apple-touch-icon 图标
+  og-image.png      1200×630 分享图（og:image）
 games/
   _template/        可复制的新游戏模板
   <id>/index.html   每个游戏一个页面
+sitemap.xml         8 个可索引页的 URL 清单
+robots.txt          爬虫规则 + sitemap 指向
 scripts/
   check-site.mjs    部署前结构校验
   check-i18n.mjs    中英文案覆盖校验
+  og-image.html     OG 分享图源文件（1200×630）
+  make-og-image.mjs 从源文件生成 assets/og-image.png
 ```
 
 游戏页只保留**自己棋盘/球场/网格**的 CSS 和玩法 JS；HUD、按钮、遮罩、提示、更多游戏、音效按钮、最高分读写都用公共外壳。
@@ -44,6 +49,11 @@ scripts/
    ```
    分类页会自动出卡，不需要改 HTML。
 3. 改页面：`<title>`、`meta description`、顶栏 `<h1>`、分类链接、`--game-width`。
+   同时补该页的 SEO（`canonical`、`og:*`、`twitter:*`）：
+   - `og:title` 用“游戏名 · Little Playground”；
+   - `og:description` 用该页 `meta description`，描述保持中文；
+   - `og:image` 用共享的 `https://my-website-all.pages.dev/assets/og-image.png`；
+   - 把 `/games/<id>/` 加进 `sitemap.xml`（`lastmod` 同步更新）；`check-site` 会拦漏。
    顶栏 h1 不再用 emoji，改为“自绘图标 + 可翻译文字”：
    ```html
    <h1 class="game-topbar-title">
@@ -98,6 +108,16 @@ scripts/
    - 通过变量/条件传入 `I18N.t` 的文案（如 `t(step.title)`）不会被静态扫描到，记得一并补词典。
 7. 跑校验：`node scripts/check-site.mjs && node scripts/check-i18n.mjs`。
 
+## SEO / 分享（8 个可索引页）
+
+- 可索引页：首页 + 2 分类 + 5 游戏 = **8 个**；`404.html` 有 `noindex`，不进 sitemap。
+- 每页必须有：`canonical`、`og:type/site_name/locale/title/description/url/image`、`og:image:type/width/height/alt`、`twitter:card/title/description/image/alt`。
+- 共享分享图：`assets/og-image.png`（1200×630，中英双语品牌卡）。源文件 `scripts/og-image.html`；改品牌或游戏列表后运行 `node scripts/make-og-image.mjs` 重新生成（需要本机 Chrome，可用 `CHROME_PATH` 指定；无 npm 依赖）。
+- `sitemap.xml`：8 个 URL；页面内容更新时同步改 `lastmod`。
+- `robots.txt`：允许抓取并指向 sitemap。
+- 域名默认 `https://my-website-all.pages.dev`；换自定义域名时，同步改 8 个页面的 canonical/og:url/og:image、`sitemap.xml`、`robots.txt`、`check-site` 的 `SITE_URL`。
+- 社交爬虫不执行 JS：页面静态文案是中文，所以分享卡面是中文标题 + 中英双语图片；如需静态英文 SEO，需要另开 `/en/` 路由，属于更大改动。
+
 ## 移动端与可访问性底线
 
 - 320px 宽必须无横向溢出；HUD/按钮不能把文字挤成竖排。
@@ -130,6 +150,6 @@ scripts/
 - 模板：`games/_template/index.html`，包含 HUD、音效、最高分、重开确认、更多游戏、自定义弹窗的完整示例；复制后按第 3 步补自绘 h1 图标。
 - 图标：`assets/icons.svg` 是站内自绘 SVG sprite；品牌/游戏/分类/音效/暂停/重开/撤回/旗帜都在这里，不依赖系统 emoji，也不引外部 CDN。
 - 扫雷是“首次教学 + 工具栏常驻玩法按钮”的现成例子：首次自动展示，之后可用 `GameKit.showTutorial({ ..., force: true })` 重看。
-- 结构校验：`node scripts/check-site.mjs`，会检查配置文件、页面存在性、分类名一致、storageKey 唯一、公共外壳与 i18n/图标引用、语言按钮、h1/meta、更多游戏入口、PWA manifest/图标、禁止缩放等。
+- 结构校验：`node scripts/check-site.mjs`，会检查配置文件、页面存在性、分类名一致、storageKey 唯一、公共外壳与 i18n/图标引用、语言按钮、h1/meta、更多游戏入口、PWA manifest/图标、SEO（canonical/OG/Twitter）、sitemap/robots/OG 图、禁止缩放等。
 - 英文覆盖：`node scripts/check-i18n.mjs`，检查页面、脚本、游戏元数据里的中文 key 是否都在 `assets/i18n.js` 的 EN 词典里。
 - 建议在部署前（或 CI）执行；两个校验都通过再 push。

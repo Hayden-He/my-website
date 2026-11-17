@@ -58,6 +58,40 @@ function checkContains(content, needle, label) {
   if (!content || !content.includes(needle)) fail(`${label} 缺少 ${needle}`);
 }
 
+const SITE_URL = 'https://my-website-all.pages.dev';
+const OG_IMAGE = SITE_URL + '/assets/og-image.png';
+const OG_ALT = '小游乐场 · Little Playground：5 款即开即玩的小游戏';
+
+// 每个可索引页面：canonical + OG/Twitter 必须齐全，且 og:title 为“页面名 · Little Playground”
+function checkSeoPage(page, { label, urlPath, ogTitle }) {
+  if (!page) return;
+  const descriptionMatch = page.match(/<meta name="description" content="([^"]+)"/);
+  if (!descriptionMatch) {
+    fail(`${label} 缺少 meta description`);
+    return;
+  }
+  const description = descriptionMatch[1];
+  const url = SITE_URL + urlPath;
+
+  checkContains(page, `<link rel="canonical" href="${url}"`, label);
+  checkContains(page, '<meta property="og:type" content="website"', label);
+  checkContains(page, `<meta property="og:site_name" content="${config.siteTitle}"`, label);
+  checkContains(page, '<meta property="og:locale" content="zh_CN"', label);
+  checkContains(page, `<meta property="og:title" content="${ogTitle}"`, label);
+  checkContains(page, `<meta property="og:description" content="${description}"`, label);
+  checkContains(page, `<meta property="og:url" content="${url}"`, label);
+  checkContains(page, `<meta property="og:image" content="${OG_IMAGE}"`, label);
+  checkContains(page, '<meta property="og:image:type" content="image/png"', label);
+  checkContains(page, '<meta property="og:image:width" content="1200"', label);
+  checkContains(page, '<meta property="og:image:height" content="630"', label);
+  checkContains(page, `<meta property="og:image:alt" content="${OG_ALT}"`, label);
+  checkContains(page, '<meta name="twitter:card" content="summary_large_image"', label);
+  checkContains(page, `<meta name="twitter:title" content="${ogTitle}"`, label);
+  checkContains(page, `<meta name="twitter:description" content="${description}"`, label);
+  checkContains(page, `<meta name="twitter:image" content="${OG_IMAGE}"`, label);
+  checkContains(page, `<meta name="twitter:image:alt" content="${OG_ALT}"`, label);
+}
+
 // ---------- 站点配置 ----------
 const configSource = read('assets/games.js');
 if (!configSource) {
@@ -110,6 +144,11 @@ for (const category of categories) {
     checkContains(categoryPage, 'site.webmanifest', `分类页 ${category.url}`);
     checkContains(categoryPage, 'assets/icon.svg', `分类页 ${category.url}`);
     checkContains(categoryPage, 'apple-touch-icon.png', `分类页 ${category.url}`);
+    checkSeoPage(categoryPage, {
+      label: `分类页 ${category.url}`,
+      urlPath: category.url,
+      ogTitle: category.name + ' · Little Playground',
+    });
   }
 }
 
@@ -170,6 +209,11 @@ for (const game of games) {
   checkContains(page, 'assets/i18n.js', pagePath);
   checkContains(page, 'assets/icons.svg', pagePath);
   checkContains(page, 'game-' + game.icon, pagePath);
+  checkSeoPage(page, {
+    label: pagePath,
+    urlPath: game.url,
+    ogTitle: game.title + ' · Little Playground',
+  });
   checkContains(page, 'site.webmanifest', pagePath);
   checkContains(page, 'assets/icon.svg', pagePath);
   checkContains(page, 'apple-touch-icon.png', pagePath);
@@ -199,6 +243,11 @@ try {
 checkContains(read('index.html'), "initSitePage('all')", 'index.html');
 checkContains(read('index.html'), 'id="games-grid"', 'index.html');
 checkContains(read('index.html'), 'assets/i18n.js', 'index.html');
+checkSeoPage(read('index.html'), {
+  label: 'index.html',
+  urlPath: '/',
+  ogTitle: config.siteTitle + ' · Little Playground',
+});
 checkContains(read('index.html'), 'site.webmanifest', 'index.html');
 checkContains(read('index.html'), 'assets/icon.svg', 'index.html');
 checkContains(read('index.html'), 'apple-touch-icon.png', 'index.html');
@@ -208,6 +257,42 @@ checkContains(read('404.html'), 'site.webmanifest', '404.html');
 checkContains(read('404.html'), 'assets/icon.svg', '404.html');
 checkContains(read('404.html'), 'apple-touch-icon.png', '404.html');
 checkFile('404.html', '404.html');
+const notFoundPage = read('404.html');
+checkContains(notFoundPage, 'name="robots" content="noindex"', '404.html');
+if (notFoundPage && notFoundPage.includes('rel="canonical"')) {
+  fail('404.html 不应有 canonical（noindex 页面）');
+}
+if (notFoundPage && notFoundPage.includes('property="og:url"')) {
+  fail('404.html 不应有 OG meta（noindex 页面）');
+}
+
+// ---------- SEO：sitemap / robots / OG image ----------
+checkFile('assets/og-image.png', 'assets/og-image.png');
+checkFile('sitemap.xml', 'sitemap.xml');
+checkFile('robots.txt', 'robots.txt');
+const sitemap = read('sitemap.xml') || '';
+const robots = read('robots.txt') || '';
+const indexablePaths = [
+  '/',
+  ...categories.map((category) => category.url).filter(Boolean),
+  ...games.map((game) => game.url).filter(Boolean),
+];
+for (const urlPath of indexablePaths) {
+  checkContains(sitemap, `<loc>${SITE_URL}${urlPath}</loc>`, 'sitemap.xml');
+}
+const sitemapLocs = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map((match) => match[1]);
+if (sitemapLocs.length !== indexablePaths.length) {
+  fail(`sitemap.xml 的 URL 数量应为 ${indexablePaths.length}，实际为 ${sitemapLocs.length}`);
+}
+if (sitemapLocs.includes(SITE_URL + '/404.html')) fail('sitemap.xml 不应包含 noindex 的 404 页面');
+for (const loc of sitemapLocs) {
+  if (!/^https:\/\/my-website-all\.pages\.dev\//.test(loc)) fail(`sitemap.xml 使用了非约定域名：${loc}`);
+}
+if (!/<lastmod>\d{4}-\d{2}-\d{2}<\/lastmod>/.test(sitemap)) {
+  fail('sitemap.xml 缺少 YYYY-MM-DD 格式的 lastmod');
+}
+checkContains(robots, 'Allow: /', 'robots.txt');
+checkContains(robots, `Sitemap: ${SITE_URL}/sitemap.xml`, 'robots.txt');
 
 for (const asset of [
   'assets/style.css',

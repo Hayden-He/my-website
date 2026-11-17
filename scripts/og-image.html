@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>小游乐场 · Little Playground — OG image source</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; width: 1200px; height: 630px; overflow: hidden; }
+    body {
+      position: relative;
+      background: #f8fafc;
+      color: #0f172a;
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    }
+    body::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      background:
+        radial-gradient(560px 380px at 1060px -40px, rgba(37, 99, 235, 0.18), transparent 70%),
+        radial-gradient(480px 300px at -60px 700px, rgba(249, 115, 22, 0.16), transparent 70%),
+        linear-gradient(135deg, #ffffff 0%, #f8fafc 55%, #eff6ff 100%);
+    }
+    .og { width: 1200px; height: 630px; padding: 52px 64px 42px; display: flex; flex-direction: column; }
+    .top { display: flex; align-items: center; justify-content: space-between; }
+    .brand { display: flex; align-items: center; gap: 14px; }
+    .brand-mark { width: 54px; height: 54px; display: block; }
+    .brand-text { display: flex; flex-direction: column; gap: 2px; }
+    .brand-zh { font-size: 25px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.1; }
+    .brand-en { font-size: 14px; font-weight: 600; color: #475569; letter-spacing: 0.02em; }
+    .badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 9px 16px; border-radius: 999px;
+      background: rgba(37, 99, 235, 0.08);
+      color: #1d4ed8; font-size: 14px; font-weight: 700;
+    }
+    .hero { margin-top: 38px; }
+    .hero h1 { margin: 0; font-size: 50px; line-height: 1.12; letter-spacing: -0.035em; font-weight: 900; }
+    .hero .en { margin: 10px 0 0; font-size: 22px; line-height: 1.25; font-weight: 700; color: #334155; letter-spacing: -0.01em; }
+    .hero .sub { margin: 14px 0 0; font-size: 16px; line-height: 1.5; color: #64748b; }
+    .hero .sub b { color: #475569; font-weight: 700; }
+    .cards { margin-top: auto; display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; }
+    .card {
+      display: flex; flex-direction: column; gap: 10px;
+      padding: 16px;
+      border: 1px solid rgba(226, 232, 240, 0.95);
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.94);
+      box-shadow: 0 12px 28px rgba(15, 23, 42, 0.06);
+    }
+    .card-icon { width: 46px; height: 46px; display: block; }
+    .card-name { font-size: 18px; font-weight: 800; line-height: 1.2; letter-spacing: -0.01em; }
+    .card-en { font-size: 12px; font-weight: 600; color: #64748b; line-height: 1.3; }
+    .foot { display: flex; align-items: center; justify-content: space-between; margin-top: 18px; color: #64748b; font-size: 13px; font-weight: 600; }
+    .url { display: inline-flex; align-items: center; gap: 8px; }
+    .dot { width: 6px; height: 6px; border-radius: 50%; background: #f97316; }
+  </style>
+</head>
+<body>
+  <div class="og">
+    <div class="top">
+      <div class="brand">
+        <svg class="brand-mark" viewBox="0 0 40 40" aria-hidden="true"><use href="../assets/icons.svg#brand"></use></svg>
+        <div class="brand-text"><span class="brand-zh">小游乐场</span><span class="brand-en">Little Playground</span></div>
+      </div>
+      <span class="badge">5 款小游戏 · 5 mini games</span>
+    </div>
+
+    <div class="hero">
+      <h1>打开即玩的小游戏合集</h1>
+      <p class="en">Instant mini games for a quick break.</p>
+      <p class="sub"><b>街头投篮 · 贪吃蛇 · 2048 · 扫雷 · 记忆翻牌</b>　|　No downloads. Desktop &amp; mobile.</p>
+    </div>
+
+    <div class="cards">
+      <div class="card"><svg class="card-icon" viewBox="0 0 32 32" aria-hidden="true"><use href="../assets/icons.svg#game-basketball"></use></svg><span class="card-name">街头投篮</span><span class="card-en">Street Hoops</span></div>
+      <div class="card"><svg class="card-icon" viewBox="0 0 32 32" aria-hidden="true"><use href="../assets/icons.svg#game-snake"></use></svg><span class="card-name">经典贪吃蛇</span><span class="card-en">Classic Snake</span></div>
+      <div class="card"><svg class="card-icon" viewBox="0 0 32 32" aria-hidden="true"><use href="../assets/icons.svg#game-2048"></use></svg><span class="card-name">经典 2048</span><span class="card-en">2048</span></div>
+      <div class="card"><svg class="card-icon" viewBox="0 0 32 32" aria-hidden="true"><use href="../assets/icons.svg#game-minesweeper"></use></svg><span class="card-name">经典扫雷</span><span class="card-en">Minesweeper</span></div>
+      <div class="card"><svg class="card-icon" viewBox="0 0 32 32" aria-hidden="true"><use href="../assets/icons.svg#game-memory"></use></svg><span class="card-name">记忆翻牌</span><span class="card-en">Memory Match</span></div>
+    </div>
+
+    <div class="foot"><span class="url"><span class="dot"></span>my-website-all.pages.dev</span><span>Little Playground · 打开即玩</span></div>
+  </div>
+</body>
+</html>
