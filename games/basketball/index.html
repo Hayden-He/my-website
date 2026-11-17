@@ -259,10 +259,10 @@
     <div class="controls-row">
       <div class="hint-block">
         <span class="hint-text">操作：点击球场 / 空格 / ↑ / W 起跳，P 暂停</span>
-        <span class="hint-text">机制：进球重置倒计时 · 连续空心触发火焰球 · 每 5 球出现金球 ×2 · 25 分开启护盾</span>
+        <span class="hint-text">机制：进球重置倒计时 · 连续空心火焰球 · 每 5 球金球 ×2 · 25/50/80 分护盾进阶</span>
       </div>
       <div class="btn-group">
-        <button id="skin-btn" class="btn-small secondary">球色: 经典橙</button>
+        <button id="skin-btn" class="btn-small secondary">球款: 经典篮球</button>
         <button id="sound-btn" class="btn-small secondary">音效: 开</button>
         <button id="pause-btn" class="btn-small secondary">暂停</button>
         <button id="restart-btn" class="btn-small">重开</button>
@@ -308,17 +308,18 @@
       const RIM_CENTER_X = (RIM_LEFT_X + RIM_RIGHT_X) / 2;
 
       const BALL_SKINS = [
-        { name: '经典橙', c0: '#fdba74', c1: '#f97316', c2: '#9a3412', seam: '#431407' },
-        { name: '黑金夜', c0: '#64748b', c1: '#1e293b', c2: '#020617', seam: '#facc15' },
-        { name: '冰蓝潮', c0: '#bae6fd', c1: '#0ea5e9', c2: '#0369a1', seam: '#e0f2fe' },
-        { name: '烈焰红', c0: '#fca5a5', c1: '#ef4444', c2: '#7f1d1d', seam: '#450a0a' },
+        { id: 'classic', name: '经典篮球', c0: '#fdba74', c1: '#f97316', c2: '#9a3412', seam: '#431407' },
+        { id: 'planet', name: '蔚蓝星球', c0: '#7dd3fc', c1: '#0284c7', c2: '#1e3a8a', seam: '#4ade80' },
+        { id: 'ice', name: '寒冰晶球', c0: '#f0f9ff', c1: '#38bdf8', c2: '#0369a1', seam: '#e0f2fe' },
+        { id: 'water', name: '深海气泡', c0: '#67e8f9', c1: '#0891b2', c2: '#164e63', seam: '#cffafe' },
+        { id: 'darkgold', name: '黑金夜影', c0: '#64748b', c1: '#1e293b', c2: '#020617', seam: '#facc15' },
       ];
       let skinIndex = 0;
       try {
         const savedSkin = parseInt(localStorage.getItem(SKIN_STORAGE_KEY) || '0', 10);
         if (savedSkin >= 0 && savedSkin < BALL_SKINS.length) skinIndex = savedSkin;
       } catch {}
-      skinBtn.textContent = '球色: ' + BALL_SKINS[skinIndex].name;
+      skinBtn.textContent = '球款: ' + BALL_SKINS[skinIndex].name;
 
       // 城市天际线预设建筑
       const SKYLINE = [
@@ -502,10 +503,13 @@
           netSwing: 0,
           netExpand: 0,
           boardFlash: 0,
+          blockerX: 250,
           blockerY: 190,
           blockerDir: 1,
+          blockerPhase: 0,
           blockerPause: 0,
           blockerFlash: 0,
+          blockerFlash2: 0,
           shake: 0,
           rings: [],
           particles: [],
@@ -517,6 +521,19 @@
         overlay.classList.remove('show');
         pauseBtn.textContent = '暂停';
         updateHud();
+      }
+
+      function getBlockers() {
+        if (state.score < 25) return [];
+        if (state.score >= 80) {
+          return [
+            { x: 225, y: state.blockerY, h: 38, flash: state.blockerFlash },
+            { x: 305, y: 385 - state.blockerY, h: 38, flash: state.blockerFlash2 },
+          ];
+        }
+        return [
+          { x: state.score >= 50 ? state.blockerX : 250, y: state.blockerY, h: 56, flash: state.blockerFlash },
+        ];
       }
 
       function saveBest() {
@@ -580,6 +597,30 @@
         b.vy = JUMP_VY * liftFactor;
         b.squash = -0.1;
         if (b.vx > -120) b.vx = BASE_VX;
+        // 普通球起跳时产生轻巧的主题气流微粒，增强起跳反馈但不抢火焰球与金球风头
+        if (state.combo < 2 && !b.isGold) {
+          const skinId = BALL_SKINS[skinIndex].id;
+          const puffColor = skinId === 'planet'
+            ? '#bae6fd'
+            : skinId === 'ice'
+              ? '#e0f2fe'
+              : skinId === 'water'
+                ? '#a5f3fc'
+                : skinId === 'darkgold'
+                  ? '#fde68a'
+                  : '#f8fafc';
+          for (let i = 0; i < 5; i++) {
+            state.particles.push({
+              x: b.x + (Math.random() - 0.5) * 18,
+              y: b.y + BALL_R - 2,
+              vx: (Math.random() - 0.5) * 75,
+              vy: 28 + Math.random() * 52,
+              r: 2.0 + Math.random() * 1.2,
+              color: puffColor,
+              life: 0.65,
+            });
+          }
+        }
         playSound('jump');
       }
 
@@ -685,21 +726,28 @@
         }
         state.rimY = Math.max(128, Math.min(236, state.baseRimY + floatOffset));
 
-        // 25 分以上启用移动防守护盾（带起跳/落点节奏微停顿）
+        // 护盾随分数三阶段演进：25+ 垂直守卫 -> 50+ 斜向巡逻提速 -> 80+ 双子联动护盾
         if (state.score >= 25 && state.started && !state.ended) {
+          const spd = state.score >= 80 ? 105 : state.score >= 50 ? 95 : 78;
           if (state.blockerPause > 0) {
             state.blockerPause = Math.max(0, state.blockerPause - dt);
           } else {
-            state.blockerY += state.blockerDir * 78 * dt;
+            state.blockerY += state.blockerDir * spd * dt;
             if (state.blockerY >= 270) {
               state.blockerY = 270;
               state.blockerDir = -1;
-              state.blockerPause = 0.14;
+              state.blockerPause = 0.12;
             } else if (state.blockerY <= 115) {
               state.blockerY = 115;
               state.blockerDir = 1;
-              state.blockerPause = 0.14;
+              state.blockerPause = 0.12;
             }
+          }
+          if (state.score >= 50 && state.score < 80) {
+            state.blockerPhase += dt * 1.35;
+            state.blockerX = 270 + Math.sin(state.blockerPhase) * 45;
+          } else {
+            state.blockerX = 250;
           }
         }
 
@@ -708,6 +756,7 @@
         if (state.rimSpring > 0) state.rimSpring = Math.max(0, state.rimSpring - dt * 5.0);
         if (state.boardFlash > 0) state.boardFlash = Math.max(0, state.boardFlash - dt * 3.5);
         if (state.blockerFlash > 0) state.blockerFlash = Math.max(0, state.blockerFlash - dt * 4.5);
+        if (state.blockerFlash2 > 0) state.blockerFlash2 = Math.max(0, state.blockerFlash2 - dt * 4.5);
         if (state.shake > 0) state.shake = Math.max(0, state.shake - dt * 28);
 
         state.rings = state.rings.filter((rg) => {
@@ -741,6 +790,18 @@
               r: BALL_R * 0.75,
               color: b.isGold ? '#fde047' : '#fb923c',
               life: 0.35,
+              maxLife: 0.35,
+              alpha: 1.4,
+            });
+          } else if (Math.hypot(b.vx, b.vy) > 120) {
+            state.trail.push({
+              x: b.x,
+              y: b.y,
+              r: BALL_R * 0.36,
+              color: '#e2e8f0',
+              life: 0.14,
+              maxLife: 0.14,
+              alpha: 1.1,
             });
           }
           state.trail = state.trail.filter((t) => {
@@ -806,25 +867,30 @@
             }
           }
 
-          // 防守护盾碰撞（25 分后开启）
+          // 防守护盾碰撞（25/50/80 分三阶段演进）
           if (state.score >= 25 && !b.scored) {
-            const bx = 250;
-            const bTop = state.blockerY - 28;
-            const bBot = state.blockerY + 28;
-            if (b.x + BALL_R > bx - 6 && b.x - BALL_R < bx + 6 && b.y + BALL_R > bTop && b.y - BALL_R < bBot) {
-              // 双向碰撞：球在护盾右侧向左飞，或在左侧向右飞（如被篮板弹回）时都会被挡下
-              const fromRight = b.x >= bx;
-              if ((fromRight && b.vx < 0) || (!fromRight && b.vx > 0)) {
-                const relHit = (b.y - state.blockerY) / 28;
-                b.x = fromRight ? bx + 6 + BALL_R : bx - 6 - BALL_R;
-                b.vx = (fromRight ? 1 : -1) * Math.abs(b.vx) * 0.54;
-                b.vy = relHit < 0 ? -210 + relHit * 60 : -110 + relHit * 70;
-                b.squash = 0.12;
-                state.blockerFlash = 1.0;
-                state.shake = Math.max(state.shake, 3);
-                addRing(bx + (fromRight ? 4 : -4), b.y, 'rgba(248, 113, 113, 0.9)', 26);
-                spawnBurst(bx + (fromRight ? 4 : -4), b.y, '#fca5a5', 6);
-                playSound('shield');
+            const blockers = getBlockers();
+            for (let bi = 0; bi < blockers.length; bi++) {
+              const blk = blockers[bi];
+              const halfH = blk.h / 2;
+              const bTop = blk.y - halfH;
+              const bBot = blk.y + halfH;
+              if (b.x + BALL_R > blk.x - 6 && b.x - BALL_R < blk.x + 6 && b.y + BALL_R > bTop && b.y - BALL_R < bBot) {
+                const fromRight = b.x >= blk.x;
+                if ((fromRight && b.vx < 0) || (!fromRight && b.vx > 0)) {
+                  const relHit = (b.y - blk.y) / halfH;
+                  b.x = fromRight ? blk.x + 6 + BALL_R : blk.x - 6 - BALL_R;
+                  b.vx = (fromRight ? 1 : -1) * Math.abs(b.vx) * 0.54;
+                  b.vy = relHit < 0 ? -210 + relHit * 60 : -110 + relHit * 70;
+                  b.squash = 0.12;
+                  if (bi === 0) state.blockerFlash = 1.0;
+                  else state.blockerFlash2 = 1.0;
+                  state.shake = Math.max(state.shake, 3);
+                  addRing(blk.x + (fromRight ? 4 : -4), b.y, 'rgba(248, 113, 113, 0.9)', 26);
+                  spawnBurst(blk.x + (fromRight ? 4 : -4), b.y, '#fca5a5', 6);
+                  playSound('shield');
+                  break;
+                }
               }
             }
           }
@@ -988,6 +1054,65 @@
         }
       }
 
+      function drawNightCityAndFence(opts) {
+        // 远层楼顶穿插于近层天际线后，近层保留少量亮窗与围栏
+        ctx.fillStyle = opts.far;
+        SKYLINE.forEach((building, i) => {
+          const roof = FLOOR_Y - building.h - 16 - (i % 3) * 12;
+          ctx.fillRect(building.x - 17, roof, building.w - 6, FLOOR_Y - roof);
+        });
+        SKYLINE.forEach((building, i) => {
+          const roof = FLOOR_Y - building.h;
+          ctx.fillStyle = i % 2 ? opts.nearA : opts.nearB;
+          ctx.fillRect(building.x, roof, building.w, building.h);
+          ctx.fillStyle = typeof opts.roofLine === 'function' ? opts.roofLine(i) : opts.roofLine;
+          ctx.fillRect(building.x + 1, roof, building.w - 2, 2);
+          for (let row = 0; roof + 14 + row * 17 < FLOOR_Y - 56; row++) {
+            for (let column = 0; 10 + column * 13 < building.w - 7; column++) {
+              if ((i * 11 + row * 13 + column * 7) % 17 < 4) {
+                ctx.fillStyle = (i + row + column) % 3 === 0 ? opts.winA : opts.winB;
+                ctx.fillRect(building.x + 10 + column * 13, roof + 14 + row * 17, 4, 7);
+              }
+            }
+          }
+        });
+
+        drawFloodlight(185, 142, opts.lightL);
+        drawFloodlight(514, 506, opts.lightR);
+
+        const fenceTop = FLOOR_Y - 49;
+        ctx.strokeStyle = opts.fenceMesh;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        for (let x = -49; x < W + 49; x += 16) {
+          ctx.moveTo(x, fenceTop);
+          ctx.lineTo(x + 49, FLOOR_Y);
+          ctx.moveTo(x + 49, fenceTop);
+          ctx.lineTo(x, FLOOR_Y);
+        }
+        ctx.stroke();
+        ctx.fillStyle = opts.fenceRail;
+        ctx.fillRect(0, fenceTop, W, 2);
+        ctx.fillStyle = opts.fencePost;
+        for (let x = 34; x < W; x += 101) ctx.fillRect(x, fenceTop - 2, 3, 51);
+
+        // 光区裁在地面内，避免光晕盖住围栏或投篮区
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(0, FLOOR_Y, W, H - FLOOR_Y);
+        ctx.clip();
+        const floor = ctx.createLinearGradient(0, FLOOR_Y, 0, H);
+        floor.addColorStop(0, opts.floor0);
+        floor.addColorStop(0.5, opts.floor1);
+        floor.addColorStop(1, opts.floor2);
+        ctx.fillStyle = floor;
+        ctx.fillRect(0, FLOOR_Y, W, H - FLOOR_Y);
+        drawNightGlow(142, FLOOR_Y + 23, 185, 47, opts.lightL, opts.glowAlpha);
+        drawNightGlow(506, FLOOR_Y + 20, 170, 42, opts.lightR, opts.glowAlpha * 0.9);
+        ctx.restore();
+        drawCourtMarkings(opts.boundary, opts.lines);
+      }
+
       function drawNightCourt() {
         const sky = ctx.createLinearGradient(0, 0, 0, FLOOR_Y);
         sky.addColorStop(0, '#060e1c');
@@ -998,64 +1123,145 @@
         drawNightGlow(365, 238, 280, 132, '112, 162, 180', 0.19);
         drawCourtClouds('rgba(125, 166, 185, 0.04)');
 
-        // 远层楼顶穿插于原有天际线后，近层只保留少量亮窗。
-        ctx.fillStyle = '#203b50';
-        SKYLINE.forEach((building, i) => {
-          const roof = FLOOR_Y - building.h - 16 - (i % 3) * 12;
-          ctx.fillRect(building.x - 17, roof, building.w - 6, FLOOR_Y - roof);
+        drawNightCityAndFence({
+          far: '#203b50',
+          nearA: '#0e2131',
+          nearB: '#102637',
+          roofLine: '#263e4a',
+          winA: '#715947',
+          winB: '#4b4942',
+          lightL: '255, 224, 173',
+          lightR: '162, 219, 239',
+          fenceMesh: 'rgba(96, 130, 142, 0.20)',
+          fenceRail: '#48606b',
+          fencePost: '#253d4b',
+          floor0: '#26454c',
+          floor1: '#20363e',
+          floor2: '#101e29',
+          glowAlpha: 0.27,
+          boundary: '#a6bcb8',
+          lines: 'rgba(216, 231, 220, 0.55)',
         });
-        SKYLINE.forEach((building, i) => {
-          const roof = FLOOR_Y - building.h;
-          ctx.fillStyle = i % 2 ? '#0e2131' : '#102637';
-          ctx.fillRect(building.x, roof, building.w, building.h);
-          ctx.fillStyle = '#263e4a';
-          ctx.fillRect(building.x + 1, roof, building.w - 2, 2);
-          for (let row = 0; roof + 14 + row * 17 < FLOOR_Y - 56; row++) {
-            for (let column = 0; 10 + column * 13 < building.w - 7; column++) {
-              if ((i * 11 + row * 13 + column * 7) % 17 < 4) {
-                ctx.fillStyle = (i + row + column) % 3 === 0 ? '#715947' : '#4b4942';
-                ctx.fillRect(building.x + 10 + column * 13, roof + 14 + row * 17, 4, 7);
-              }
-            }
+      }
+
+      function drawAuroraCourt() {
+        const sky = ctx.createLinearGradient(0, 0, 0, FLOOR_Y);
+        sky.addColorStop(0, '#040914');
+        sky.addColorStop(0.55, '#0b192e');
+        sky.addColorStop(1, '#182b47');
+        ctx.fillStyle = sky;
+        ctx.fillRect(0, 0, W, FLOOR_Y);
+
+        // 柔和青紫极光带：顶部与底部均平滑衰减至 0，无硬边
+        for (let band = 0; band < 2; band++) {
+          ctx.save();
+          const baseY = 64 + band * 44;
+          const grad = ctx.createLinearGradient(0, baseY - 26, 0, baseY + 62);
+          grad.addColorStop(0, 'rgba(45, 212, 191, 0)');
+          grad.addColorStop(0.42, band === 0 ? 'rgba(45, 212, 191, 0.17)' : 'rgba(167, 139, 250, 0.15)');
+          grad.addColorStop(1, 'rgba(45, 212, 191, 0)');
+          ctx.fillStyle = grad;
+          ctx.beginPath();
+          for (let x = 0; x <= W; x += 32) {
+            const wave = Math.sin(x * 0.012 + state.skyTime * (0.45 + band * 0.2) + band * 2) * 14;
+            if (x === 0) ctx.moveTo(x, baseY + wave);
+            else ctx.lineTo(x, baseY + wave);
           }
-        });
-
-        const warm = '255, 224, 173';
-        const cool = '162, 219, 239';
-        drawFloodlight(185, 142, warm);
-        drawFloodlight(514, 506, cool);
-
-        const fenceTop = FLOOR_Y - 49;
-        ctx.strokeStyle = 'rgba(96, 130, 142, 0.20)';
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        for (let x = -49; x < W + 49; x += 16) {
-          ctx.moveTo(x, fenceTop);
-          ctx.lineTo(x + 49, FLOOR_Y);
-          ctx.moveTo(x + 49, fenceTop);
-          ctx.lineTo(x, FLOOR_Y);
+          ctx.lineTo(W, baseY + 62);
+          ctx.lineTo(0, baseY + 62);
+          ctx.closePath();
+          ctx.fill();
+          ctx.restore();
         }
-        ctx.stroke();
-        ctx.fillStyle = '#48606b';
-        ctx.fillRect(0, fenceTop, W, 2);
-        ctx.fillStyle = '#253d4b';
-        for (let x = 34; x < W; x += 101) ctx.fillRect(x, fenceTop - 2, 3, 51);
 
-        // 光区裁在地面内，避免光晕盖住围栏或投篮区。
+        drawNightCityAndFence({
+          far: '#142642',
+          nearA: '#0b1626',
+          nearB: '#0f1d32',
+          roofLine: (i) => (i % 2 ? 'rgba(56, 189, 248, 0.42)' : 'rgba(192, 132, 252, 0.38)'),
+          winA: 'rgba(103, 232, 249, 0.36)',
+          winB: 'rgba(196, 181, 253, 0.3)',
+          lightL: '103, 232, 249',
+          lightR: '196, 181, 253',
+          fenceMesh: 'rgba(103, 232, 249, 0.16)',
+          fenceRail: '#334155',
+          fencePost: '#1e293b',
+          floor0: '#1e293b',
+          floor1: '#172033',
+          floor2: '#0b1120',
+          glowAlpha: 0.24,
+          boundary: '#7dd3fc',
+          lines: 'rgba(186, 230, 253, 0.48)',
+        });
+      }
+
+      function drawStarryCourt() {
+        const sky = ctx.createLinearGradient(0, 0, 0, FLOOR_Y);
+        sky.addColorStop(0, '#02040a');
+        sky.addColorStop(0.5, '#0b1026');
+        sky.addColorStop(1, '#1b1d3d');
+        ctx.fillStyle = sky;
+        ctx.fillRect(0, 0, W, FLOOR_Y);
+
+        // 淡银河光带
         ctx.save();
+        ctx.translate(W * 0.5, 130);
+        ctx.rotate(-0.22);
+        const milky = ctx.createRadialGradient(0, 0, 10, 0, 0, 290);
+        milky.addColorStop(0, 'rgba(129, 140, 248, 0.14)');
+        milky.addColorStop(0.55, 'rgba(56, 189, 248, 0.06)');
+        milky.addColorStop(1, 'rgba(15, 23, 42, 0)');
+        ctx.fillStyle = milky;
+        ctx.scale(1.6, 0.45);
         ctx.beginPath();
-        ctx.rect(0, FLOOR_Y, W, H - FLOOR_Y);
-        ctx.clip();
-        const floor = ctx.createLinearGradient(0, FLOOR_Y, 0, H);
-        floor.addColorStop(0, '#26454c');
-        floor.addColorStop(0.48, '#20363e');
-        floor.addColorStop(1, '#101e29');
-        ctx.fillStyle = floor;
-        ctx.fillRect(0, FLOOR_Y, W, H - FLOOR_Y);
-        drawNightGlow(142, FLOOR_Y + 23, 185, 47, warm, 0.27);
-        drawNightGlow(506, FLOOR_Y + 20, 170, 42, cool, 0.24);
+        ctx.arc(0, 0, 290, 0, Math.PI * 2);
+        ctx.fill();
         ctx.restore();
-        drawCourtMarkings('#a6bcb8', 'rgba(216, 231, 220, 0.55)');
+
+        // 确定性星辰闪烁
+        for (let i = 0; i < 42; i++) {
+          const sx = (i * 97 + 41) % W;
+          const sy = (i * 53 + 17) % (FLOOR_Y - 90);
+          const twinkle = 0.3 + 0.55 * (0.5 + 0.5 * Math.sin(state.skyTime * (1.5 + (i % 4) * 0.6) + i));
+          ctx.fillStyle = i % 5 === 0 ? `rgba(253, 224, 71, ${twinkle})` : `rgba(226, 232, 240, ${twinkle})`;
+          ctx.beginPath();
+          ctx.arc(sx, sy, i % 6 === 0 ? 1.7 : 1.1, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        // 偶发流星（每 5.2 秒划过一次）
+        const meteorCycle = state.skyTime % 5.2;
+        if (meteorCycle < 0.75) {
+          const p = meteorCycle / 0.75;
+          const mx = 520 - p * 220;
+          const my = 32 + p * 85;
+          ctx.strokeStyle = `rgba(254, 240, 138, ${(1 - p) * 0.75})`;
+          ctx.lineWidth = 1.6;
+          ctx.beginPath();
+          ctx.moveTo(mx, my);
+          ctx.lineTo(mx + 34, my - 13);
+          ctx.stroke();
+        }
+
+        drawNightCityAndFence({
+          far: '#181c3a',
+          nearA: '#0a0f1f',
+          nearB: '#0f172a',
+          roofLine: 'rgba(253, 230, 138, 0.28)',
+          winA: 'rgba(253, 224, 71, 0.32)',
+          winB: 'rgba(147, 197, 253, 0.25)',
+          lightL: '253, 224, 140',
+          lightR: '147, 197, 253',
+          fenceMesh: 'rgba(147, 197, 253, 0.14)',
+          fenceRail: '#312e81',
+          fencePost: '#1e1b4b',
+          floor0: '#1e1b3a',
+          floor1: '#15142d',
+          floor2: '#090919',
+          glowAlpha: 0.24,
+          boundary: '#fde68a',
+          lines: 'rgba(224, 231, 255, 0.5)',
+        });
       }
 
       function drawSunsetCourt() {
@@ -1342,60 +1548,63 @@
       }
 
       function drawBlocker() {
-        if (state.score < 25) return;
-        const bx = 250;
-        const by = state.blockerY;
-        const h = 56;
-        const top = by - h / 2;
+        const blockers = getBlockers();
+        if (blockers.length === 0) return;
 
-        ctx.save();
-        // 防守护盾外发光
-        ctx.shadowColor = state.blockerFlash > 0 ? '#fef08a' : 'rgba(239, 68, 68, 0.65)';
-        ctx.shadowBlur = state.blockerFlash > 0 ? 18 : 10;
+        blockers.forEach((blk) => {
+          const bx = blk.x;
+          const by = blk.y;
+          const h = blk.h;
+          const top = by - h / 2;
 
-        const grad = ctx.createLinearGradient(bx - 6, top, bx + 6, top + h);
-        grad.addColorStop(0, state.blockerFlash > 0 ? '#fef08a' : '#f87171');
-        grad.addColorStop(0.5, state.blockerFlash > 0 ? '#facc15' : '#dc2626');
-        grad.addColorStop(1, '#991b1b');
+          ctx.save();
+          ctx.shadowColor = blk.flash > 0 ? '#fef08a' : 'rgba(239, 68, 68, 0.65)';
+          ctx.shadowBlur = blk.flash > 0 ? 18 : 10;
 
-        ctx.fillStyle = grad;
-        ctx.strokeStyle = '#fee2e2';
-        ctx.lineWidth = 1.8;
-        ctx.beginPath();
-        ctx.roundRect(bx - 6, top, 12, h, 6);
-        ctx.fill();
-        ctx.stroke();
+          const grad = ctx.createLinearGradient(bx - 6, top, bx + 6, top + h);
+          grad.addColorStop(0, blk.flash > 0 ? '#fef08a' : '#f87171');
+          grad.addColorStop(0.5, blk.flash > 0 ? '#facc15' : '#dc2626');
+          grad.addColorStop(1, '#991b1b');
 
-        // 护盾警示斜纹与上下金属端盖
-        ctx.shadowBlur = 0;
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.45)';
-        ctx.lineWidth = 1.5;
-        for (let y = top + 12; y <= top + h - 12; y += 10) {
+          ctx.fillStyle = grad;
+          ctx.strokeStyle = '#fee2e2';
+          ctx.lineWidth = 1.8;
           ctx.beginPath();
-          ctx.moveTo(bx - 4, y - 3);
-          ctx.lineTo(bx + 4, y + 3);
+          ctx.roundRect(bx - 6, top, 12, h, 6);
+          ctx.fill();
           ctx.stroke();
-        }
 
-        ctx.fillStyle = '#e2e8f0';
-        ctx.beginPath();
-        ctx.roundRect(bx - 7, top - 2, 14, 6, 3);
-        ctx.roundRect(bx - 7, top + h - 4, 14, 6, 3);
-        ctx.fill();
-        ctx.restore();
+          ctx.shadowBlur = 0;
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.45)';
+          ctx.lineWidth = 1.5;
+          for (let y = top + 10; y <= top + h - 10; y += 9) {
+            ctx.beginPath();
+            ctx.moveTo(bx - 4, y - 3);
+            ctx.lineTo(bx + 4, y + 3);
+            ctx.stroke();
+          }
+
+          ctx.fillStyle = '#e2e8f0';
+          ctx.beginPath();
+          ctx.roundRect(bx - 7, top - 2, 14, 6, 3);
+          ctx.roundRect(bx - 7, top + h - 4, 14, 6, 3);
+          ctx.fill();
+          ctx.restore();
+        });
       }
 
       function drawBall() {
         const b = state.ball;
         const onFire = state.combo >= 2;
 
-        // 火焰/金球拖尾
+        // 火焰/金球/普通气流拖尾
         state.trail.forEach((t) => {
           ctx.save();
-          ctx.globalAlpha = t.life * 1.4;
+          const maxL = t.maxLife || 0.35;
+          ctx.globalAlpha = Math.max(0, t.life * (t.alpha || 1.4));
           ctx.fillStyle = t.color;
           ctx.beginPath();
-          ctx.arc(t.x, t.y, t.r * (t.life / 0.35), 0, Math.PI * 2);
+          ctx.arc(t.x, t.y, t.r * (t.life / maxL), 0, Math.PI * 2);
           ctx.fill();
           ctx.restore();
         });
@@ -1424,44 +1633,192 @@
         const sx = 1 + b.squash;
         const sy = 1 - b.squash;
         ctx.scale(sx, sy);
-        ctx.rotate(b.rot);
 
         const skin = BALL_SKINS[skinIndex];
-        const grad = ctx.createRadialGradient(-BALL_R * 0.32, -BALL_R * 0.32, BALL_R * 0.12, 0, 0, BALL_R);
-        if (b.isGold) {
-          grad.addColorStop(0, '#fef9c3');
-          grad.addColorStop(0.5, '#facc15');
-          grad.addColorStop(1, '#a16207');
-        } else {
-          grad.addColorStop(0, skin.c0);
-          grad.addColorStop(0.45, skin.c1);
-          grad.addColorStop(1, skin.c2);
-        }
+        const useFixedLighting = !b.isGold && (skin.id === 'planet' || skin.id === 'ice' || skin.id === 'water');
 
-        ctx.fillStyle = grad;
-        ctx.beginPath();
-        ctx.arc(0, 0, BALL_R, 0, Math.PI * 2);
-        ctx.fill();
-
+        // 1. 旋转纹理层
+        ctx.save();
+        ctx.rotate(b.rot);
         ctx.beginPath();
         ctx.arc(0, 0, BALL_R, 0, Math.PI * 2);
         ctx.clip();
 
-        ctx.strokeStyle = b.isGold ? '#713f12' : skin.seam;
-        ctx.lineWidth = 1.7;
-        ctx.beginPath();
-        ctx.moveTo(-BALL_R, 0);
-        ctx.lineTo(BALL_R, 0);
-        ctx.moveTo(0, -BALL_R);
-        ctx.lineTo(0, BALL_R);
-        ctx.stroke();
+        if (b.isGold || skin.id === 'classic' || skin.id === 'darkgold') {
+          const grad = ctx.createRadialGradient(-BALL_R * 0.32, -BALL_R * 0.32, BALL_R * 0.12, 0, 0, BALL_R);
+          if (b.isGold) {
+            grad.addColorStop(0, '#fef9c3');
+            grad.addColorStop(0.5, '#facc15');
+            grad.addColorStop(1, '#a16207');
+          } else {
+            grad.addColorStop(0, skin.c0);
+            grad.addColorStop(0.45, skin.c1);
+            grad.addColorStop(1, skin.c2);
+          }
+          ctx.fillStyle = grad;
+          ctx.fillRect(-BALL_R, -BALL_R, BALL_R * 2, BALL_R * 2);
 
-        ctx.beginPath();
-        ctx.arc(-BALL_R * 0.92, 0, BALL_R * 0.72, -0.75, 0.75);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.arc(BALL_R * 0.92, 0, BALL_R * 0.72, Math.PI - 0.75, Math.PI + 0.75);
-        ctx.stroke();
+          ctx.strokeStyle = b.isGold ? '#713f12' : skin.seam;
+          ctx.lineWidth = 1.7;
+          ctx.beginPath();
+          ctx.moveTo(-BALL_R, 0);
+          ctx.lineTo(BALL_R, 0);
+          ctx.moveTo(0, -BALL_R);
+          ctx.lineTo(0, BALL_R);
+          ctx.stroke();
+
+          ctx.beginPath();
+          ctx.arc(-BALL_R * 0.92, 0, BALL_R * 0.72, -0.75, 0.75);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.arc(BALL_R * 0.92, 0, BALL_R * 0.72, Math.PI - 0.75, Math.PI + 0.75);
+          ctx.stroke();
+        } else if (skin.id === 'planet') {
+          // 蔚蓝星球：深海底色 + 多块翠绿/沙金大陆 + 极地冰盖 + 流云带
+          ctx.fillStyle = '#0369a1';
+          ctx.fillRect(-BALL_R, -BALL_R, BALL_R * 2, BALL_R * 2);
+
+          // 浅海浅滩过渡
+          ctx.fillStyle = '#0ea5e9';
+          ctx.beginPath();
+          ctx.ellipse(-5, -2, 11, 8, 0.3, 0, Math.PI * 2);
+          ctx.ellipse(8, 6, 9, 7, -0.4, 0, Math.PI * 2);
+          ctx.fill();
+
+          // 陆地板块（深绿底 + 沙金高地）
+          ctx.fillStyle = '#22c55e';
+          ctx.beginPath();
+          ctx.ellipse(-6, -4, 7.5, 4.8, 0.35, 0, Math.PI * 2);
+          ctx.ellipse(7, 5, 6.8, 5.2, -0.45, 0, Math.PI * 2);
+          ctx.ellipse(-7, 9, 4.5, 3, 0.2, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.fillStyle = '#86efac';
+          ctx.beginPath();
+          ctx.ellipse(-6.5, -4.5, 4, 2.2, 0.35, 0, Math.PI * 2);
+          ctx.ellipse(6.5, 4.5, 3.5, 2.4, -0.45, 0, Math.PI * 2);
+          ctx.fill();
+
+          // 南北极冰盖
+          ctx.fillStyle = 'rgba(248, 250, 252, 0.88)';
+          ctx.beginPath();
+          ctx.ellipse(0, -BALL_R + 2, 10, 4, 0, 0, Math.PI * 2);
+          ctx.ellipse(0, BALL_R - 1.5, 8, 3.2, 0, 0, Math.PI * 2);
+          ctx.fill();
+
+          // 斜向白色云带
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+          ctx.lineWidth = 2;
+          ctx.lineCap = 'round';
+          ctx.beginPath();
+          ctx.arc(-2, -6, 13, 0.2, 1.3);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.arc(3, 5, 11, 2.7, 3.8);
+          ctx.stroke();
+        } else if (skin.id === 'ice') {
+          // 寒冰晶球：冷白亮底 + 几何冰晶切面 + 六角雪花核心
+          ctx.fillStyle = '#bae6fd';
+          ctx.fillRect(-BALL_R, -BALL_R, BALL_R * 2, BALL_R * 2);
+
+          const facets = [
+            { pts: [[-19, -19], [2, -19], [-4, -2], [-19, 3]], col: '#e0f2fe' },
+            { pts: [[2, -19], [19, -19], [19, 2], [-4, -2]], col: '#7dd3fc' },
+            { pts: [[-19, 3], [-4, -2], [3, 19], [-19, 19]], col: '#38bdf8' },
+            { pts: [[-4, -2], [19, 2], [19, 19], [3, 19]], col: '#0284c7' },
+          ];
+          facets.forEach((f) => {
+            ctx.fillStyle = f.col;
+            ctx.beginPath();
+            ctx.moveTo(f.pts[0][0], f.pts[0][1]);
+            for (let i = 1; i < f.pts.length; i++) ctx.lineTo(f.pts[i][0], f.pts[i][1]);
+            ctx.closePath();
+            ctx.fill();
+          });
+
+          // 六角雪花晶核
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.92)';
+          ctx.lineWidth = 1.6;
+          ctx.lineCap = 'round';
+          for (let a = 0; a < 3; a++) {
+            const ang = (a * Math.PI) / 3;
+            const dx = Math.cos(ang) * 11;
+            const dy = Math.sin(ang) * 11;
+            ctx.beginPath();
+            ctx.moveTo(-dx, -dy);
+            ctx.lineTo(dx, dy);
+            ctx.stroke();
+          }
+          ctx.fillStyle = '#ffffff';
+          ctx.beginPath();
+          ctx.arc(0, 0, 2.8, 0, Math.PI * 2);
+          ctx.fill();
+        } else if (skin.id === 'water') {
+          // 深海气泡：晶莹通透水蓝底 + 双层波纹 + 错落气泡群
+          const wGrad = ctx.createRadialGradient(0, 0, 2, 0, 0, BALL_R);
+          wGrad.addColorStop(0, '#cffafe');
+          wGrad.addColorStop(0.65, '#22d3ee');
+          wGrad.addColorStop(1, '#0e7490');
+          ctx.fillStyle = wGrad;
+          ctx.fillRect(-BALL_R, -BALL_R, BALL_R * 2, BALL_R * 2);
+
+          // 内部深色水波层
+          ctx.fillStyle = 'rgba(8, 145, 178, 0.42)';
+          ctx.beginPath();
+          ctx.moveTo(-BALL_R, 2);
+          ctx.quadraticCurveTo(-7, -4, 0, 2);
+          ctx.quadraticCurveTo(8, 8, BALL_R, 1);
+          ctx.lineTo(BALL_R, BALL_R);
+          ctx.lineTo(-BALL_R, BALL_R);
+          ctx.closePath();
+          ctx.fill();
+
+          // 错落气泡
+          const bubbles = [
+            { x: -7, y: -6, r: 3.6 },
+            { x: 6, y: -7, r: 2.3 },
+            { x: 7, y: 4, r: 4.1 },
+            { x: -4, y: 8, r: 2.7 },
+            { x: 0, y: -1, r: 1.8 },
+          ];
+          bubbles.forEach((bb) => {
+            ctx.fillStyle = 'rgba(236, 254, 255, 0.5)';
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.75)';
+            ctx.lineWidth = 0.9;
+            ctx.beginPath();
+            ctx.arc(bb.x, bb.y, bb.r, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(bb.x - bb.r * 0.32, bb.y - bb.r * 0.32, Math.max(0.8, bb.r * 0.28), 0, Math.PI * 2);
+            ctx.fill();
+          });
+        }
+        ctx.restore();
+
+        // 2. 固定球面立体光影层（不随旋转转动，塑造真实 3D 球体感）
+        if (useFixedLighting) {
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(0, 0, BALL_R, 0, Math.PI * 2);
+          ctx.clip();
+
+          // 右下角球面暗部阴影
+          const shadowGrad = ctx.createRadialGradient(-BALL_R * 0.38, -BALL_R * 0.38, BALL_R * 0.25, 0, 0, BALL_R * 1.05);
+          shadowGrad.addColorStop(0, 'rgba(255, 255, 255, 0.28)');
+          shadowGrad.addColorStop(0.55, 'rgba(15, 23, 42, 0)');
+          shadowGrad.addColorStop(1, 'rgba(2, 6, 23, 0.52)');
+          ctx.fillStyle = shadowGrad;
+          ctx.fillRect(-BALL_R, -BALL_R, BALL_R * 2, BALL_R * 2);
+
+          // 左上角玻璃/大气高光月牙
+          ctx.fillStyle = skin.id === 'water' ? 'rgba(255, 255, 255, 0.58)' : 'rgba(255, 255, 255, 0.38)';
+          ctx.beginPath();
+          ctx.ellipse(-BALL_R * 0.42, -BALL_R * 0.42, 5.5, 2.8, -0.75, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
 
         ctx.restore();
 
@@ -1469,8 +1826,16 @@
         ctx.save();
         ctx.translate(b.x, b.y);
         ctx.scale(sx, sy);
-        ctx.strokeStyle = b.isGold ? 'rgba(254, 240, 138, 0.6)' : 'rgba(255, 255, 255, 0.22)';
-        ctx.lineWidth = 1.2;
+        ctx.strokeStyle = b.isGold
+          ? 'rgba(254, 240, 138, 0.65)'
+          : skin.id === 'planet'
+            ? 'rgba(125, 211, 252, 0.65)'
+            : skin.id === 'ice'
+              ? 'rgba(224, 242, 254, 0.78)'
+              : skin.id === 'water'
+                ? 'rgba(165, 243, 252, 0.72)'
+                : 'rgba(255, 255, 255, 0.22)';
+        ctx.lineWidth = useFixedLighting ? 1.6 : 1.2;
         ctx.beginPath();
         ctx.arc(0, 0, BALL_R - 0.5, 0, Math.PI * 2);
         ctx.stroke();
@@ -1487,9 +1852,12 @@
       function render() {
         ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
         ctx.save();
-        const isNight = state.score >= 30;
-        // 先铺满背景再做前景震屏，避免黄昏或夜场震屏时边缘露底
-        if (isNight) {
+        // 5 阶段场景：0-14 黄昏 -> 15-29 暮色 -> 30-59 夜场 -> 60-99 极光 -> 100+ 星河
+        if (state.score >= 100) {
+          drawStarryCourt();
+        } else if (state.score >= 60) {
+          drawAuroraCourt();
+        } else if (state.score >= 30) {
           drawNightCourt();
         } else {
           drawSunsetCourt();
@@ -1602,7 +1970,7 @@
 
       skinBtn.addEventListener('click', () => {
         skinIndex = (skinIndex + 1) % BALL_SKINS.length;
-        skinBtn.textContent = '球色: ' + BALL_SKINS[skinIndex].name;
+        skinBtn.textContent = '球款: ' + BALL_SKINS[skinIndex].name;
         try {
           localStorage.setItem(SKIN_STORAGE_KEY, String(skinIndex));
         } catch {}
