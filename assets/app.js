@@ -14,6 +14,38 @@
     }
   }
 
+  // 2048 是唯一会保存“进行中棋局”的游戏：首页卡片给出继续入口
+  function get2048Resume() {
+    try {
+      const mode = localStorage.getItem('game_save_2048_mode') === '5' ? 5 : 4;
+      const raw = localStorage.getItem('game_save_2048_' + mode);
+      if (!raw) return null;
+      const save = JSON.parse(raw);
+      if (!save || !Array.isArray(save.board) || save.board.length !== mode) return null;
+      const score = Number(save.score);
+      if (!Number.isFinite(score) || score < 0) return null;
+
+      const board = save.board;
+      let hasTile = false;
+      let canMove = false;
+      for (let r = 0; r < mode; r++) {
+        if (!Array.isArray(board[r]) || board[r].length !== mode) return null;
+        for (let c = 0; c < mode; c++) {
+          const v = board[r][c];
+          if (!Number.isSafeInteger(v) || v < 0) return null;
+          if (v > 0) hasTile = true;
+          if (v === 0) canMove = true;
+          if (c + 1 < mode && v !== 0 && v === board[r][c + 1]) canMove = true;
+          if (r + 1 < mode && v !== 0 && v === board[r + 1][c]) canMove = true;
+        }
+      }
+      if (!hasTile || !canMove) return null;
+      return { size: mode, score };
+    } catch {
+      return null;
+    }
+  }
+
   function createEl(tag, className, text) {
     const el = document.createElement(tag);
     if (className) el.className = className;
@@ -55,8 +87,12 @@
       soundBtn.type = 'button';
       const syncLabel = () => {
         const on = window.SiteData.getSound();
-        soundBtn.textContent = on ? '🔊 音效开' : '🔇 音效关';
+        soundBtn.textContent = '';
+        soundBtn.appendChild(createEl('span', 'sound-ico', on ? '🔊' : '🔇'));
+        soundBtn.appendChild(createEl('span', 'sound-label', on ? '音效开' : '音效关'));
         soundBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+        soundBtn.setAttribute('aria-label', on ? '音效已开启，点击关闭' : '音效已关闭，点击开启');
+        soundBtn.title = on ? '关闭音效' : '开启音效';
       };
       syncLabel();
       soundBtn.addEventListener('click', () => {
@@ -101,8 +137,17 @@
     }
     card.appendChild(meta);
 
-    const btn = createEl('a', 'play-btn', '开始游戏 →');
+    const resume = game.id === '2048' ? get2048Resume() : null;
+    const btn = createEl(
+      'a',
+      'play-btn',
+      resume
+        ? '继续上局 · ' + resume.size + '×' + resume.size +
+          (resume.score > 0 ? ' ' + resume.score + ' 分' : '') + ' →'
+        : '开始游戏 →'
+    );
     btn.href = game.url;
+    if (resume) btn.title = '继续上次未完成的棋局';
     card.appendChild(btn);
 
     card.addEventListener('click', (e) => {

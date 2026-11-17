@@ -2,106 +2,19 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>经典扫雷 - 小游乐场</title>
   <meta name="description" content="经典扫雷：首击必安全、支持数字快捷排雷与三档难度，支持电脑与手机。" />
   <meta name="author" content="Hayden-He" />
   <meta name="theme-color" content="#2563eb" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E%F0%9F%8E%AE%3C/text%3E%3C/svg%3E" />
   <link rel="stylesheet" href="/assets/style.css" />
+  <link rel="stylesheet" href="/assets/game-shell.css" />
   <script src="/assets/site-data.js"></script>
+  <script src="/assets/games.js"></script>
+  <script src="/assets/game-kit.js"></script>
   <style>
-    .game-wrap {
-      max-width: 540px;
-      margin: 18px auto 36px;
-      padding: 0 16px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 12px;
-    }
 
-    .hud {
-      width: 100%;
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
-    }
-
-    .hud-box {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 8px 10px;
-      text-align: center;
-      box-shadow: var(--shadow-sm);
-    }
-
-    .hud-label {
-      font-size: 0.72rem;
-      color: var(--text-muted);
-    }
-
-    .hud-value {
-      font-size: 1.15rem;
-      font-weight: 800;
-    }
-
-    .toolbar {
-      width: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    .mode-pills {
-      display: flex;
-      background: #e2e8f0;
-      padding: 3px;
-      border-radius: 10px;
-      gap: 4px;
-    }
-
-    .mode-pill {
-      border: none;
-      background: transparent;
-      padding: 6px 10px;
-      border-radius: 8px;
-      font-size: 0.8rem;
-      font-weight: 600;
-      color: var(--text-muted);
-      cursor: pointer;
-    }
-
-    .mode-pill.active {
-      background: var(--surface);
-      color: var(--primary);
-      box-shadow: var(--shadow-sm);
-    }
-
-    .btn-group {
-      display: flex;
-      gap: 6px;
-      flex-wrap: wrap;
-    }
-
-    .btn-small {
-      padding: 7px 12px;
-      border: none;
-      border-radius: 10px;
-      background: var(--primary);
-      color: #fff;
-      font-size: 0.84rem;
-      font-weight: 600;
-      cursor: pointer;
-    }
-
-    .btn-small.secondary {
-      background: #e2e8f0;
-      color: var(--text);
-    }
 
     .btn-small.flag-active {
       background: #f97316;
@@ -209,59 +122,47 @@
     .n7 { color: #1e293b; }
     .n8 { color: #64748b; }
 
-    .overlay {
-      position: absolute;
-      inset: 0;
-      border-radius: 16px;
-      background: rgba(15, 23, 42, 0.78);
-      backdrop-filter: blur(4px);
+    /* 本页尺寸；其余外壳样式见 assets/game-shell.css */
+    .game-wrap { --game-width: 540px; }
+    .hud { grid-template-columns: repeat(3, 1fr); }
+
+    .mobile-diff-note {
       display: none;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      color: #fff;
+      width: 100%;
+      margin: -4px 0 0;
       text-align: center;
-      padding: 20px;
-      z-index: 5;
-    }
-
-    .overlay.show {
-      display: flex;
-    }
-
-    .overlay-actions {
-      display: flex;
-      gap: 10px;
-      margin-top: 4px;
-    }
-
-    .overlay-btn {
-      padding: 10px 18px;
-      border: none;
-      border-radius: 10px;
-      background: var(--primary);
-      color: #fff;
-      font-weight: 600;
-      cursor: pointer;
-    }
-
-    .overlay-btn.secondary {
-      background: #475569;
-    }
-
-    .hint-text {
-      font-size: 0.82rem;
+      font-size: 0.78rem;
       color: var(--text-muted);
-      text-align: center;
     }
+
+    @media (max-width: 600px) {
+      .mode-pill[data-diff="medium"],
+      .mode-pill[data-diff="hard"] {
+        display: none;
+      }
+
+      .mobile-diff-note {
+        display: block;
+      }
+    }
+
+    @media (max-width: 340px) {
+      /* 320px 下 4 个按钮改成 2×2，避免最后只剩一个按钮单独一行 */
+      .btn-group {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        width: 100%;
+      }
+    }
+
   </style>
 </head>
 <body>
   <header class="game-topbar">
     <div class="container game-topbar-inner">
       <a class="back-link" href="/">← 返回大厅</a>
-      <span class="game-topbar-title">经典扫雷 💣</span>
+      <h1 class="game-topbar-title">经典扫雷 💣</h1>
       <a class="game-topbar-cat" href="/categories/puzzle.html">益智休闲</a>
     </div>
   </header>
@@ -289,11 +190,14 @@
         <button class="mode-pill" data-diff="hard">16×16</button>
       </div>
       <div class="btn-group">
+        <button id="help-btn" class="btn-small secondary" title="查看玩法">玩法</button>
         <button id="tool-btn" class="btn-small secondary">模式: 翻开</button>
         <button id="sound-btn" class="btn-small secondary">音效: 开</button>
         <button id="restart-btn" class="btn-small">重开</button>
       </div>
     </div>
+
+    <p class="mobile-diff-note">12×12 / 16×16 建议在平板或桌面挑战</p>
 
     <div class="board-wrap">
       <div id="mine-grid" class="mine-grid"></div>
@@ -308,6 +212,8 @@
     </div>
 
     <p class="hint-text">电脑左键翻开、右键插旗；手机长按或切换「插旗模式」标记；点击已翻开数字可快捷排雷</p>
+
+    <div id="more-games" class="more-games"></div>
   </main>
 
   <script>
@@ -322,6 +228,8 @@
         hard: { size: 16, mines: 40, label: '16×16 挑战' },
       };
 
+      const MOBILE_BOARD_QUERY = window.matchMedia('(max-width: 600px)');
+
       const gridEl = document.getElementById('mine-grid');
       const minesEl = document.getElementById('mines-el');
       const timeEl = document.getElementById('time-el');
@@ -332,9 +240,12 @@
       const overlayTitle = document.getElementById('overlay-title');
       const overlayDesc = document.getElementById('overlay-desc');
       const diffBtns = document.querySelectorAll('.mode-pill[data-diff]');
+      const helpBtn = document.getElementById('help-btn');
 
       let soundEnabled = window.SiteData ? SiteData.getSound() : true;
-      soundBtn.textContent = soundEnabled ? '音效: 开' : '音效: 关';
+      GameKit.bindSoundButton(soundBtn, soundEnabled, (on) => {
+        soundEnabled = on;
+      });
 
       function playTone(freq, duration, type, slideTo) {
         if (!soundEnabled || !window.SiteData) return;
@@ -360,6 +271,8 @@
         const savedDiff = localStorage.getItem(MODE_KEY);
         if (savedDiff && DIFFS[savedDiff]) diff = savedDiff;
       } catch {}
+      // 手机上格子在 25px 以下，12×12 / 16×16 不可用；仅保留 9×9
+      if (MOBILE_BOARD_QUERY.matches) diff = 'easy';
 
       let size = 9;
       let totalMines = 10;
@@ -372,25 +285,21 @@
       let openedCount = 0;
       let flagCount = 0;
       let hitPos = null;
+      let dialogOpen = false;
 
       function readBest(key) {
-        try {
-          const val = parseInt(localStorage.getItem(key) || '0', 10);
-          return val > 0 ? val : 0;
-        } catch {
-          return 0;
-        }
+        return GameKit.readBest(key);
       }
 
       function saveBest(sec) {
         const diffKey = DIFF_BEST_PREFIX + diff;
         const curDiffBest = readBest(diffKey);
         if (!curDiffBest || sec < curDiffBest) {
-          try { localStorage.setItem(diffKey, String(sec)); } catch {}
+          GameKit.writeBest(diffKey, sec);
         }
         const curGlobalBest = readBest(GLOBAL_BEST_KEY);
         if (!curGlobalBest || sec < curGlobalBest) {
-          try { localStorage.setItem(GLOBAL_BEST_KEY, String(sec)); } catch {}
+          GameKit.writeBest(GLOBAL_BEST_KEY, sec);
         }
       }
 
@@ -411,7 +320,7 @@
       function startTimer() {
         stopTimer();
         timerId = setInterval(() => {
-          if (!started || ended || document.hidden) return;
+          if (!started || ended || document.hidden || dialogOpen) return;
           elapsed += 1;
           timeEl.textContent = elapsed + 's';
         }, 1000);
@@ -633,6 +542,20 @@
               btn.className = 'cell closed';
             }
 
+            let stateLabel;
+            if (cell.mine && ended) {
+              stateLabel = hitPos === r + ',' + c ? '踩中的地雷' : '地雷';
+            } else if (!cell.mine && cell.flag && ended) {
+              stateLabel = '插错的旗子';
+            } else if (cell.flag) {
+              stateLabel = '已插旗';
+            } else if (cell.open) {
+              stateLabel = cell.adj > 0 ? '已翻开，周围 ' + cell.adj + ' 颗雷' : '已翻开，空白';
+            } else {
+              stateLabel = '未翻开';
+            }
+            btn.setAttribute('aria-label', '第 ' + (r + 1) + ' 行第 ' + (c + 1) + ' 列，' + stateLabel);
+
             gridEl.appendChild(btn);
           }
         }
@@ -647,11 +570,13 @@
       gridEl.addEventListener('pointerdown', (e) => {
         const btn = e.target.closest('.cell');
         if (!btn || ended) return;
-        if (e.pointerType === 'mouse' && e.button !== 0) return;
+        const isMouse = e.pointerType === 'mouse' || !e.pointerType;
+        if (isMouse && e.button !== 0) return;
         longPressed = false;
         const r = Number(btn.dataset.r);
         const c = Number(btn.dataset.c);
-        if (!board[r][c].open) {
+        // 长按插旗只用于触屏/手写笔；鼠标慢点不应变成插旗
+        if (!isMouse && !board[r][c].open) {
           longPressTimer = setTimeout(() => {
             longPressed = true;
             toggleFlag(r, c);
@@ -708,11 +633,21 @@
         btn.addEventListener('click', () => {
           const next = btn.dataset.diff;
           if (!DIFFS[next] || next === diff) return;
+          if (MOBILE_BOARD_QUERY.matches && next !== 'easy') return;
           diff = next;
           try { localStorage.setItem(MODE_KEY, diff); } catch {}
           initGame();
         });
       });
+
+      if (typeof MOBILE_BOARD_QUERY.addEventListener === 'function') {
+        MOBILE_BOARD_QUERY.addEventListener('change', (event) => {
+          if (event.matches && diff !== 'easy') {
+            diff = 'easy';
+            initGame();
+          }
+        });
+      }
 
       toolBtn.addEventListener('click', () => {
         flagMode = !flagMode;
@@ -720,10 +655,11 @@
         toolBtn.classList.toggle('flag-active', flagMode);
       });
 
-      soundBtn.addEventListener('click', () => {
-        soundEnabled = !soundEnabled;
-        soundBtn.textContent = soundEnabled ? '音效: 开' : '音效: 关';
-        if (window.SiteData) SiteData.setSound(soundEnabled);
+      document.addEventListener('site:dialogopen', () => {
+        dialogOpen = true;
+      });
+      document.addEventListener('site:dialogclose', () => {
+        dialogOpen = false;
       });
 
       document.getElementById('restart-btn').addEventListener('click', initGame);
@@ -732,7 +668,42 @@
         overlay.classList.remove('show');
       });
 
+      const TUTORIAL_STEPS = [
+        {
+          icon: '🎯',
+          title: '目标：翻开所有安全格',
+          text: '把所有不是雷的格子翻开就赢；不需要去点雷。',
+        },
+        {
+          icon: '🔢',
+          title: '数字 = 周围 8 格雷数',
+          text: '数字表示它周围 8 格里有几颗雷，不是全盘剩余的雷数。',
+        },
+        {
+          icon: '🚩',
+          title: '翻开与插旗',
+          text: '点击或左键翻开；右键或手机长按插旗。第一下一定安全，会先翻出一片空白。',
+        },
+        {
+          icon: '⚡',
+          title: '快捷排雷',
+          text: '当一个数字周围的旗子数等于它时，点击这个数字可一次翻开其余相邻格。',
+        },
+      ];
+
+      function showRules(force) {
+        GameKit.showTutorial({
+          id: 'minesweeper',
+          steps: TUTORIAL_STEPS,
+          force: !!force,
+        });
+      }
+
+      helpBtn.addEventListener('click', () => showRules(true));
+
       initGame();
+      GameKit.mountMoreGames('minesweeper', document.getElementById('more-games'));
+      showRules(false);
     })();
   </script>
 </body>

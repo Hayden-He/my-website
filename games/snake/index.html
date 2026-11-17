@@ -2,104 +2,20 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>经典贪吃蛇 - 小游乐场</title>
   <meta name="description" content="经典贪吃蛇：支持键盘与连续划屏，含经典撞墙与自由穿墙双模式。" />
   <meta name="author" content="Hayden-He" />
   <meta name="theme-color" content="#2563eb" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E%F0%9F%8E%AE%3C/text%3E%3C/svg%3E" />
   <link rel="stylesheet" href="/assets/style.css" />
+  <link rel="stylesheet" href="/assets/game-shell.css" />
   <script src="/assets/site-data.js"></script>
+  <script src="/assets/games.js"></script>
+  <script src="/assets/game-kit.js"></script>
   <script src="/assets/canvas-polyfill.js"></script>
   <style>
-    .game-wrap {
-      max-width: 560px;
-      margin: 18px auto 36px;
-      padding: 0 16px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 12px;
-    }
 
-    .hud {
-      width: 100%;
-      max-width: 520px;
-      display: grid;
-      grid-template-columns: 1fr 1fr auto auto;
-      gap: 8px;
-      align-items: stretch;
-    }
-
-    .hud-box {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 8px 12px;
-      text-align: center;
-      box-shadow: var(--shadow-sm);
-    }
-
-    .hud-label {
-      font-size: 0.72rem;
-      color: var(--text-muted);
-    }
-
-    .hud-value {
-      font-size: 1.15rem;
-      font-weight: 800;
-    }
-
-    .toolbar {
-      width: 100%;
-      max-width: 520px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    .mode-pills {
-      display: flex;
-      background: #e2e8f0;
-      padding: 3px;
-      border-radius: 10px;
-      gap: 4px;
-    }
-
-    .mode-pill {
-      border: none;
-      background: transparent;
-      padding: 6px 12px;
-      border-radius: 8px;
-      font-size: 0.84rem;
-      font-weight: 600;
-      color: var(--text-muted);
-      cursor: pointer;
-    }
-
-    .mode-pill.active {
-      background: var(--surface);
-      color: var(--primary);
-      box-shadow: var(--shadow-sm);
-    }
-
-    .btn-small {
-      padding: 8px 14px;
-      border: none;
-      border-radius: 10px;
-      background: var(--primary);
-      color: #fff;
-      font-size: 0.86rem;
-      font-weight: 600;
-      cursor: pointer;
-    }
-
-    .btn-small.secondary {
-      background: #e2e8f0;
-      color: var(--text);
-    }
 
     .stage-box {
       position: relative;
@@ -126,35 +42,6 @@
       touch-action: none;
       user-select: none;
       -webkit-user-select: none;
-      cursor: pointer;
-    }
-
-    .overlay {
-      position: absolute;
-      inset: 0;
-      background: rgba(15, 23, 42, 0.78);
-      backdrop-filter: blur(4px);
-      display: none;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-      color: #fff;
-      padding: 20px;
-      text-align: center;
-    }
-
-    .overlay.show {
-      display: flex;
-    }
-
-    .overlay-btn {
-      padding: 10px 20px;
-      border: none;
-      border-radius: 10px;
-      background: var(--primary);
-      color: #fff;
-      font-weight: 600;
       cursor: pointer;
     }
 
@@ -190,25 +77,24 @@
       visibility: hidden;
     }
 
-    .hint-text {
-      font-size: 0.82rem;
-      color: var(--text-muted);
-      text-align: center;
-    }
-
     /* 方向键仅在触屏设备显示，桌面端使用键盘 */
     @media (hover: hover) and (pointer: fine) {
       .dpad {
         display: none;
       }
     }
+
+    /* 本页尺寸；其余外壳样式见 assets/game-shell.css */
+    .hud { grid-template-columns: 1fr 1fr auto auto; max-width: 520px; }
+    .toolbar { max-width: 520px; }
+
   </style>
 </head>
 <body>
   <header class="game-topbar">
     <div class="container game-topbar-inner">
       <a class="back-link" href="/">← 返回大厅</a>
-      <span class="game-topbar-title">经典贪吃蛇 🐍</span>
+      <h1 class="game-topbar-title">经典贪吃蛇 🐍</h1>
       <a class="game-topbar-cat" href="/categories/arcade.html">动作街机</a>
     </div>
   </header>
@@ -220,7 +106,7 @@
         <div id="score-el" class="hud-value">0</div>
       </div>
       <div class="hud-box">
-        <div class="hud-label">历史最高</div>
+        <div class="hud-label">模式最高</div>
         <div id="best-el" class="hud-value" style="color: var(--accent);">0</div>
       </div>
       <button id="pause-btn" class="btn-small secondary">暂停</button>
@@ -253,12 +139,15 @@
       <button class="dpad-btn" data-dir="right" type="button">→</button>
     </div>
 
-    <p class="hint-text">🍎普通 +10 · ⭐金星 +30（限时）· ❄️冰果减速 · 方向键/WASD/连续划屏操控</p>
+    <p class="hint-text">🍎+10 · ⭐金星+30（限时）· ❄️冰果减速 · 方向键/WASD/划屏 · 空格/P 暂停</p>
+
+    <div id="more-games" class="more-games"></div>
   </main>
 
   <script>
     (function () {
-      const STORAGE_KEY = 'game_best_snake';
+      const LEGACY_BEST_KEY = 'game_best_snake';
+      const BEST_PREFIX = LEGACY_BEST_KEY + '_';
       const canvas = document.getElementById('board');
       const ctx = canvas.getContext('2d');
       const stageBox = document.getElementById('stage-box');
@@ -282,7 +171,9 @@
       const BONUS_TTL = 45;
 
       let soundEnabled = window.SiteData ? SiteData.getSound() : true;
-      soundBtn.textContent = soundEnabled ? '音效: 开' : '音效: 关';
+      GameKit.bindSoundButton(soundBtn, soundEnabled, (on) => {
+        soundEnabled = on;
+      });
 
       function playTone(freq, duration, slideTo) {
         if (!soundEnabled || !window.SiteData) return;
@@ -302,18 +193,41 @@
         });
       }
 
+      function bestKeyFor(isWrap) {
+        return BEST_PREFIX + (isWrap ? 'wrap' : 'classic');
+      }
+
+      function readBest(isWrap) {
+        return GameKit.readBest(bestKeyFor(isWrap));
+      }
+
+      // 旧版两种模式共用一个最高分，首次升级时迁移到经典模式
+      function migrateLegacyBest() {
+        try {
+          const legacy = localStorage.getItem(LEGACY_BEST_KEY);
+          if (!legacy) return;
+          if (!localStorage.getItem(bestKeyFor(false))) {
+            localStorage.setItem(bestKeyFor(false), legacy);
+          }
+          localStorage.removeItem(LEGACY_BEST_KEY);
+        } catch {}
+      }
+
       let bestScore = 0;
-      try {
-        bestScore = parseInt(localStorage.getItem(STORAGE_KEY) || '0', 10) || 0;
-      } catch {}
-      bestEl.textContent = bestScore;
 
       let snake, dir, nextDirs, food, bonusItem, score, eatenCount, speedOffset, started, paused, gameOver, timer;
       let particles = [];
       let popups = [];
       let wrapMode = false;
+      try {
+        wrapMode = localStorage.getItem('game_mode_snake') === 'wrap';
+      } catch {}
       let animTime = 0;
       let lastFrameTs = 0;
+
+      migrateLegacyBest();
+      bestScore = readBest(wrapMode);
+      bestEl.textContent = bestScore;
 
       // 枚举所有空格后随机选取，避免蛇接近占满棋盘时随机撞格造成死循环；无空格时返回 null
       function randomEmptyCell() {
@@ -362,9 +276,7 @@
         if (score > bestScore) {
           bestScore = score;
           bestEl.textContent = bestScore;
-          try {
-            localStorage.setItem(STORAGE_KEY, String(bestScore));
-          } catch {}
+          GameKit.saveBestIfHigher(bestKeyFor(wrapMode), bestScore);
         }
       }
 
@@ -504,7 +416,15 @@
 
         if (bonusItem) {
           bonusItem.ttl -= 1;
-          if (bonusItem.ttl <= 0) bonusItem = null;
+          if (bonusItem.ttl <= 0) {
+            addPopup(
+              bonusItem.x,
+              bonusItem.y,
+              bonusItem.type === 'star' ? '★ 消失了' : '❄️ 消失了',
+              '#94a3b8'
+            );
+            bonusItem = null;
+          }
         }
 
         if (grew) {
@@ -522,7 +442,7 @@
         gameOver = true;
         playTone(220, 0.22, 95);
         overlayTitle.textContent = title || '游戏结束';
-        overlayDesc.textContent = '本局得分：' + score + '（历史最高：' + bestScore + '）';
+        overlayDesc.textContent = '本局得分：' + score + '（本模式最高：' + bestScore + '）';
         overlay.classList.add('show');
       }
 
@@ -717,6 +637,9 @@
       }
 
       document.addEventListener('keydown', (e) => {
+        if (GameKit.shouldIgnoreGameKey(e, { ignoreOnControl: true })) return;
+        if (window.SiteData && SiteData.isDialogOpen && SiteData.isDialogOpen()) return;
+        if (window.GameKit && GameKit.isTutorialOpen && GameKit.isTutorialOpen()) return;
         if (e.code === 'Space' || e.code === 'KeyP') {
           e.preventDefault();
           togglePause();
@@ -782,33 +705,48 @@
         }
       });
 
-      function setWrapMode(flag) {
-        wrapMode = flag;
+      function applyModeChrome(flag) {
         modeClassicBtn.classList.toggle('active', !flag);
         modeWrapBtn.classList.toggle('active', flag);
         stageBox.classList.toggle('wrap-mode', flag);
+      }
+
+      function setWrapMode(flag) {
+        wrapMode = flag;
+        try {
+          localStorage.setItem('game_mode_snake', flag ? 'wrap' : 'classic');
+        } catch {}
+        applyModeChrome(flag);
+        bestScore = readBest(wrapMode);
+        bestEl.textContent = bestScore;
         initGame();
       }
 
       modeClassicBtn.addEventListener('click', () => setWrapMode(false));
       modeWrapBtn.addEventListener('click', () => setWrapMode(true));
 
-      soundBtn.addEventListener('click', () => {
-        soundEnabled = !soundEnabled;
-        soundBtn.textContent = soundEnabled ? '音效: 开' : '音效: 关';
-        if (window.SiteData) SiteData.setSound(soundEnabled);
-      });
-
       pauseBtn.addEventListener('click', togglePause);
 
+      // 打开清数据等原生确认框时先暂停，避免蛇在弹窗后面继续走
+      document.addEventListener('site:dialogopen', () => {
+        if (started && !paused && !gameOver) togglePause();
+      });
+
       // 切到后台时自动暂停，避免蛇在后台继续移动
-      document.addEventListener('visibilitychange', () => {
-        if (document.hidden && started && !paused && !gameOver) togglePause();
+      GameKit.onHidden(() => {
+        if (started && !paused && !gameOver) togglePause();
       });
       document.getElementById('restart-btn').addEventListener('click', initGame);
       document.getElementById('overlay-btn').addEventListener('click', initGame);
 
+      // 点击后移除按钮焦点，避免之后按空格时再次激活按钮而不是暂停/继续
+      document.querySelectorAll('button').forEach((btn) => {
+        btn.addEventListener('click', () => btn.blur());
+      });
+
+      applyModeChrome(wrapMode);
       initGame();
+      GameKit.mountMoreGames('snake', document.getElementById('more-games'));
       requestAnimationFrame(frameLoop);
     })();
   </script>

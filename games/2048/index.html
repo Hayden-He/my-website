@@ -2,24 +2,19 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>经典 2048 - 小游乐场</title>
   <meta name="description" content="经典 2048：丝滑滑动合并方块，支持 4×4 与 5×5 棋盘、自动存档与单步撤回。" />
   <meta name="author" content="Hayden-He" />
   <meta name="theme-color" content="#2563eb" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E%F0%9F%8E%AE%3C/text%3E%3C/svg%3E" />
   <link rel="stylesheet" href="/assets/style.css" />
+  <link rel="stylesheet" href="/assets/game-shell.css" />
   <script src="/assets/site-data.js"></script>
+  <script src="/assets/games.js"></script>
+  <script src="/assets/game-kit.js"></script>
   <style>
-    .game-wrap {
-      max-width: 460px;
-      margin: 18px auto 36px;
-      padding: 0 16px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 12px;
-    }
+
 
     .rule-banner {
       width: 100%;
@@ -58,33 +53,6 @@
       background: #ede0c8;
     }
 
-    .hud {
-      width: 100%;
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
-    }
-
-    .hud-box {
-      position: relative;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 8px 10px;
-      text-align: center;
-      box-shadow: var(--shadow-sm);
-    }
-
-    .hud-label {
-      font-size: 0.72rem;
-      color: var(--text-muted);
-    }
-
-    .hud-value {
-      font-size: 1.15rem;
-      font-weight: 800;
-    }
-
     .score-float {
       position: absolute;
       top: 4px;
@@ -99,66 +67,6 @@
     @keyframes score-rise {
       0% { opacity: 1; transform: translateY(4px); }
       100% { opacity: 0; transform: translateY(-16px); }
-    }
-
-    .toolbar {
-      width: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    .mode-pills {
-      display: flex;
-      background: #e2e8f0;
-      padding: 3px;
-      border-radius: 10px;
-      gap: 4px;
-    }
-
-    .mode-pill {
-      border: none;
-      background: transparent;
-      padding: 6px 12px;
-      border-radius: 8px;
-      font-size: 0.82rem;
-      font-weight: 600;
-      color: var(--text-muted);
-      cursor: pointer;
-    }
-
-    .mode-pill.active {
-      background: var(--surface);
-      color: var(--primary);
-      box-shadow: var(--shadow-sm);
-    }
-
-    .btn-group {
-      display: flex;
-      gap: 6px;
-    }
-
-    .btn-small {
-      padding: 8px 13px;
-      border: none;
-      border-radius: 10px;
-      background: var(--primary);
-      color: #fff;
-      font-size: 0.85rem;
-      font-weight: 600;
-      cursor: pointer;
-    }
-
-    .btn-small.secondary {
-      background: #e2e8f0;
-      color: var(--text);
-    }
-
-    .btn-small:disabled {
-      opacity: 0.45;
-      cursor: not-allowed;
     }
 
     .board-wrap {
@@ -268,58 +176,17 @@
     .tile.super .tile-inner { background: #3c3a32; color: #fff; font-size: 1.02rem; }
     .tile.compact.super .tile-inner { font-size: 0.85rem; }
 
-    .overlay {
-      position: absolute;
-      inset: 0;
-      border-radius: 16px;
-      background: rgba(15, 23, 42, 0.78);
-      backdrop-filter: blur(4px);
-      display: none;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-      color: #fff;
-      text-align: center;
-      padding: 20px;
-      z-index: 5;
-    }
+    /* 本页尺寸；其余外壳样式见 assets/game-shell.css */
+    .game-wrap { --game-width: 460px; }
+    .hud { grid-template-columns: repeat(3, 1fr); }
 
-    .overlay.show {
-      display: flex;
-    }
-
-    .overlay-actions {
-      display: flex;
-      gap: 10px;
-    }
-
-    .overlay-btn {
-      padding: 10px 18px;
-      border: none;
-      border-radius: 10px;
-      background: var(--primary);
-      color: #fff;
-      font-weight: 600;
-      cursor: pointer;
-    }
-
-    .overlay-btn.secondary {
-      background: #475569;
-    }
-
-    .hint-text {
-      font-size: 0.84rem;
-      color: var(--text-muted);
-      text-align: center;
-    }
   </style>
 </head>
 <body>
   <header class="game-topbar">
     <div class="container game-topbar-inner">
       <a class="back-link" href="/">← 返回大厅</a>
-      <span class="game-topbar-title">经典 2048 🔢</span>
+      <h1 class="game-topbar-title">经典 2048 🔢</h1>
       <a class="game-topbar-cat" href="/categories/puzzle.html">益智休闲</a>
     </div>
   </header>
@@ -342,7 +209,7 @@
         <div id="max-el" class="hud-value" style="color: var(--primary);">2</div>
       </div>
       <div class="hud-box">
-        <div class="hud-label">历史最高</div>
+        <div class="hud-label">模式最高</div>
         <div id="best-el" class="hud-value" style="color: var(--accent);">0</div>
       </div>
     </div>
@@ -375,11 +242,14 @@
     </div>
 
     <p class="hint-text">电脑按 ↑ ↓ ← → 或 WASD 移动，手机在棋盘上滑动；新手推荐先试 5×5</p>
+
+    <div id="more-games" class="more-games"></div>
   </main>
 
   <script>
     (function () {
-      const STORAGE_KEY = 'game_best_2048';
+      const LEGACY_BEST_KEY = 'game_best_2048';
+      const BEST_PREFIX = LEGACY_BEST_KEY + '_';
       const SAVE_PREFIX = 'game_save_2048_';
       const MODE_KEY = SAVE_PREFIX + 'mode';
       const temporarySaves = new Map();
@@ -401,7 +271,9 @@
       const boardWrap = document.getElementById('board-wrap');
 
       let soundEnabled = window.SiteData ? SiteData.getSound() : true;
-      soundBtn.textContent = soundEnabled ? '音效: 开' : '音效: 关';
+      GameKit.bindSoundButton(soundBtn, soundEnabled, (on) => {
+        soundEnabled = on;
+      });
 
       function playMergeTone(maxVal) {
         if (!soundEnabled || !window.SiteData) return;
@@ -421,15 +293,28 @@
         });
       }
 
-      function readBestScore() {
-        try {
-          return parseInt(localStorage.getItem(STORAGE_KEY) || '0', 10) || 0;
-        } catch {
-          return 0;
-        }
+      function bestKeyFor(sizeValue) {
+        return BEST_PREFIX + sizeValue;
       }
 
-      let bestScore = readBestScore();
+      function readBestScore(sizeValue) {
+        return GameKit.readBest(bestKeyFor(sizeValue));
+      }
+
+      // 旧版把 4×4 / 5×5 的最高分存在同一个键里，首次升级时迁移到当前尺寸
+      function migrateLegacyBest(sizeValue) {
+        try {
+          const legacy = localStorage.getItem(LEGACY_BEST_KEY);
+          if (!legacy) return;
+          if (!localStorage.getItem(bestKeyFor(sizeValue))) {
+            localStorage.setItem(bestKeyFor(sizeValue), legacy);
+          }
+          localStorage.removeItem(LEGACY_BEST_KEY);
+        } catch {}
+      }
+
+      let bestScore = 0;
+      let newBestThisGame = false;
 
       let size = 4;
       let board = [];
@@ -438,6 +323,7 @@
       let victory = null;
       let lastSpawn = null;
       let lastMerged = new Set();
+      let renderSeq = 0;
 
       function cloneBoard(b) {
         return b.map((row) => row.slice());
@@ -487,6 +373,8 @@
         size4Btn.classList.toggle('active', size === 4);
         size5Btn.classList.toggle('active', size === 5);
         rebuildGridBg();
+        bestScore = readBestScore(size);
+        newBestThisGame = false;
 
         let saved;
         try {
@@ -515,6 +403,7 @@
         score = 0;
         prevState = null;
         victory = null;
+        newBestThisGame = false;
         lastSpawn = null;
         lastMerged = new Set();
         addRandomTile();
@@ -617,7 +506,15 @@
               if (isMerged) mergedCells.add(r + ',' + c);
               origins[j].forEach((fromIdx) => {
                 const [fr, fc] = toCoord(dir, i, fromIdx);
-                animTiles.push({ val, fromR: fr, fromC: fc, toR: r, toC: c, isMerged });
+                animTiles.push({
+                  val,
+                  fromVal: line[fromIdx].val,
+                  fromR: fr,
+                  fromC: fc,
+                  toR: r,
+                  toC: c,
+                  isMerged,
+                });
               });
             }
           }
@@ -633,28 +530,36 @@
         score += totalGained;
         showScoreFloat(totalGained);
         if (score > bestScore) {
+          newBestThisGame = true;
           bestScore = score;
-          try {
-            localStorage.setItem(STORAGE_KEY, String(bestScore));
-          } catch {}
+          GameKit.saveBestIfHigher(bestKeyFor(size), bestScore);
         }
 
         addRandomTile();
         if (victory === null && getMaxTile() >= 2048) victory = 'pending';
         render(animTiles);
+        // 滑动结束后再落定合并值与新方块，避免两个“合并后数字”同时滑入
+        const seq = renderSeq;
+        setTimeout(() => {
+          if (seq === renderSeq) render();
+        }, 140);
         showOutcome();
         saveGame();
       }
 
       function showOutcome() {
+        const isNewRecord = newBestThisGame && score > 0 && score >= bestScore;
         if (victory === 'pending') {
           overlayTitle.textContent = '恭喜合成 2048！🎉';
-          overlayDesc.textContent = '当前得分：' + score + '，你可以继续挑战更高数字！';
+          overlayDesc.textContent = (isNewRecord ? '🎉 新纪录！' : '') +
+            '当前得分：' + score + '，你可以继续挑战更高数字！';
           keepBtn.style.display = 'inline-block';
           overlay.classList.add('show');
         } else if (!canMove()) {
           overlayTitle.textContent = '没有可移动的方块了';
-          overlayDesc.textContent = '本局得分：' + score + '（历史最高：' + bestScore + '）';
+          overlayDesc.textContent = (isNewRecord ? '🎉 新纪录！' : '') +
+            '本局得分：' + score + ' · 最大方块：' + getMaxTile() +
+            '（本模式最高：' + bestScore + '）';
           keepBtn.style.display = 'none';
           overlay.classList.add('show');
         } else {
@@ -702,6 +607,7 @@
       }
 
       function render(animTiles) {
+        renderSeq += 1;
         scoreEl.textContent = score;
         maxEl.textContent = getMaxTile();
         bestEl.textContent = bestScore;
@@ -710,25 +616,15 @@
 
         if (animTiles && animTiles.length > 0) {
           const moving = [];
-          const mergedSet = new Set();
 
           animTiles.forEach((item) => {
-            const key = item.toR + ',' + item.toC;
-            const cls = item.isMerged && !mergedSet.has(key) ? 'merged' : '';
-            if (item.isMerged) mergedSet.add(key);
-            const el = createTileEl(item.val, item.fromR, item.fromC, cls);
+            // 起点先显示合并前的数字，滑动到位后再由下一次 render 换成合并结果
+            const el = createTileEl(item.fromVal, item.fromR, item.fromC, '');
             tileLayerEl.appendChild(el);
             if (item.fromR !== item.toR || item.fromC !== item.toC) {
               moving.push({ el, toR: item.toR, toC: item.toC });
             }
           });
-
-          if (lastSpawn) {
-            const [sr, sc] = lastSpawn.split(',').map(Number);
-            if (board[sr] && board[sr][sc] > 0) {
-              tileLayerEl.appendChild(createTileEl(board[sr][sc], sr, sc, 'spawn'));
-            }
-          }
 
           if (moving.length > 0) {
             requestAnimationFrame(() => {
@@ -783,13 +679,10 @@
       size4Btn.addEventListener('click', () => switchMode(4));
       size5Btn.addEventListener('click', () => switchMode(5));
 
-      soundBtn.addEventListener('click', () => {
-        soundEnabled = !soundEnabled;
-        soundBtn.textContent = soundEnabled ? '音效: 开' : '音效: 关';
-        if (window.SiteData) SiteData.setSound(soundEnabled);
-      });
-
       document.addEventListener('keydown', (e) => {
+        if (GameKit.shouldIgnoreGameKey(e)) return;
+        if (window.SiteData && SiteData.isDialogOpen && SiteData.isDialogOpen()) return;
+        if (window.GameKit && GameKit.isTutorialOpen && GameKit.isTutorialOpen()) return;
         const map = {
           ArrowLeft: 'left',
           KeyA: 'left',
@@ -838,24 +731,31 @@
         saveGame();
       }
 
-      function restartWithConfirm() {
-        if (canMove() && score > 0 && !confirm(`重开 ${size}×${size} 棋局？当前进度将被清除。`)) return;
-        forceRestart();
+      async function restartWithConfirm() {
+        if (!(canMove() && score > 0)) {
+          forceRestart();
+          return;
+        }
+        const ok = await window.SiteData.confirmDialog({
+          title: '重开棋局',
+          message: `重开 ${size}×${size} 棋局？当前进度将被清除。`,
+          confirmText: '重开',
+          cancelText: '继续本局',
+          danger: true,
+        });
+        if (ok) forceRestart();
       }
 
       document.getElementById('restart-btn').addEventListener('click', restartWithConfirm);
       document.getElementById('overlay-btn').addEventListener('click', forceRestart);
 
       window.addEventListener('pageshow', (event) => {
-        if (event.persisted) {
-          bestScore = readBestScore();
-          openGame(false);
-        }
+        if (event.persisted) openGame(false);
       });
 
       window.addEventListener('storage', (event) => {
-        if (event.key === null || event.key === STORAGE_KEY) {
-          bestScore = readBestScore();
+        if (event.key === null || event.key === bestKeyFor(size)) {
+          bestScore = readBestScore(size);
           bestEl.textContent = bestScore;
           showOutcome();
         }
@@ -867,7 +767,9 @@
       });
 
       size = readProgress(MODE_KEY) === '5' ? 5 : 4;
+      migrateLegacyBest(size);
       openGame();
+      GameKit.mountMoreGames('2048', document.getElementById('more-games'));
     })();
   </script>
 </body>

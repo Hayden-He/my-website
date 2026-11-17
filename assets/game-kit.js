@@ -1,0 +1,267 @@
+/**
+ * 游戏页公共工具
+ * - 最高分读写（各游戏自己决定 key / 是否分模式）
+ * - 音效按钮（全站音效开关的唯一入口）
+ * - 键盘守卫（修饰键、焦点在表单/按钮上时不抢事件）
+ * - 切后台回调
+ * - 底部“换个游戏”交叉推荐
+ * - 首次进入教学
+ * 依赖：assets/site-data.js（SiteData）、assets/games.js（SITE_CONFIG，仅“换个游戏”需要）
+ */
+(function () {
+  function readBest(key) {
+    try {
+      const value = parseInt(localStorage.getItem(key) || '0', 10);
+      return Number.isFinite(value) && value > 0 ? value : 0;
+    } catch {
+      return 0;
+    }
+  }
+
+  function writeBest(key, value) {
+    try {
+      localStorage.setItem(key, String(value));
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  function saveBestIfHigher(key, value) {
+    if (value > readBest(key)) return writeBest(key, value);
+    return false;
+  }
+
+  function bindSoundButton(button, initial, onChange) {
+    if (!button) return { isEnabled: () => false, setEnabled: () => {} };
+    let enabled = typeof initial === 'boolean'
+      ? initial
+      : (window.SiteData ? SiteData.getSound() : true);
+
+    function sync() {
+      button.textContent = enabled ? '音效: 开' : '音效: 关';
+      button.setAttribute('aria-pressed', enabled ? 'true' : 'false');
+      button.setAttribute('aria-label', enabled ? '关闭音效' : '开启音效');
+      if (onChange) onChange(enabled);
+    }
+
+    button.addEventListener('click', () => {
+      enabled = !enabled;
+      if (window.SiteData) SiteData.setSound(enabled);
+      sync();
+    });
+
+    sync();
+    return {
+      isEnabled: () => enabled,
+      setEnabled(value) {
+        enabled = !!value;
+        sync();
+      },
+    };
+  }
+
+  function shouldIgnoreGameKey(event, options) {
+    const opts = options || {};
+    if (event.metaKey || event.ctrlKey || event.altKey || event.isComposing) return true;
+    if (!opts.ignoreOnControl) return false;
+    if (event.code !== 'Space' && event.code !== 'Enter') return false;
+    const target = event.target;
+    return target instanceof Element &&
+      !!target.closest('button, a, input, textarea, select, [contenteditable="true"]');
+  }
+
+  function onHidden(callback) {
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) callback();
+    });
+  }
+
+  function mountMoreGames(currentId, container) {
+    if (!container || !window.SITE_CONFIG || !Array.isArray(window.SITE_CONFIG.games)) return;
+    const games = window.SITE_CONFIG.games.filter((game) => game.id !== currentId).slice(0, 3);
+    if (games.length === 0) return;
+
+    container.textContent = '';
+    const title = document.createElement('div');
+    title.className = 'more-games-title';
+    title.textContent = '换个游戏';
+    container.appendChild(title);
+
+    const grid = document.createElement('div');
+    grid.className = 'more-games-grid';
+    games.forEach((game) => {
+      const link = document.createElement('a');
+      link.className = 'more-game-link';
+      link.href = game.url;
+
+      const icon = document.createElement('span');
+      icon.className = 'more-game-icon';
+      icon.setAttribute('aria-hidden', 'true');
+      icon.textContent = game.icon || '🎮';
+
+      const info = document.createElement('span');
+      const name = document.createElement('span');
+      name.className = 'more-game-name';
+      name.textContent = game.title;
+      const category = document.createElement('span');
+      category.className = 'more-game-cat';
+      category.textContent = game.categoryName || '';
+      info.appendChild(name);
+      info.appendChild(category);
+
+      link.appendChild(icon);
+      link.appendChild(info);
+      grid.appendChild(link);
+    });
+    container.appendChild(grid);
+  }
+
+  let tutorialOpen = false;
+
+  function showTutorial(options) {
+    const opts = options || {};
+    const steps = Array.isArray(opts.steps) ? opts.steps : [];
+    if (!opts.id || steps.length === 0) return false;
+
+    const seenKey = 'game_tutorial_' + opts.id;
+    if (!opts.force) {
+      try {
+        if (localStorage.getItem(seenKey)) return false;
+      } catch {}
+    }
+    if (tutorialOpen) return false;
+
+    tutorialOpen = true;
+    document.dispatchEvent(new CustomEvent('site:dialogopen'));
+
+    const prevOverflow = document.body.style.overflow;
+    const lastFocus = document.activeElement;
+    document.body.style.overflow = 'hidden';
+
+    const mask = document.createElement('div');
+    mask.className = 'gk-tutorial-mask';
+
+    const card = document.createElement('div');
+    card.className = 'gk-tutorial';
+    card.setAttribute('role', 'dialog');
+    card.setAttribute('aria-modal', 'true');
+    card.setAttribute('aria-labelledby', 'gk-tutorial-title');
+    card.setAttribute('aria-describedby', 'gk-tutorial-text');
+
+    const icon = document.createElement('div');
+    icon.className = 'gk-tutorial-icon';
+    icon.setAttribute('aria-hidden', 'true');
+
+    const title = document.createElement('h2');
+    title.className = 'gk-tutorial-title';
+    title.id = 'gk-tutorial-title';
+
+    const text = document.createElement('p');
+    text.className = 'gk-tutorial-text';
+    text.id = 'gk-tutorial-text';
+
+    const dots = document.createElement('div');
+    dots.className = 'gk-tutorial-dots';
+    dots.setAttribute('aria-hidden', 'true');
+
+    const actions = document.createElement('div');
+    actions.className = 'gk-tutorial-actions';
+
+    const skipBtn = document.createElement('button');
+    skipBtn.type = 'button';
+    skipBtn.className = 'gk-tutorial-btn secondary';
+    skipBtn.textContent = '跳过';
+
+    const nextBtn = document.createElement('button');
+    nextBtn.type = 'button';
+    nextBtn.className = 'gk-tutorial-btn';
+
+    actions.appendChild(skipBtn);
+    actions.appendChild(nextBtn);
+    card.appendChild(icon);
+    card.appendChild(title);
+    card.appendChild(text);
+    card.appendChild(dots);
+    card.appendChild(actions);
+    mask.appendChild(card);
+    document.body.appendChild(mask);
+
+    let index = 0;
+
+    function render() {
+      const step = steps[index] || {};
+      icon.textContent = step.icon || '💡';
+      title.textContent = step.title || '';
+      text.textContent = step.text || '';
+      dots.textContent = '';
+      steps.forEach((_, i) => {
+        const dot = document.createElement('span');
+        dot.className = 'gk-tutorial-dot' + (i === index ? ' active' : '');
+        dots.appendChild(dot);
+      });
+      nextBtn.textContent = index === steps.length - 1 ? '开始游戏' : '下一步';
+    }
+
+    function close() {
+      if (!tutorialOpen) return;
+      tutorialOpen = false;
+      document.body.style.overflow = prevOverflow;
+      mask.remove();
+      document.dispatchEvent(new CustomEvent('site:dialogclose'));
+      try {
+        localStorage.setItem(seenKey, '1');
+      } catch {}
+      if (lastFocus && typeof lastFocus.focus === 'function') {
+        try { lastFocus.focus(); } catch {}
+      }
+    }
+
+    nextBtn.addEventListener('click', () => {
+      if (index >= steps.length - 1) {
+        close();
+        return;
+      }
+      index += 1;
+      render();
+      nextBtn.focus();
+    });
+    skipBtn.addEventListener('click', close);
+
+    mask.addEventListener('keydown', (e) => {
+      e.stopPropagation();
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        close();
+        return;
+      }
+      if (e.key !== 'Tab') return;
+      const focusables = [skipBtn, nextBtn];
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    });
+
+    render();
+    requestAnimationFrame(() => nextBtn.focus());
+    return true;
+  }
+
+  window.GameKit = {
+    readBest,
+    writeBest,
+    saveBestIfHigher,
+    bindSoundButton,
+    shouldIgnoreGameKey,
+    onHidden,
+    mountMoreGames,
+    showTutorial,
+    isTutorialOpen: () => tutorialOpen,
+  };
+})();

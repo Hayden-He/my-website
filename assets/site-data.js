@@ -4,7 +4,7 @@
  */
 (function () {
   const SOUND_KEY = 'site_sound';
-  const PREFIXES = ['game_best_', 'game_skin_', 'game_save_2048_', 'game_mode_'];
+  const PREFIXES = ['game_best_', 'game_skin_', 'game_save_2048_', 'game_mode_', 'game_tutorial_'];
   const EXACT_KEYS = [SOUND_KEY];
 
   function getSound() {
@@ -94,16 +94,165 @@
     }
   }
 
+
+  // ---- 自定义确认/提示弹窗：替换原生 confirm/alert ----
+  let activeDialog = null;
+
+  function isDialogOpen() {
+    return !!activeDialog;
+  }
+
+  function openDialog(options) {
+    const opts = options || {};
+    if (activeDialog) return Promise.resolve(false);
+
+    return new Promise((resolve) => {
+      const lastFocus = document.activeElement;
+      const prevOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+
+      const mask = document.createElement('div');
+      mask.className = 'site-dialog-mask';
+
+      const dialog = document.createElement('div');
+      dialog.className = 'site-dialog';
+      dialog.setAttribute('role', 'dialog');
+      dialog.setAttribute('aria-modal', 'true');
+      dialog.setAttribute('aria-labelledby', 'site-dialog-title');
+      dialog.setAttribute('aria-describedby', 'site-dialog-message');
+
+      const title = document.createElement('h2');
+      title.className = 'site-dialog-title';
+      title.id = 'site-dialog-title';
+      title.textContent = opts.title || '提示';
+
+      const message = document.createElement('p');
+      message.className = 'site-dialog-message';
+      message.id = 'site-dialog-message';
+      message.textContent = opts.message || '';
+
+      const actions = document.createElement('div');
+      actions.className = 'site-dialog-actions';
+
+      const cancelBtn = document.createElement('button');
+      cancelBtn.type = 'button';
+      cancelBtn.className = 'site-dialog-btn';
+      cancelBtn.textContent = opts.cancelText || '取消';
+
+      const confirmBtn = document.createElement('button');
+      confirmBtn.type = 'button';
+      confirmBtn.className = 'site-dialog-btn ' + (opts.danger ? 'danger' : 'primary');
+      confirmBtn.textContent = opts.confirmText || '确定';
+
+      const hasCancel = opts.cancelText !== null;
+      if (hasCancel) actions.appendChild(cancelBtn);
+      actions.appendChild(confirmBtn);
+
+      dialog.appendChild(title);
+      dialog.appendChild(message);
+      dialog.appendChild(actions);
+      mask.appendChild(dialog);
+      document.body.appendChild(mask);
+
+      const focusTargets = (hasCancel ? [cancelBtn, confirmBtn] : [confirmBtn]);
+      const first = focusTargets[0];
+      const last = focusTargets[focusTargets.length - 1];
+
+      activeDialog = { mask };
+
+      function close(result) {
+        if (!activeDialog) return;
+        activeDialog = null;
+        document.body.style.overflow = prevOverflow;
+        mask.remove();
+        document.dispatchEvent(new CustomEvent('site:dialogclose'));
+        if (lastFocus && typeof lastFocus.focus === 'function') {
+          try { lastFocus.focus(); } catch {}
+        }
+        resolve(result);
+      }
+
+      mask.addEventListener('keydown', (e) => {
+        e.stopPropagation();
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          close(false);
+          return;
+        }
+        if (e.key !== 'Tab') return;
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      });
+
+      mask.addEventListener('click', (e) => {
+        if (e.target === mask) close(false);
+      });
+      if (hasCancel) cancelBtn.addEventListener('click', () => close(false));
+      confirmBtn.addEventListener('click', () => close(true));
+
+      document.dispatchEvent(new CustomEvent('site:dialogopen'));
+      requestAnimationFrame(() => (opts.danger ? (hasCancel ? cancelBtn : confirmBtn) : confirmBtn).focus());
+    });
+  }
+
+  function confirmDialog(options) {
+    return openDialog(options);
+  }
+
+  function alertDialog(options) {
+    return openDialog(Object.assign({}, options, { cancelText: null }));
+  }
+
+  // ---- 轻量 toast ----
+  let toastEl = null;
+  let toastTimer = null;
+
+  function toast(message, options) {
+    if (!toastEl) {
+      toastEl = document.createElement('div');
+      toastEl.className = 'site-toast';
+      toastEl.setAttribute('role', 'status');
+      toastEl.setAttribute('aria-live', 'polite');
+      document.body.appendChild(toastEl);
+    }
+    toastEl.textContent = message;
+    toastEl.classList.remove('show');
+    void toastEl.offsetWidth;
+    toastEl.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toastEl.classList.remove('show'), (options && options.duration) || 2200);
+  }
+
   function createClearButton() {
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'data-clear-btn';
     btn.textContent = '清除本地数据';
-    btn.addEventListener('click', () => {
-      if (!confirm('将清除本站保存在此浏览器中的最高纪录、游戏存档、球色与音效设置，且无法恢复。确定清除吗？')) return;
-      const ok = clearAll();
-      alert(ok ? '本地数据已清除' : '清除失败：浏览器禁止访问本地存储');
-      if (ok) location.reload();
+    btn.addEventListener('click', async () => {
+      const ok = await confirmDialog({
+        title: '清除本地数据',
+        message: '将清除本站保存在此浏览器中的最高纪录、游戏存档、球色、音效设置与教学提示，且无法恢复。',
+        confirmText: '清除',
+        cancelText: '取消',
+        danger: true,
+      });
+      if (!ok) return;
+
+      if (clearAll()) {
+        toast('本地数据已清除');
+        setTimeout(() => location.reload(), 500);
+      } else {
+        alertDialog({
+          title: '清除失败',
+          message: '浏览器禁止访问本地存储，请检查浏览器的隐私设置后重试。',
+          confirmText: '知道了',
+        });
+      }
     });
     return btn;
   }
@@ -125,7 +274,11 @@
     return el;
   }
 
-  window.SiteData = { getSound, setSound, clearAll, createClearButton, createCredit, getAudioContext, unlockAudio, withAudio };
+  window.SiteData = {
+    getSound, setSound, clearAll, createClearButton, createCredit,
+    getAudioContext, unlockAudio, withAudio,
+    isDialogOpen, confirmDialog, alertDialog, toast,
+  };
 
   // 游戏页：自动在页面底部追加入口（列表页由 app.js 在页脚渲染）
   document.addEventListener('DOMContentLoaded', () => {

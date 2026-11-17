@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>街头投篮 - 小游乐场</title>
   <meta name="description" content="街头投篮：点击或按空格起跳，空心入网、打板进球，挑战你的最高分。" />
   <meta name="author" content="Hayden-He" />
@@ -10,52 +10,12 @@
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E%F0%9F%8F%80%3C/text%3E%3C/svg%3E" />
   <script src="/assets/canvas-polyfill.js"></script>
   <link rel="stylesheet" href="/assets/style.css" />
+  <link rel="stylesheet" href="/assets/game-shell.css" />
   <script src="/assets/site-data.js"></script>
+  <script src="/assets/games.js"></script>
+  <script src="/assets/game-kit.js"></script>
   <style>
-    .game-wrap {
-      max-width: 700px;
-      margin: 18px auto 36px;
-      padding: 0 16px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 12px;
-      touch-action: manipulation;
-      -webkit-tap-highlight-color: transparent;
-    }
 
-    .hud {
-      width: 100%;
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 8px;
-    }
-
-    .hud-box {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 8px 6px;
-      text-align: center;
-      box-shadow: var(--shadow-sm);
-    }
-
-    .hud-label {
-      font-size: 0.72rem;
-      color: var(--text-muted);
-    }
-
-    .hud-value {
-      font-size: 1.12rem;
-      font-weight: 800;
-      color: var(--text);
-    }
-
-    .hud-sub {
-      font-size: 0.62rem;
-      color: var(--text-muted);
-      line-height: 1.2;
-    }
 
     .hint-block {
       display: flex;
@@ -112,34 +72,6 @@
       cursor: pointer;
     }
 
-    .overlay {
-      position: absolute;
-      inset: 0;
-      background: rgba(15, 23, 42, 0.8);
-      backdrop-filter: blur(4px);
-      display: none;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      color: #fff;
-      padding: 24px;
-      text-align: center;
-    }
-
-    .overlay.show {
-      display: flex;
-    }
-
-    .overlay h2 {
-      font-size: 1.55rem;
-    }
-
-    .overlay p {
-      color: #cbd5e1;
-      font-size: 0.95rem;
-    }
-
     .controls-row {
       width: 100%;
       display: flex;
@@ -147,32 +79,6 @@
       justify-content: space-between;
       gap: 10px;
       flex-wrap: wrap;
-    }
-
-    .btn-group {
-      display: flex;
-      gap: 8px;
-    }
-
-    .hint-text {
-      font-size: 0.84rem;
-      color: var(--text-muted);
-    }
-
-    .btn-small {
-      padding: 9px 16px;
-      border: none;
-      border-radius: 10px;
-      background: var(--primary);
-      color: #fff;
-      font-size: 0.88rem;
-      font-weight: 600;
-      cursor: pointer;
-    }
-
-    .btn-small.secondary {
-      background: #e2e8f0;
-      color: var(--text);
     }
 
     @media (max-width: 560px) {
@@ -203,14 +109,54 @@
       .hint-text {
         font-size: 0.78rem;
       }
+
+      /* 窄屏下把 4 个操作按钮排成 2×2，避免文字被挤成竖排 */
+      .btn-group {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        width: 100%;
+      }
     }
+
+    /* 本页尺寸；其余外壳样式见 assets/game-shell.css */
+    .game-wrap {
+      --game-width: 700px;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .hud { grid-template-columns: repeat(5, 1fr); }
+    .btn-group { gap: 8px; }
+
+    .scene-hint {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-top: -4px;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .scene-hint strong {
+      color: var(--text);
+      font-weight: 700;
+    }
+
+    /* 5 列 HUD 在 320/360 宽下过于拥挤，改成 3 列两行 */
+    @media (max-width: 380px) {
+      .hud { grid-template-columns: repeat(3, 1fr); }
+    }
+
   </style>
 </head>
 <body>
   <header class="game-topbar">
     <div class="container game-topbar-inner">
       <a class="back-link" href="/">← 返回大厅</a>
-      <span class="game-topbar-title">街头投篮 🏀</span>
+      <h1 class="game-topbar-title">街头投篮 🏀</h1>
       <a class="game-topbar-cat" href="/categories/arcade.html">动作街机</a>
     </div>
   </header>
@@ -228,7 +174,7 @@
       <div class="hud-box">
         <div class="hud-label">空心入网</div>
         <div id="swish-el" class="hud-value accent">0</div>
-        <div class="hud-sub">+4 · 连击+5</div>
+        <div class="hud-sub">+4 · 火焰+5</div>
       </div>
       <div class="hud-box">
         <div class="hud-label">打板进球</div>
@@ -245,6 +191,11 @@
       <div id="timer-bar" class="timer-bar"></div>
     </div>
 
+    <div class="scene-hint">
+      <span>当前场景 <strong id="scene-name">黄昏街头</strong></span>
+      <span id="scene-next">下一场景 15 分</span>
+    </div>
+
     <div class="stage-box">
       <canvas id="court" width="640" height="420"></canvas>
       <div id="game-overlay" class="overlay">
@@ -258,16 +209,18 @@
 
     <div class="controls-row">
       <div class="hint-block">
-        <span class="hint-text">操作：点击球场 / 空格 / ↑ / W 起跳，P 暂停</span>
-        <span class="hint-text">机制：进球重置倒计时 · 连续空心火焰球 · 每 5 球金球 ×2 · 25/50/80 分护盾进阶</span>
+        <span class="hint-text">操作：连续点击球场 / 连按空格升空，停手后下落；<span class="nowrap">P 暂停</span></span>
+        <span class="hint-text">机制：进球重置倒计时 · 连续空心触发火焰连击 · 每 5 球金球 ×2 · 25/50/80 分护盾进阶</span>
       </div>
       <div class="btn-group">
-        <button id="skin-btn" class="btn-small secondary">球款: 经典篮球</button>
+        <button id="skin-btn" class="btn-small secondary">用球: 经典篮球</button>
         <button id="sound-btn" class="btn-small secondary">音效: 开</button>
         <button id="pause-btn" class="btn-small secondary">暂停</button>
         <button id="restart-btn" class="btn-small">重开</button>
       </div>
     </div>
+
+    <div id="more-games" class="more-games"></div>
   </main>
 
   <script>
@@ -289,6 +242,8 @@
       const overlay = document.getElementById('game-overlay');
       const finalSummary = document.getElementById('final-summary');
       const finalStats = document.getElementById('final-stats');
+      const sceneNameEl = document.getElementById('scene-name');
+      const sceneNextEl = document.getElementById('scene-next');
 
       const W = 640;
       const H = 420;
@@ -319,7 +274,7 @@
         const savedSkin = parseInt(localStorage.getItem(SKIN_STORAGE_KEY) || '0', 10);
         if (savedSkin >= 0 && savedSkin < BALL_SKINS.length) skinIndex = savedSkin;
       } catch {}
-      skinBtn.textContent = '球款: ' + BALL_SKINS[skinIndex].name;
+      skinBtn.textContent = '用球: ' + BALL_SKINS[skinIndex].name;
 
       // 城市天际线预设建筑
       const SKYLINE = [
@@ -336,9 +291,12 @@
         { x: 554, w: 86, h: 130 },
       ];
 
-      let soundEnabled = window.SiteData ? SiteData.getSound() : true;
-      soundBtn.textContent = soundEnabled ? '音效: 开' : '音效: 关';
       let soundTimers = [];
+      let soundEnabled = window.SiteData ? SiteData.getSound() : true;
+      GameKit.bindSoundButton(soundBtn, soundEnabled, (on) => {
+        soundEnabled = on;
+        if (!on) clearSoundTimers();
+      });
 
       function clearSoundTimers() {
         soundTimers.forEach((id) => clearTimeout(id));
@@ -433,10 +391,7 @@
         }
       }
 
-      let bestScore = 0;
-      try {
-        bestScore = parseInt(localStorage.getItem(STORAGE_KEY) || '0', 10) || 0;
-      } catch {}
+      let bestScore = GameKit.readBest(STORAGE_KEY);
 
       function setText(el, v) {
         v = String(v);
@@ -544,10 +499,16 @@
       function saveBest() {
         if (state.score > bestScore) {
           bestScore = state.score;
-          try {
-            localStorage.setItem(STORAGE_KEY, String(bestScore));
-          } catch {}
+          GameKit.saveBestIfHigher(STORAGE_KEY, bestScore);
         }
+      }
+
+      function getSceneInfo(score) {
+        if (score >= 100) return { name: '星河球场', next: '已解锁全部场景' };
+        if (score >= 60) return { name: '极光球场', next: '下一场景 100 分' };
+        if (score >= 30) return { name: '夜场灯光', next: '下一场景 60 分' };
+        if (score >= 15) return { name: '暮色球场', next: '下一场景 30 分' };
+        return { name: '黄昏街头', next: '下一场景 15 分' };
       }
 
       function updateHud() {
@@ -557,6 +518,10 @@
         setText(swishEl, state.swishCount);
         setText(bankEl, state.bankCount);
         setText(bestEl, bestScore);
+
+        const scene = getSceneInfo(state.score);
+        setText(sceneNameEl, scene.name);
+        setText(sceneNextEl, scene.next);
 
         const pct = Math.max(0, Math.min(100, (state.timeLeft / state.timeLimit) * 100));
         const pctStr = pct.toFixed(1) + '%';
@@ -647,6 +612,9 @@
 
       document.addEventListener('keydown', (e) => {
         if (e.repeat) return;
+        if (GameKit.shouldIgnoreGameKey(e, { ignoreOnControl: true })) return;
+        if (window.SiteData && SiteData.isDialogOpen && SiteData.isDialogOpen()) return;
+        if (window.GameKit && GameKit.isTutorialOpen && GameKit.isTutorialOpen()) return;
         if (e.code === 'KeyP') {
           setPaused(!state.paused);
           return;
@@ -665,8 +633,9 @@
         }
       });
 
-      document.addEventListener('visibilitychange', () => {
-        if (document.hidden) setPaused(true);
+      GameKit.onHidden(() => setPaused(true));
+      document.addEventListener('site:dialogopen', () => {
+        if (state.started && !state.ended) setPaused(true);
       });
       pauseBtn.addEventListener('click', () => setPaused(!state.paused));
 
@@ -1932,7 +1901,7 @@
           ctx.fillStyle = '#f8fafc';
           ctx.font = 'bold 16px sans-serif';
           ctx.textAlign = 'center';
-          ctx.fillText('点击画面或按空格键起跳投篮 🏀', W / 2, 148);
+          ctx.fillText('连续点击升空 · 停手落网 🏀', W / 2, 148);
         }
 
         if (state.paused) {
@@ -2000,16 +1969,10 @@
 
       skinBtn.addEventListener('click', () => {
         skinIndex = (skinIndex + 1) % BALL_SKINS.length;
-        skinBtn.textContent = '球款: ' + BALL_SKINS[skinIndex].name;
+        skinBtn.textContent = '用球: ' + BALL_SKINS[skinIndex].name;
         try {
           localStorage.setItem(SKIN_STORAGE_KEY, String(skinIndex));
         } catch {}
-      });
-      soundBtn.addEventListener('click', () => {
-        soundEnabled = !soundEnabled;
-        if (!soundEnabled) clearSoundTimers();
-        soundBtn.textContent = soundEnabled ? '音效: 开' : '音效: 关';
-        if (window.SiteData) SiteData.setSound(soundEnabled);
       });
       document.querySelectorAll('button').forEach((btn) => {
         btn.addEventListener('click', () => btn.blur());
@@ -2018,6 +1981,14 @@
       document.getElementById('overlay-restart').addEventListener('click', initGame);
 
       initGame();
+      GameKit.mountMoreGames('basketball', document.getElementById('more-games'));
+      GameKit.showTutorial({
+        id: 'basketball',
+        steps: [
+          { icon: '👆', title: '连点升空', text: '连续点击球场，或连按空格键，让球持续升高。' },
+          { icon: '🏀', title: '停手落网', text: '在篮筐上方停止点击，让球自然下落；空心入网得分最高。' },
+        ],
+      });
       requestAnimationFrame(loop);
     })();
   </script>
