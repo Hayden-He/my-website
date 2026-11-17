@@ -48,7 +48,7 @@
     }
 
     .hud-value.accent {
-      color: var(--accent);
+      color: var(--accent-text);
     }
 
     .hud-value.danger {
@@ -226,8 +226,8 @@
     </div>
 
     <div class="stage-box">
-      <canvas id="court" width="640" height="420"></canvas>
-      <div id="game-overlay" class="overlay">
+      <canvas id="court" width="640" height="420" role="img" aria-label="街头投篮球场" data-i18n-attr="aria-label:街头投篮球场"></canvas>
+      <div id="game-overlay" class="overlay" role="status" aria-live="polite">
         <h2 data-i18n="时间到！🏀">时间到！🏀</h2>
         <p id="final-summary">本局得分：0</p>
         <p id="final-stats"></p>

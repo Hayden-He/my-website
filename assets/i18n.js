@@ -182,6 +182,7 @@
     '★ 消失了': '★ expired',
     '❄️ 消失了': '❄️ expired',
     '方向控制': 'Direction controls',
+    '贪吃蛇游戏棋盘': 'Snake game board',
     '游戏模式': 'Game mode',
 
     // ---- 扫雷 ----
@@ -276,6 +277,7 @@
     '停手落网': 'Release to drop',
     '在篮筐上方停止点击，让球自然下落；空心入网得分最高。':
       'Stop tapping above the rim and let the ball fall through. Swishes score the most.',
+    '街头投篮球场': 'Street Hoops court',
     '球款': 'Ball',
 
     // ---- 记忆翻牌 ----

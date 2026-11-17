@@ -136,7 +136,7 @@
       </div>
       <div class="hud-box">
         <div class="hud-label" data-i18n="模式最高">模式最高</div>
-        <div id="best-el" class="hud-value" style="color: var(--accent);">0</div>
+        <div id="best-el" class="hud-value" style="color: var(--accent-text);">0</div>
       </div>
       <button id="pause-btn" class="btn-small secondary">暂停</button>
       <button id="restart-btn" class="btn-small" data-i18n="重开">重开</button>
@@ -151,8 +151,8 @@
     </div>
 
     <div id="stage-box" class="stage-box">
-      <canvas id="board" width="560" height="560"></canvas>
-      <div id="overlay" class="overlay">
+      <canvas id="board" width="560" height="560" role="img" aria-label="贪吃蛇游戏棋盘" data-i18n-attr="aria-label:贪吃蛇游戏棋盘"></canvas>
+      <div id="overlay" class="overlay" role="status" aria-live="polite">
         <h2 id="overlay-title">游戏结束</h2>
         <p id="overlay-desc">得分：0</p>
         <button id="overlay-btn" class="overlay-btn" data-i18n="再来一局">再来一局</button>

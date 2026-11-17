@@ -208,7 +208,7 @@
       </div>
       <div class="hud-box">
         <div class="hud-label" data-i18n="最佳用时">最佳用时</div>
-        <div id="best-el" class="hud-value" style="color: var(--accent);">--</div>
+        <div id="best-el" class="hud-value" style="color: var(--accent-text);">--</div>
       </div>
     </div>
 
@@ -230,7 +230,7 @@
 
     <div class="board-wrap">
       <div id="mine-grid" class="mine-grid"></div>
-      <div id="overlay" class="overlay">
+      <div id="overlay" class="overlay" role="status" aria-live="polite">
         <h2 id="overlay-title">排雷成功！🎉</h2>
         <p id="overlay-desc">用时：0s</p>
         <div class="overlay-actions">

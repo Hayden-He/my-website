@@ -183,7 +183,7 @@
       </div>
       <div class="hud-box">
         <div class="hud-label" data-i18n="最少步数">最少步数</div>
-        <div id="best-el" class="hud-value" style="color: var(--accent);">--</div>
+        <div id="best-el" class="hud-value" style="color: var(--accent-text);">--</div>
       </div>
     </div>
 
@@ -200,7 +200,7 @@
 
     <div class="memory-stage">
       <div id="memory-board" class="memory-board" aria-label="记忆翻牌牌桌" data-i18n-attr="aria-label:记忆翻牌牌桌"></div>
-      <div id="overlay" class="overlay">
+      <div id="overlay" class="overlay" role="status" aria-live="polite">
         <h2 id="overlay-title" data-i18n="全部配对！🎉">全部配对！🎉</h2>
         <p id="overlay-desc">步数：0 · 用时：0s</p>
         <div class="overlay-actions">

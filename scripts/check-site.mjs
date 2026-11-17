@@ -209,6 +209,9 @@ for (const game of games) {
   checkContains(page, 'assets/i18n.js', pagePath);
   checkContains(page, 'assets/icons.svg', pagePath);
   checkContains(page, 'game-' + game.icon, pagePath);
+  if (game.id === 'snake' || game.id === 'basketball') {
+    checkContains(page, 'role="img"', pagePath);
+  }
   checkSeoPage(page, {
     label: pagePath,
     urlPath: game.url,
@@ -218,6 +221,8 @@ for (const game of games) {
   checkContains(page, 'assets/icon.svg', pagePath);
   checkContains(page, 'apple-touch-icon.png', pagePath);
   checkContains(page, 'data-lang-toggle', pagePath);
+  checkContains(page, 'role="status"', pagePath);
+  checkContains(page, 'aria-live="polite"', pagePath);
   checkContains(page, 'assets/games.js', pagePath);
   checkContains(page, 'assets/game-kit.js', pagePath);
   checkContains(page, 'id="more-games"', pagePath);

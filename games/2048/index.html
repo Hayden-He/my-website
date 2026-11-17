@@ -82,7 +82,7 @@
       right: 8px;
       font-size: 0.78rem;
       font-weight: 800;
-      color: var(--accent);
+      color: var(--accent-text);
       pointer-events: none;
       animation: score-rise 0.65s ease-out forwards;
     }
@@ -239,7 +239,7 @@
       </div>
       <div class="hud-box">
         <div class="hud-label" data-i18n="模式最高">模式最高</div>
-        <div id="best-el" class="hud-value" style="color: var(--accent);">0</div>
+        <div id="best-el" class="hud-value" style="color: var(--accent-text);">0</div>
       </div>
     </div>
 
@@ -260,7 +260,7 @@
         <div id="grid-bg" class="grid-bg"></div>
         <div id="tile-layer" class="tile-layer"></div>
       </div>
-      <div id="overlay" class="overlay">
+      <div id="overlay" class="overlay" role="status" aria-live="polite">
         <h2 id="overlay-title">没有可移动的方块了</h2>
         <p id="overlay-desc">本局得分：0</p>
         <div class="overlay-actions">
