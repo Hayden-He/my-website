@@ -4,7 +4,7 @@
  */
 (function () {
   const SOUND_KEY = 'site_sound';
-  const PREFIXES = ['game_best_', 'game_skin_', 'game_save_2048_'];
+  const PREFIXES = ['game_best_', 'game_skin_', 'game_save_2048_', 'game_mode_'];
   const EXACT_KEYS = [SOUND_KEY];
 
   function getSound() {
@@ -100,9 +100,9 @@
     btn.className = 'data-clear-btn';
     btn.textContent = '清除本地数据';
     btn.addEventListener('click', () => {
-      if (!confirm('将清除本站保存在此浏览器中的最高分、2048 棋局进度、球色和音效设置。此操作无法恢复，确定清除吗？')) return;
+      if (!confirm('将清除本站保存在此浏览器中的最高纪录、游戏存档、球色与音效设置，且无法恢复。确定清除吗？')) return;
       const ok = clearAll();
-      alert(ok ? '已清除' : '清除失败：浏览器禁止访问本地存储');
+      alert(ok ? '本地数据已清除' : '清除失败：浏览器禁止访问本地存储');
       if (ok) location.reload();
     });
     return btn;

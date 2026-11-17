@@ -118,26 +118,14 @@
   </style>
 </head>
 <body>
-  <header class="site-header">
-    <div class="container header-inner">
-      <a class="brand" href="/">
-        <span class="brand-badge" aria-hidden="true">🎮</span>
-        <span>小游乐场</span>
-      </a>
-      <nav class="nav-links" aria-label="主导航">
-        <a class="nav-link" href="/">全部游戏</a>
-        <a class="nav-link" href="/categories/arcade.html">动作街机</a>
-        <a class="nav-link" href="/categories/puzzle.html">益智休闲</a>
-      </nav>
-    </div>
-  </header>
+  <header id="site-header" class="site-header"></header>
 
   <main class="container not-found-wrap">
     <section class="not-found-card" aria-labelledby="not-found-heading">
       <div class="not-found-icon" aria-hidden="true">🕹️</div>
       <div><span class="not-found-code">404</span></div>
-      <h1 id="not-found-heading" class="not-found-title">找不到这个页面</h1>
-      <p class="not-found-desc">链接可能已失效，或网址有误。</p>
+      <h1 id="not-found-heading" class="not-found-title">这关还没解锁</h1>
+      <p class="not-found-desc">你似乎走到了地图边缘，不如回到大厅挑一局新游戏。</p>
       <div class="not-found-actions">
         <a href="/" class="play-btn">返回全部游戏</a>
         <a href="/games/basketball/" class="secondary-btn">🏀 来一局投篮</a>
@@ -145,10 +133,11 @@
     </section>
   </main>
 
-  <footer id="site-footer" class="site-footer">
-    <div class="container site-credit">
-      小游乐场 · <a href="https://github.com/Hayden-He/my-website">Hayden-He</a>
-    </div>
-  </footer>
+  <footer id="site-footer" class="site-footer"></footer>
+
+  <script src="/assets/site-data.js"></script>
+  <script src="/assets/games.js"></script>
+  <script src="/assets/app.js"></script>
+  <script>initSitePage('');</script>
 </body>
 </html>

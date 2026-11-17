@@ -258,9 +258,8 @@
 
     <div class="controls-row">
       <div class="hint-block">
-        <span class="hint-text">操作：点击游戏区空白处 / 空格 / ↑ / W 起跳，P 暂停</span>
-        <span class="hint-text">计时：首次起跳开始计时，进球后重置，出界补球沿用剩余时间</span>
-        <span class="hint-text">规则：连续空心触发火焰球，25 分后出现防守护盾</span>
+        <span class="hint-text">操作：点击球场 / 空格 / ↑ / W 起跳，P 暂停</span>
+        <span class="hint-text">机制：进球重置倒计时 · 连续空心触发火焰球 · 每 5 球出现金球 ×2 · 25 分开启护盾</span>
       </div>
       <div class="btn-group">
         <button id="skin-btn" class="btn-small secondary">球色: 经典橙</button>
@@ -338,6 +337,20 @@
 
       let soundEnabled = window.SiteData ? SiteData.getSound() : true;
       soundBtn.textContent = soundEnabled ? '音效: 开' : '音效: 关';
+      let soundTimers = [];
+
+      function clearSoundTimers() {
+        soundTimers.forEach((id) => clearTimeout(id));
+        soundTimers = [];
+      }
+
+      function scheduleSound(fn, delay) {
+        const id = setTimeout(() => {
+          soundTimers = soundTimers.filter((t) => t !== id);
+          fn();
+        }, delay);
+        soundTimers.push(id);
+      }
 
       // 通过全站共用的音频上下文发声（见 assets/site-data.js），避免 iOS 等浏览器的自动播放限制
       function withAudio(fn) {
@@ -405,17 +418,17 @@
           const step = Math.min(combo || 1, 6) - 1;
           const baseFreq = 523 * Math.pow(1.06, step * 2);
           playTone(baseFreq, 0.12, 'sine', 0.13, baseFreq * 1.5);
-          setTimeout(() => playTone(baseFreq * 1.5, 0.16, 'sine', 0.11, baseFreq * 2), 65);
+          scheduleSound(() => playTone(baseFreq * 1.5, 0.16, 'sine', 0.11, baseFreq * 2), 65);
         }
         if (kind === 'gold') {
           playTone(659, 0.12, 'triangle', 0.12, 880);
-          setTimeout(() => playTone(880, 0.18, 'sine', 0.12, 1318), 60);
+          scheduleSound(() => playTone(880, 0.18, 'sine', 0.12, 1318), 60);
         }
         if (kind === 'score') playTone(440, 0.14, 'triangle', 0.13, 660);
         if (kind === 'tick') playTone(880, 0.04, 'sine', 0.05);
         if (kind === 'buzzer') {
           playTone(190, 0.28, 'sawtooth', 0.09, 140);
-          setTimeout(() => playTone(150, 0.3, 'sawtooth', 0.08, 120), 120);
+          scheduleSound(() => playTone(150, 0.3, 'sawtooth', 0.08, 120), 120);
         }
       }
 
@@ -462,6 +475,7 @@
       }
 
       function initGame() {
+        clearSoundTimers();
         const limit = getShotTimeLimit(0);
         lastTickSec = -1;
         state = {
@@ -571,7 +585,7 @@
 
       const gameWrap = document.querySelector('.game-wrap');
       gameWrap.addEventListener('pointerdown', (e) => {
-        if (e.target.closest('button, a, .overlay, .hud, .hint-text')) return;
+        if (e.target.closest('button, a, .overlay, .hud, .hint-text, .controls-row, .data-clear-wrap')) return;
         e.preventDefault();
         if (state.paused) { setPaused(false); return; }
         jumpBall();
@@ -781,6 +795,13 @@
               b.squash = 0.1;
               state.boardFlash = 1.0;
               addRing(BOARD_X + 6, b.y, 'rgba(224, 242, 254, 0.85)', 28);
+              playSound('board');
+            } else if (b.x <= BOARD_X && b.vx > 0) {
+              b.x = BOARD_X - 6 - BALL_R;
+              b.vx = -Math.abs(b.vx) * 0.56;
+              b.vy *= 0.85;
+              b.squash = 0.1;
+              state.boardFlash = 1.0;
               playSound('board');
             }
           }
@@ -1467,15 +1488,18 @@
         ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
         ctx.save();
         const isNight = state.score >= 30;
-        // 夜场先铺满画布，进球震屏时边缘仍由完整背景覆盖。
-        if (isNight) drawNightCourt();
+        // 先铺满背景再做前景震屏，避免黄昏或夜场震屏时边缘露底
+        if (isNight) {
+          drawNightCourt();
+        } else {
+          drawSunsetCourt();
+        }
         if (state.shake > 0.2) {
           const sx = (Math.random() - 0.5) * state.shake * 2;
           const sy = (Math.random() - 0.5) * state.shake * 2;
           ctx.translate(sx, sy);
         }
 
-        if (!isNight) drawSunsetCourt();
         drawHoop(false);
         drawBlocker();
         drawBall();
@@ -1532,6 +1556,36 @@
           ctx.restore();
         });
 
+        // 画面右上角状态徽章：火焰连击 / 金球回合
+        if (state.started && !state.ended) {
+          let badgeText = '';
+          let badgeColor = '#fb923c';
+          if (state.ball && state.ball.isGold) {
+            badgeText = '⭐ 金球回合 ×2';
+            badgeColor = '#facc15';
+          } else if (state.combo >= 2) {
+            badgeText = '🔥 火焰连击 ×' + state.combo;
+            badgeColor = '#fb923c';
+          }
+          if (badgeText) {
+            ctx.save();
+            ctx.font = 'bold 13px sans-serif';
+            const tw = ctx.measureText(badgeText).width + 22;
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.68)';
+            ctx.beginPath();
+            ctx.roundRect(W - tw - 14, 14, tw, 28, 999);
+            ctx.fill();
+            ctx.strokeStyle = badgeColor;
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+            ctx.fillStyle = badgeColor;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(badgeText, W - tw / 2 - 14, 28.5);
+            ctx.restore();
+          }
+        }
+
         ctx.restore();
       }
 
@@ -1555,6 +1609,7 @@
       });
       soundBtn.addEventListener('click', () => {
         soundEnabled = !soundEnabled;
+        if (!soundEnabled) clearSoundTimers();
         soundBtn.textContent = soundEnabled ? '音效: 开' : '音效: 关';
         if (window.SiteData) SiteData.setSound(soundEnabled);
       });

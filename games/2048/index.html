@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>经典 2048 - 小游乐场</title>
-  <meta name="description" content="经典 2048：滑动合并方块，支持 4×4 与 5×5 棋盘，可撤回。" />
+  <meta name="description" content="经典 2048：丝滑滑动合并方块，支持 4×4 与 5×5 棋盘、自动存档与单步撤回。" />
   <meta name="author" content="Hayden-He" />
   <meta name="theme-color" content="#2563eb" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E%F0%9F%8E%AE%3C/text%3E%3C/svg%3E" />
@@ -66,6 +66,7 @@
     }
 
     .hud-box {
+      position: relative;
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 12px;
@@ -82,6 +83,22 @@
     .hud-value {
       font-size: 1.15rem;
       font-weight: 800;
+    }
+
+    .score-float {
+      position: absolute;
+      top: 4px;
+      right: 8px;
+      font-size: 0.78rem;
+      font-weight: 800;
+      color: var(--accent);
+      pointer-events: none;
+      animation: score-rise 0.65s ease-out forwards;
+    }
+
+    @keyframes score-rise {
+      0% { opacity: 1; transform: translateY(4px); }
+      100% { opacity: 0; transform: translateY(-16px); }
     }
 
     .toolbar {
@@ -145,6 +162,8 @@
     }
 
     .board-wrap {
+      --size: 4;
+      --gap: 10px;
       position: relative;
       width: 100%;
       max-width: 420px;
@@ -155,61 +174,99 @@
       box-shadow: var(--shadow-md);
       touch-action: none;
       user-select: none;
+      -webkit-user-select: none;
     }
 
-    .grid-2048 {
+    .board-stage {
+      position: relative;
+      width: 100%;
+      height: 100%;
+    }
+
+    .grid-bg {
       width: 100%;
       height: 100%;
       display: grid;
-      gap: 10px;
+      grid-template-columns: repeat(var(--size), 1fr);
+      grid-template-rows: repeat(var(--size), 1fr);
+      gap: var(--gap);
+    }
+
+    .cell-bg {
+      border-radius: 10px;
+      background: rgba(238, 228, 218, 0.35);
+    }
+
+    .tile-layer {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
     }
 
     .tile {
+      --cell: calc((100% - (var(--size) - 1) * var(--gap)) / var(--size));
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: var(--cell);
+      height: var(--cell);
       display: flex;
       align-items: center;
       justify-content: center;
       border-radius: 10px;
       font-weight: 800;
       font-size: 1.65rem;
-      background: rgba(238, 228, 218, 0.35);
       color: #776e65;
+      box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08);
+      transition: transform 0.11s cubic-bezier(0.22, 1, 0.36, 1);
+      will-change: transform;
+    }
+
+    .tile-inner {
+      width: 100%;
+      height: 100%;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     .tile.compact {
       font-size: 1.35rem;
     }
 
-    .tile.spawn {
+    .tile.spawn .tile-inner {
       animation: pop-in 0.18s ease-out;
     }
 
-    .tile.merged {
-      animation: merge-pop 0.22s ease-out;
+    .tile.merged .tile-inner {
+      animation: merge-pop 0.2s ease-out;
     }
 
     @keyframes pop-in {
-      0% { transform: scale(0.5); opacity: 0.4; }
+      0% { transform: scale(0.45); opacity: 0.4; }
       100% { transform: scale(1); opacity: 1; }
     }
 
     @keyframes merge-pop {
-      0% { transform: scale(0.92); }
-      50% { transform: scale(1.12); }
+      0% { transform: scale(0.9); }
+      50% { transform: scale(1.13); }
       100% { transform: scale(1); }
     }
 
-    .tile[data-val="2"] { background: #eee4da; }
-    .tile[data-val="4"] { background: #ede0c8; }
-    .tile[data-val="8"] { background: #f2b179; color: #fff; }
-    .tile[data-val="16"] { background: #f59563; color: #fff; }
-    .tile[data-val="32"] { background: #f67c5f; color: #fff; }
-    .tile[data-val="64"] { background: #f65e3b; color: #fff; }
-    .tile[data-val="128"] { background: #edcf72; color: #fff; font-size: 1.35rem; }
-    .tile[data-val="256"] { background: #edcc61; color: #fff; font-size: 1.35rem; }
-    .tile[data-val="512"] { background: #edc850; color: #fff; font-size: 1.35rem; }
-    .tile[data-val="1024"] { background: #edc53f; color: #fff; font-size: 1.1rem; }
-    .tile[data-val="2048"] { background: #edc22e; color: #fff; font-size: 1.1rem; }
-    .tile.super { background: #3c3a32; color: #fff; font-size: 1.05rem; }
+    .tile[data-val="2"] .tile-inner { background: #eee4da; }
+    .tile[data-val="4"] .tile-inner { background: #ede0c8; }
+    .tile[data-val="8"] .tile-inner { background: #f2b179; color: #fff; }
+    .tile[data-val="16"] .tile-inner { background: #f59563; color: #fff; }
+    .tile[data-val="32"] .tile-inner { background: #f67c5f; color: #fff; }
+    .tile[data-val="64"] .tile-inner { background: #f65e3b; color: #fff; }
+    .tile[data-val="128"] .tile-inner { background: #edcf72; color: #fff; font-size: 1.35rem; }
+    .tile[data-val="256"] .tile-inner { background: #edcc61; color: #fff; font-size: 1.35rem; }
+    .tile[data-val="512"] .tile-inner { background: #edc850; color: #fff; font-size: 1.35rem; }
+    .tile[data-val="1024"] .tile-inner { background: #edc53f; color: #fff; font-size: 1.1rem; }
+    .tile[data-val="2048"] .tile-inner { background: #edc22e; color: #fff; font-size: 1.1rem; box-shadow: 0 0 18px rgba(237, 194, 46, 0.55); }
+    .tile.super .tile-inner { background: #3c3a32; color: #fff; font-size: 1.02rem; }
+    .tile.compact.super .tile-inner { font-size: 0.85rem; }
 
     .overlay {
       position: absolute;
@@ -225,6 +282,7 @@
       color: #fff;
       text-align: center;
       padding: 20px;
+      z-index: 5;
     }
 
     .overlay.show {
@@ -275,7 +333,7 @@
     </div>
 
     <div class="hud">
-      <div class="hud-box">
+      <div id="score-box" class="hud-box">
         <div class="hud-label">当前得分</div>
         <div id="score-el" class="hud-value">0</div>
       </div>
@@ -302,7 +360,10 @@
     </div>
 
     <div id="board-wrap" class="board-wrap">
-      <div id="grid" class="grid-2048"></div>
+      <div class="board-stage">
+        <div id="grid-bg" class="grid-bg"></div>
+        <div id="tile-layer" class="tile-layer"></div>
+      </div>
       <div id="overlay" class="overlay">
         <h2 id="overlay-title">没有可移动的方块了</h2>
         <p id="overlay-desc">本局得分：0</p>
@@ -313,7 +374,7 @@
       </div>
     </div>
 
-    <p class="hint-text">电脑按 ↑ ↓ ← → 或 WASD 移动，手机在棋盘上滑动；新手推荐先试 5×5 模式</p>
+    <p class="hint-text">电脑按 ↑ ↓ ← → 或 WASD 移动，手机在棋盘上滑动；新手推荐先试 5×5</p>
   </main>
 
   <script>
@@ -322,7 +383,10 @@
       const SAVE_PREFIX = 'game_save_2048_';
       const MODE_KEY = SAVE_PREFIX + 'mode';
       const temporarySaves = new Map();
-      const gridEl = document.getElementById('grid');
+
+      const gridBgEl = document.getElementById('grid-bg');
+      const tileLayerEl = document.getElementById('tile-layer');
+      const scoreBoxEl = document.getElementById('score-box');
       const scoreEl = document.getElementById('score-el');
       const maxEl = document.getElementById('max-el');
       const bestEl = document.getElementById('best-el');
@@ -340,21 +404,20 @@
       soundBtn.textContent = soundEnabled ? '音效: 开' : '音效: 关';
 
       function playMergeTone(maxVal) {
-        if (!soundEnabled) return;
-        if (!window.SiteData) return;
+        if (!soundEnabled || !window.SiteData) return;
         SiteData.withAudio((audioCtx) => {
-        try {
-          const osc = audioCtx.createOscillator();
-          const gain = audioCtx.createGain();
-          const base = maxVal > 0 ? Math.min(880, 260 + Math.log2(maxVal) * 48) : 220;
-          osc.frequency.setValueAtTime(base, audioCtx.currentTime);
-          gain.gain.setValueAtTime(0.07, audioCtx.currentTime);
-          gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.08);
-          osc.connect(gain);
-          gain.connect(audioCtx.destination);
-          osc.start();
-          osc.stop(audioCtx.currentTime + 0.08);
-        } catch {}
+          try {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            const base = maxVal > 0 ? Math.min(880, 260 + Math.log2(maxVal) * 48) : 220;
+            osc.frequency.setValueAtTime(base, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.07, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.08);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.08);
+          } catch {}
         });
       }
 
@@ -410,17 +473,26 @@
           ))) && position.board.some((row) => row.some((tile) => tile !== 0));
       }
 
+      function rebuildGridBg() {
+        boardWrap.style.setProperty('--size', String(size));
+        gridBgEl.innerHTML = '';
+        for (let i = 0; i < size * size; i++) {
+          const cell = document.createElement('div');
+          cell.className = 'cell-bg';
+          gridBgEl.appendChild(cell);
+        }
+      }
+
       function openGame(saveFresh = true) {
         size4Btn.classList.toggle('active', size === 4);
         size5Btn.classList.toggle('active', size === 5);
-        gridEl.style.gridTemplateColumns = 'repeat(' + size + ', 1fr)';
-        gridEl.style.gridTemplateRows = 'repeat(' + size + ', 1fr)';
+        rebuildGridBg();
 
         let saved;
         try {
           saved = JSON.parse(readProgress(SAVE_PREFIX + size));
         } catch {
-          // 无法读取的存档可用新棋局替换。
+          // 无法读取的存档可用新棋局替换
         }
         if (!isValidPosition(saved)) {
           initGame();
@@ -464,26 +536,50 @@
         lastSpawn = r + ',' + c;
       }
 
-      function slideLine(line) {
-        const filtered = line.filter((v) => v !== 0);
+      function showScoreFloat(gained) {
+        if (gained <= 0) return;
+        const el = document.createElement('span');
+        el.className = 'score-float';
+        el.textContent = '+' + gained;
+        scoreBoxEl.appendChild(el);
+        setTimeout(() => el.remove(), 700);
+      }
+
+      function slideLineWithOrigins(line) {
+        // line: [{ val, idx }]
+        const nonZero = line.filter((item) => item.val !== 0);
         const result = [];
+        const origins = []; // 对应新位置上由哪些旧下标组成
         const mergedIdx = [];
         let gained = 0;
         let highestMerged = 0;
-        for (let i = 0; i < filtered.length; i++) {
-          if (i + 1 < filtered.length && filtered[i] === filtered[i + 1]) {
-            const merged = filtered[i] * 2;
+
+        for (let i = 0; i < nonZero.length; i++) {
+          if (i + 1 < nonZero.length && nonZero[i].val === nonZero[i + 1].val) {
+            const merged = nonZero[i].val * 2;
             mergedIdx.push(result.length);
+            origins.push([nonZero[i].idx, nonZero[i + 1].idx]);
             result.push(merged);
             gained += merged;
             if (merged > highestMerged) highestMerged = merged;
             i++;
           } else {
-            result.push(filtered[i]);
+            origins.push([nonZero[i].idx]);
+            result.push(nonZero[i].val);
           }
         }
-        while (result.length < size) result.push(0);
-        return { result, gained, mergedIdx, highestMerged };
+        while (result.length < size) {
+          result.push(0);
+          origins.push([]);
+        }
+        return { result, origins, gained, mergedIdx, highestMerged };
+      }
+
+      function toCoord(dir, i, j) {
+        if (dir === 'left') return [i, j];
+        if (dir === 'right') return [i, size - 1 - j];
+        if (dir === 'up') return [j, i];
+        return [size - 1 - j, i];
       }
 
       function move(dir) {
@@ -495,33 +591,35 @@
         let totalGained = 0;
         let highestMerged = 0;
         const mergedCells = new Set();
+        const animTiles = [];
 
         for (let i = 0; i < size; i++) {
           const line = [];
           for (let j = 0; j < size; j++) {
-            if (dir === 'left') line.push(board[i][j]);
-            if (dir === 'right') line.push(board[i][size - 1 - j]);
-            if (dir === 'up') line.push(board[j][i]);
-            if (dir === 'down') line.push(board[size - 1 - j][i]);
+            const [r, c] = toCoord(dir, i, j);
+            line.push({ val: board[r][c], idx: j });
           }
 
-          const { result, gained, mergedIdx, highestMerged: hm } = slideLine(line);
+          const { result, origins, gained, mergedIdx, highestMerged: hm } = slideLineWithOrigins(line);
           totalGained += gained;
           if (hm > highestMerged) highestMerged = hm;
 
           for (let j = 0; j < size; j++) {
             const val = result[j];
-            let r = i;
-            let c = j;
-            if (dir === 'right') c = size - 1 - j;
-            if (dir === 'up') { r = j; c = i; }
-            if (dir === 'down') { r = size - 1 - j; c = i; }
+            const [r, c] = toCoord(dir, i, j);
 
             if (board[r][c] !== val) {
               board[r][c] = val;
               moved = true;
             }
-            if (mergedIdx.includes(j)) mergedCells.add(r + ',' + c);
+            if (val > 0) {
+              const isMerged = mergedIdx.includes(j);
+              if (isMerged) mergedCells.add(r + ',' + c);
+              origins[j].forEach((fromIdx) => {
+                const [fr, fc] = toCoord(dir, i, fromIdx);
+                animTiles.push({ val, fromR: fr, fromC: fc, toR: r, toC: c, isMerged });
+              });
+            }
           }
         }
 
@@ -533,6 +631,7 @@
         lastMerged = mergedCells;
 
         score += totalGained;
+        showScoreFloat(totalGained);
         if (score > bestScore) {
           bestScore = score;
           try {
@@ -542,7 +641,7 @@
 
         addRandomTile();
         if (victory === null && getMaxTile() >= 2048) victory = 'pending';
-        render();
+        render(animTiles);
         showOutcome();
         saveGame();
       }
@@ -581,28 +680,75 @@
         return false;
       }
 
-      function render() {
+      function tileTransform(r, c) {
+        return `translate3d(calc(${c} * (100% + var(--gap))), calc(${r} * (100% + var(--gap))), 0)`;
+      }
+
+      function createTileEl(val, r, c, extraClass) {
+        const tile = document.createElement('div');
+        let cls = 'tile';
+        if (size === 5) cls += ' compact';
+        if (val > 2048) cls += ' super';
+        if (extraClass) cls += ' ' + extraClass;
+        tile.className = cls;
+        tile.dataset.val = String(val);
+        tile.style.transform = tileTransform(r, c);
+
+        const inner = document.createElement('div');
+        inner.className = 'tile-inner';
+        inner.textContent = String(val);
+        tile.appendChild(inner);
+        return tile;
+      }
+
+      function render(animTiles) {
         scoreEl.textContent = score;
         maxEl.textContent = getMaxTile();
         bestEl.textContent = bestScore;
         undoBtn.disabled = !prevState;
-        gridEl.innerHTML = '';
+        tileLayerEl.innerHTML = '';
+
+        if (animTiles && animTiles.length > 0) {
+          const moving = [];
+          const mergedSet = new Set();
+
+          animTiles.forEach((item) => {
+            const key = item.toR + ',' + item.toC;
+            const cls = item.isMerged && !mergedSet.has(key) ? 'merged' : '';
+            if (item.isMerged) mergedSet.add(key);
+            const el = createTileEl(item.val, item.fromR, item.fromC, cls);
+            tileLayerEl.appendChild(el);
+            if (item.fromR !== item.toR || item.fromC !== item.toC) {
+              moving.push({ el, toR: item.toR, toC: item.toC });
+            }
+          });
+
+          if (lastSpawn) {
+            const [sr, sc] = lastSpawn.split(',').map(Number);
+            if (board[sr] && board[sr][sc] > 0) {
+              tileLayerEl.appendChild(createTileEl(board[sr][sc], sr, sc, 'spawn'));
+            }
+          }
+
+          if (moving.length > 0) {
+            requestAnimationFrame(() => {
+              requestAnimationFrame(() => {
+                moving.forEach(({ el, toR, toC }) => {
+                  el.style.transform = tileTransform(toR, toC);
+                });
+              });
+            });
+          }
+          return;
+        }
+
         for (let r = 0; r < size; r++) {
           for (let c = 0; c < size; c++) {
             const val = board[r][c];
+            if (val <= 0) continue;
             const key = r + ',' + c;
-            const tile = document.createElement('div');
-            let cls = 'tile';
-            if (size === 5) cls += ' compact';
-            if (val > 2048) cls += ' super';
-            if (key === lastSpawn) cls += ' spawn';
-            else if (lastMerged.has(key)) cls += ' merged';
-            tile.className = cls;
-            if (val > 0) {
-              tile.dataset.val = String(val);
-              tile.textContent = String(val);
-            }
-            gridEl.appendChild(tile);
+            const extra = key === lastSpawn ? 'spawn' : lastMerged.has(key) ? 'merged' : '';
+            tileLayerEl.appendChild(createTileEl(val, r, c, extra));
           }
         }
       }
@@ -661,18 +807,20 @@
       });
 
       let startTouch = null;
+      let swipedThisTouch = false;
       boardWrap.addEventListener('touchstart', (e) => {
         if (e.touches.length === 1) {
           startTouch = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+          swipedThisTouch = false;
         }
       }, { passive: true });
 
-      boardWrap.addEventListener('touchend', (e) => {
-        if (!startTouch || e.changedTouches.length === 0) return;
-        const dx = e.changedTouches[0].clientX - startTouch.x;
-        const dy = e.changedTouches[0].clientY - startTouch.y;
-        startTouch = null;
+      boardWrap.addEventListener('touchmove', (e) => {
+        if (!startTouch || swipedThisTouch || e.touches.length === 0) return;
+        const dx = e.touches[0].clientX - startTouch.x;
+        const dy = e.touches[0].clientY - startTouch.y;
         if (Math.hypot(dx, dy) < 24) return;
+        swipedThisTouch = true;
         if (Math.abs(dx) > Math.abs(dy)) {
           move(dx > 0 ? 'right' : 'left');
         } else {
@@ -680,14 +828,23 @@
         }
       }, { passive: true });
 
-      function restartGame() {
-        if (!confirm(`重开 ${size}×${size} 棋局？当前进度将被清除。`)) return;
+      boardWrap.addEventListener('touchend', () => {
+        startTouch = null;
+        swipedThisTouch = false;
+      }, { passive: true });
+
+      function forceRestart() {
         initGame();
         saveGame();
       }
 
-      document.getElementById('restart-btn').addEventListener('click', restartGame);
-      document.getElementById('overlay-btn').addEventListener('click', restartGame);
+      function restartWithConfirm() {
+        if (canMove() && score > 0 && !confirm(`重开 ${size}×${size} 棋局？当前进度将被清除。`)) return;
+        forceRestart();
+      }
+
+      document.getElementById('restart-btn').addEventListener('click', restartWithConfirm);
+      document.getElementById('overlay-btn').addEventListener('click', forceRestart);
 
       window.addEventListener('pageshow', (event) => {
         if (event.persisted) {
