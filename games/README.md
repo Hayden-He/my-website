@@ -14,7 +14,7 @@ assets/
   icons.svg         自绘 SVG 图标 sprite（品牌/5 个游戏/分类/UI）
   icon.svg          站点图标源文件（favicon）
   icons/            PWA 192/512 与 apple-touch-icon 图标
-  og-image.png      1200×630 分享图（og:image）
+  og-image.jpg      1200×630 分享图（JPEG，约 52KB，og:image）
 games/
   _template/        可复制的新游戏模板
   <id>/index.html   每个游戏一个页面
@@ -24,7 +24,7 @@ scripts/
   check-site.mjs    部署前结构校验
   check-i18n.mjs    中英文案覆盖校验
   og-image.html     OG 分享图源文件（1200×630）
-  make-og-image.mjs 从源文件生成 assets/og-image.png
+  make-og-image.mjs 从源文件生成 assets/og-image.jpg
 ```
 
 游戏页只保留**自己棋盘/球场/网格**的 CSS 和玩法 JS；HUD、按钮、遮罩、提示、更多游戏、音效按钮、最高分读写都用公共外壳。
@@ -52,7 +52,7 @@ scripts/
    同时补该页的 SEO（`canonical`、`og:*`、`twitter:*`）：
    - `og:title` 用“游戏名 · Little Playground”；
    - `og:description` 用该页 `meta description`，描述保持中文；
-   - `og:image` 用共享的 `https://my-website-all.pages.dev/assets/og-image.png`；
+   - `og:image` 用共享的 `https://my-website-all.pages.dev/assets/og-image.jpg`；
    - 把 `/games/<id>/` 加进 `sitemap.xml`（`lastmod` 同步更新）；`check-site` 会拦漏。
    顶栏 h1 不再用 emoji，改为“自绘图标 + 可翻译文字”：
    ```html
@@ -112,7 +112,7 @@ scripts/
 
 - 可索引页：首页 + 2 分类 + 5 游戏 = **8 个**；`404.html` 有 `noindex`，不进 sitemap。
 - 每页必须有：`canonical`、`og:type/site_name/locale/title/description/url/image`、`og:image:type/width/height/alt`、`twitter:card/title/description/image/alt`。
-- 共享分享图：`assets/og-image.png`（1200×630，中英双语品牌卡）。源文件 `scripts/og-image.html`；改品牌或游戏列表后运行 `node scripts/make-og-image.mjs` 重新生成（需要本机 Chrome，可用 `CHROME_PATH` 指定；无 npm 依赖）。
+- 共享分享图：`assets/og-image.jpg`（1200×630，中英双语品牌卡）。源文件 `scripts/og-image.html`；改品牌或游戏列表后运行 `node scripts/make-og-image.mjs` 重新生成（需要本机 Chrome，可用 `CHROME_PATH` 指定；无 npm 依赖）。
 - `sitemap.xml`：8 个 URL；页面内容更新时同步改 `lastmod`。
 - `robots.txt`：允许抓取并指向 sitemap。
 - 域名默认 `https://my-website-all.pages.dev`；换自定义域名时，同步改 8 个页面的 canonical/og:url/og:image、`sitemap.xml`、`robots.txt`、`check-site` 的 `SITE_URL`。

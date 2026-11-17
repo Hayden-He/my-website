@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * 生成 assets/og-image.png（1200×630 分享图）
+ * 生成 assets/og-image.jpg（1200×630 分享图）
  *
  * 用法：
  *   node scripts/make-og-image.mjs
@@ -10,7 +10,7 @@
  * - 页面源文件是 scripts/og-image.html，使用站内 assets/icons.svg 的自绘图标；
  * - 脚本只依赖本机 Chrome/Chromium + Node 内置模块（无 npm 依赖）；
  * - 脚本临时启动本地静态服务（用于加载同源 SVG sprite），用 CDP 截图后退出；
- * - 生成结果写入 assets/og-image.png，供 og:image 使用。
+ * - 生成结果写入 assets/og-image.jpg，供 og:image 使用（JPEG，质量 82，控制微信/QQ 预取体积）。
  */
 import fs from 'node:fs';
 import http from 'node:http';
@@ -20,7 +20,7 @@ import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const outputPath = path.join(root, 'assets', 'og-image.png');
+const outputPath = path.join(root, 'assets', 'og-image.jpg');
 const chromePath = process.env.CHROME_PATH
   || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 
@@ -147,7 +147,8 @@ try {
   await sleep(900);
   await send('Runtime.evaluate', { expression: 'document.fonts && document.fonts.ready', awaitPromise: true });
   const screenshot = await send('Page.captureScreenshot', {
-    format: 'png',
+    format: 'jpeg',
+    quality: 82,
     captureBeyondViewport: false,
     clip: { x: 0, y: 0, width: 1200, height: 630, scale: 1 },
   });

@@ -59,7 +59,7 @@ function checkContains(content, needle, label) {
 }
 
 const SITE_URL = 'https://my-website-all.pages.dev';
-const OG_IMAGE = SITE_URL + '/assets/og-image.png';
+const OG_IMAGE = SITE_URL + '/assets/og-image.jpg';
 const OG_ALT = '小游乐场 · Little Playground：5 款即开即玩的小游戏';
 
 // 每个可索引页面：canonical + OG/Twitter 必须齐全，且 og:title 为“页面名 · Little Playground”
@@ -81,7 +81,7 @@ function checkSeoPage(page, { label, urlPath, ogTitle }) {
   checkContains(page, `<meta property="og:description" content="${description}"`, label);
   checkContains(page, `<meta property="og:url" content="${url}"`, label);
   checkContains(page, `<meta property="og:image" content="${OG_IMAGE}"`, label);
-  checkContains(page, '<meta property="og:image:type" content="image/png"', label);
+  checkContains(page, '<meta property="og:image:type" content="image/jpeg"', label);
   checkContains(page, '<meta property="og:image:width" content="1200"', label);
   checkContains(page, '<meta property="og:image:height" content="630"', label);
   checkContains(page, `<meta property="og:image:alt" content="${OG_ALT}"`, label);
@@ -272,7 +272,7 @@ if (notFoundPage && notFoundPage.includes('property="og:url"')) {
 }
 
 // ---------- SEO：sitemap / robots / OG image ----------
-checkFile('assets/og-image.png', 'assets/og-image.png');
+checkFile('assets/og-image.jpg', 'assets/og-image.jpg');
 checkFile('sitemap.xml', 'sitemap.xml');
 checkFile('robots.txt', 'robots.txt');
 const sitemap = read('sitemap.xml') || '';
