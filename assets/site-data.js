@@ -261,6 +261,40 @@
     return btn;
   }
 
+  function createUpdateButton() {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'update-check-btn';
+    btn.textContent = t('检查更新');
+    btn.addEventListener('click', async () => {
+      if (btn.disabled) return;
+      const original = t('检查更新');
+      btn.disabled = true;
+      btn.textContent = t('检查中…');
+      try {
+        const link = document.querySelector('link[href*="/assets/style.css?v="]');
+        const current = link ? link.href.match(/[?&]v=(\d{11})/) : null;
+        const response = await fetch(location.pathname + '?check=' + Date.now(), { cache: 'no-store' });
+        const html = await response.text();
+        const next = html.match(/assets\/style\.css\?v=(\d{11})/);
+        if (current && next && current[1] !== next[1]) {
+          toast(t('发现新版本，正在刷新…'));
+          setTimeout(() => location.replace(location.pathname + '?fresh=' + Date.now()), 450);
+        } else if (current && next) {
+          toast(t('已是最新版本'));
+        } else {
+          toast(t('检查失败，请稍后重试'));
+        }
+      } catch {
+        toast(t('检查失败，请稍后重试'));
+      } finally {
+        btn.disabled = false;
+        btn.textContent = original;
+      }
+    });
+    return btn;
+  }
+
   // 作者标识：© 年份 站点名 · by Hayden-He（链接至作者仓库）
   const AUTHOR = { name: 'Hayden-He', url: 'https://github.com/Hayden-He/my-website' };
 
@@ -284,7 +318,7 @@
   }
 
   window.SiteData = {
-    getSound, setSound, clearAll, createClearButton, createCredit,
+    getSound, setSound, clearAll, createClearButton, createUpdateButton, createCredit,
     getAudioContext, unlockAudio, withAudio,
     isDialogOpen, confirmDialog, alertDialog, toast,
   };
@@ -298,6 +332,9 @@
     document.querySelectorAll('.data-clear-btn').forEach((el) => {
       el.textContent = t('清除本地数据');
     });
+    document.querySelectorAll('.update-check-btn').forEach((el) => {
+      if (!el.disabled) el.textContent = t('检查更新');
+    });
   });
 
   // 游戏页：自动在页面底部追加入口（列表页由 app.js 在页脚渲染）
@@ -308,6 +345,7 @@
     box.className = 'data-clear-wrap';
     box.appendChild(createCredit());
     box.appendChild(createClearButton());
+    box.appendChild(createUpdateButton());
     wrap.appendChild(box);
   });
 })();

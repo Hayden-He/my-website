@@ -19,6 +19,7 @@ const pages = [
   'games/2048/index.html',
   'games/minesweeper/index.html',
   'games/memory/index.html',
+  'games/slide/index.html',
 ];
 
 const versions = new Set();

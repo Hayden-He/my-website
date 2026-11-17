@@ -227,6 +227,7 @@
     if (window.SiteData) {
       const wrap = createEl('div', 'container data-clear-wrap');
       wrap.appendChild(window.SiteData.createClearButton());
+      wrap.appendChild(window.SiteData.createUpdateButton());
       footer.appendChild(wrap);
     }
   }

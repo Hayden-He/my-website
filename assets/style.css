@@ -495,8 +495,33 @@ textarea {
 
 /* 清除本地数据入口 */
 .data-clear-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 2px 12px;
   text-align: center;
   padding: 6px 0 18px;
+}
+
+.update-check-btn {
+  background: none;
+  border: none;
+  padding: 4px 8px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  text-decoration: underline;
+  cursor: pointer;
+  font: inherit;
+}
+
+.update-check-btn:hover {
+  color: var(--primary);
+}
+
+.update-check-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
 }
 
 .data-clear-btn {
