@@ -471,6 +471,7 @@
           isGold,
           resetCooldown: 0,
           bottomEntry: false,
+          jumpLock: 0,
           squash: 0,
         };
       }
@@ -497,15 +498,19 @@
           rimY: 186,
           baseRimY: 186,
           targetRimY: 186,
-          rimFloatPhase: 0,
+          rimFloatOffset: 0,
+          rimFloatTarget: 18,
+          rimFloatSpeed: 34,
+          rimFloatPause: 0,
           rimSpring: 0,
           skyTime: 0,
           netSwing: 0,
           netExpand: 0,
           boardFlash: 0,
           blockerX: 250,
-          blockerY: 190,
+          blockerY: 180,
           blockerDir: 1,
+          blockerSpeedScale: 1,
           blockerPhase: 0,
           blockerPause: 0,
           blockerFlash: 0,
@@ -528,7 +533,7 @@
         if (state.score >= 80) {
           return [
             { x: 225, y: state.blockerY, h: 38, flash: state.blockerFlash },
-            { x: 305, y: 385 - state.blockerY, h: 38, flash: state.blockerFlash2 },
+            { x: 305, y: 334 - state.blockerY, h: 38, flash: state.blockerFlash2 },
           ];
         }
         return [
@@ -587,7 +592,7 @@
         if (state.ended || state.paused) return;
         if (!state.started) state.started = true;
         const b = state.ball;
-        if (b.scored) return;
+        if (b.scored || b.jumpLock > 0) return;
         // 高空升力平滑衰减，防止贴顶滑行逃课，同时保持手感连贯
         const minY = BALL_R + 6;
         const ceilingZone = 75;
@@ -716,31 +721,53 @@
 
         state.skyTime += dt;
 
-        // 平滑过渡篮筐高度变化（15 分后叠加缓慢连续上下浮动）
+        // 平滑过渡篮筐高度变化（15 分后改为随机方向与速率的平滑漂移）
         state.prevRimY = state.rimY;
         state.baseRimY += (state.targetRimY - state.baseRimY) * Math.min(1, dt * 6);
-        let floatOffset = 0;
         if (state.score >= 15 && state.started && !state.ended) {
-          state.rimFloatPhase += dt * 1.35;
-          floatOffset = Math.sin(state.rimFloatPhase) * 24;
+          if (state.rimFloatPause > 0) {
+            state.rimFloatPause = Math.max(0, state.rimFloatPause - dt);
+          } else {
+            const diff = state.rimFloatTarget - state.rimFloatOffset;
+            const stepSpd = state.rimFloatSpeed * Math.min(1, Math.max(0.35, Math.abs(diff) / 14));
+            if (Math.abs(diff) <= stepSpd * dt) {
+              state.rimFloatOffset = state.rimFloatTarget;
+              state.rimFloatPause = 0.15 + Math.random() * 0.25;
+              let nextTarget = (Math.random() * 2 - 1) * 28;
+              if (Math.abs(nextTarget - state.rimFloatOffset) < 12) {
+                nextTarget = state.rimFloatOffset >= 0 ? -18 - Math.random() * 10 : 18 + Math.random() * 10;
+              }
+              state.rimFloatTarget = nextTarget;
+              state.rimFloatSpeed = 24 + Math.random() * 34;
+            } else {
+              state.rimFloatOffset += Math.sign(diff) * stepSpd * dt;
+            }
+          }
+        } else {
+          state.rimFloatOffset = 0;
         }
-        state.rimY = Math.max(128, Math.min(236, state.baseRimY + floatOffset));
+        state.rimY = Math.max(128, Math.min(236, state.baseRimY + state.rimFloatOffset));
 
         // 护盾随分数三阶段演进：25+ 垂直守卫 -> 50+ 斜向巡逻提速 -> 80+ 双子联动护盾
+        // 行程扩大至 [64, 270] 封死贴顶走廊，并采用两端缓动 + 趟次微随机速率
         if (state.score >= 25 && state.started && !state.ended) {
-          const spd = state.score >= 80 ? 105 : state.score >= 50 ? 95 : 78;
+          const baseSpd = state.score >= 80 ? 105 : state.score >= 50 ? 95 : 78;
           if (state.blockerPause > 0) {
             state.blockerPause = Math.max(0, state.blockerPause - dt);
           } else {
-            state.blockerY += state.blockerDir * spd * dt;
+            const norm = Math.max(0, Math.min(1, (state.blockerY - 64) / (270 - 64)));
+            const easeFactor = 0.45 + 0.9 * Math.sin(norm * Math.PI);
+            state.blockerY += state.blockerDir * baseSpd * state.blockerSpeedScale * easeFactor * dt;
             if (state.blockerY >= 270) {
               state.blockerY = 270;
               state.blockerDir = -1;
-              state.blockerPause = 0.12;
-            } else if (state.blockerY <= 115) {
-              state.blockerY = 115;
+              state.blockerSpeedScale = 0.85 + Math.random() * 0.33;
+              state.blockerPause = 0.08;
+            } else if (state.blockerY <= 64) {
+              state.blockerY = 64;
               state.blockerDir = 1;
-              state.blockerPause = 0.12;
+              state.blockerSpeedScale = 0.85 + Math.random() * 0.33;
+              state.blockerPause = 0.08;
             }
           }
           if (state.score >= 50 && state.score < 80) {
@@ -809,6 +836,7 @@
             return t.life > 0;
           });
 
+          if (b.jumpLock > 0) b.jumpLock = Math.max(0, b.jumpLock - dt);
           b.prevY = b.y;
           b.vy += GRAVITY * dt;
           b.x += b.vx * dt;
@@ -818,7 +846,9 @@
 
           if (b.y < BALL_R + 6) {
             b.y = BALL_R + 6;
-            b.vy = Math.max(Math.abs(b.vy) * 0.55, 160);
+            b.vy = Math.max(Math.abs(b.vy) * 0.75, 240);
+            b.jumpLock = 0.2;
+            b.squash = 0.1;
           }
 
           if (b.y >= FLOOR_Y - BALL_R) {
