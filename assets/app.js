@@ -64,7 +64,7 @@
     svg.setAttribute('aria-hidden', 'true');
     svg.setAttribute('focusable', 'false');
     const use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
-    use.setAttribute('href', '/assets/icons.svg#' + name);
+    use.setAttribute('href', '#' + name);
     svg.appendChild(use);
     return svg;
   }

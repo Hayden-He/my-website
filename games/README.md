@@ -58,7 +58,7 @@ scripts/
    ```html
    <h1 class="game-topbar-title">
      <svg class="title-icon" viewBox="0 0 32 32" aria-hidden="true" focusable="false">
-       <use href="/assets/icons.svg#game-<icon>"></use>
+       <use href="#game-<icon>"></use>
      </svg>
      <span data-i18n="游戏名">游戏名</span>
    </h1>
@@ -148,7 +148,7 @@ scripts/
 ## 模板与校验
 
 - 模板：`games/_template/index.html`，包含 HUD、音效、最高分、重开确认、更多游戏、自定义弹窗的完整示例；复制后按第 3 步补自绘 h1 图标。
-- 图标：`assets/icons.svg` 是站内自绘 SVG sprite；品牌/游戏/分类/音效/暂停/重开/撤回/旗帜都在这里，不依赖系统 emoji，也不引外部 CDN。
+- 图标：`assets/icons.svg` 是站内自绘 SVG sprite（由 `node scripts/inline-icons.mjs` 内联到页面）；品牌/游戏/分类/音效/暂停/重开/撤回/旗帜都在这里，不依赖系统 emoji，也不引外部 CDN。
 - 扫雷是“首次教学 + 工具栏常驻玩法按钮”的现成例子：首次自动展示，之后可用 `GameKit.showTutorial({ ..., force: true })` 重看。
 - 结构校验：`node scripts/check-site.mjs`，会检查配置文件、页面存在性、分类名一致、storageKey 唯一、公共外壳与 i18n/图标引用、语言按钮、h1/meta、更多游戏入口、PWA manifest/图标、SEO（canonical/OG/Twitter）、sitemap/robots/OG 图、禁止缩放等。
 - 英文覆盖：`node scripts/check-i18n.mjs`，检查页面、脚本、游戏元数据里的中文 key 是否都在 `assets/i18n.js` 的 EN 词典里。

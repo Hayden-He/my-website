@@ -852,3 +852,11 @@ body:has(#site-footer) > main {
   height: 16px;
   display: block;
 }
+
+/* 内联 SVG sprite 容器（不占布局） */
+.icon-sprite {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}

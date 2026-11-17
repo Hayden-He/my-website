@@ -140,7 +140,9 @@ for (const category of categories) {
     checkContains(categoryPage, "initSitePage('" + category.id + "')", `分类页 ${category.url}`);
     checkContains(categoryPage, 'id="games-grid"', `分类页 ${category.url}`);
     checkContains(categoryPage, 'assets/i18n.js', `分类页 ${category.url}`);
-    checkContains(categoryPage, 'assets/icons.svg', `分类页 ${category.url}`);
+    checkContains(categoryPage, 'class="icon-sprite"', `分类页 ${category.url}`);
+    checkContains(categoryPage, 'assets/style.css?v=', `分类页 ${category.url}`);
+    checkContains(categoryPage, 'assets/i18n.js?v=', `分类页 ${category.url}`);
     checkContains(categoryPage, 'site.webmanifest', `分类页 ${category.url}`);
     checkContains(categoryPage, 'assets/icon.svg', `分类页 ${category.url}`);
     checkContains(categoryPage, 'apple-touch-icon.png', `分类页 ${category.url}`);
@@ -207,10 +209,13 @@ for (const game of games) {
   checkContains(page, 'assets/game-shell.css', pagePath);
   checkContains(page, 'assets/site-data.js', pagePath);
   checkContains(page, 'assets/i18n.js', pagePath);
-  checkContains(page, 'assets/icons.svg', pagePath);
+  checkContains(page, 'class="icon-sprite"', pagePath);
+  checkContains(page, 'assets/style.css?v=', pagePath);
+  checkContains(page, 'assets/i18n.js?v=', pagePath);
   checkContains(page, 'game-' + game.icon, pagePath);
   if (game.id === 'snake' || game.id === 'basketball') {
     checkContains(page, 'role="img"', pagePath);
+    checkContains(page, 'assets/game-art.js?v=', pagePath);
   }
   checkSeoPage(page, {
     label: pagePath,
@@ -247,19 +252,20 @@ try {
 // ---------- 首页 / 404 / 公共资源 ----------
 checkContains(read('index.html'), "initSitePage('all')", 'index.html');
 checkContains(read('index.html'), 'id="games-grid"', 'index.html');
-checkContains(read('index.html'), 'assets/i18n.js', 'index.html');
+checkContains(read('index.html'), 'assets/i18n.js?v=', 'index.html');
+checkContains(read('index.html'), 'class="icon-sprite"', 'index.html');
 checkSeoPage(read('index.html'), {
   label: 'index.html',
   urlPath: '/',
   ogTitle: config.siteTitle + ' · Little Playground',
 });
 checkContains(read('index.html'), 'site.webmanifest', 'index.html');
-checkContains(read('index.html'), 'assets/icon.svg', 'index.html');
+checkContains(read('index.html'), 'assets/icon.svg?v=', 'index.html');
 checkContains(read('index.html'), 'apple-touch-icon.png', 'index.html');
-checkContains(read('404.html'), 'assets/i18n.js', '404.html');
-checkContains(read('404.html'), 'assets/icons.svg', '404.html');
+checkContains(read('404.html'), 'assets/i18n.js?v=', '404.html');
+checkContains(read('404.html'), 'class="icon-sprite"', '404.html');
 checkContains(read('404.html'), 'site.webmanifest', '404.html');
-checkContains(read('404.html'), 'assets/icon.svg', '404.html');
+checkContains(read('404.html'), 'assets/icon.svg?v=', '404.html');
 checkContains(read('404.html'), 'apple-touch-icon.png', '404.html');
 checkFile('404.html', '404.html');
 const notFoundPage = read('404.html');
@@ -275,6 +281,8 @@ if (notFoundPage && notFoundPage.includes('property="og:url"')) {
 checkFile('assets/og-image.jpg', 'assets/og-image.jpg');
 checkFile('sitemap.xml', 'sitemap.xml');
 checkFile('robots.txt', 'robots.txt');
+checkContains(read('_headers'), '/assets/*', '_headers');
+checkContains(read('_headers'), 'max-age=31536000, immutable', '_headers');
 const sitemap = read('sitemap.xml') || '';
 const robots = read('robots.txt') || '';
 const indexablePaths = [
