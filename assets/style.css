@@ -736,3 +736,102 @@ body:has(#site-footer) > main {
     font-size: 0.75rem;
   }
 }
+
+/* SVG 图标系统 */
+.brand-badge {
+  background: none;
+  font-size: 0;
+}
+
+.brand-mark {
+  display: block;
+  width: 34px;
+  height: 34px;
+}
+
+.brand-name {
+  white-space: nowrap;
+}
+
+.game-icon-svg {
+  display: block;
+  width: 32px;
+  height: 32px;
+}
+
+.more-game-svg {
+  display: block;
+  width: 22px;
+  height: 22px;
+}
+
+.title-icon {
+  display: block;
+  width: 25px;
+  height: 25px;
+  flex: 0 0 auto;
+}
+
+.game-topbar-title {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.hero-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.hero-icon {
+  display: block;
+  width: 32px;
+  height: 32px;
+  flex: 0 0 auto;
+}
+
+.sound-ico {
+  display: block;
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+}
+
+.sound-label {
+  line-height: 1;
+}
+
+.not-found-mark {
+  display: block;
+  width: 60px;
+  height: 60px;
+}
+
+.btn-inline-icon {
+  display: block;
+  width: 17px;
+  height: 17px;
+  flex: 0 0 auto;
+}
+
+@media (max-width: 400px) {
+  .title-icon {
+    width: 22px;
+    height: 22px;
+  }
+
+  .hero-icon {
+    width: 27px;
+    height: 27px;
+  }
+
+  .game-topbar-title {
+    gap: 6px;
+  }
+
+  .hero-title {
+    gap: 8px;
+  }
+}

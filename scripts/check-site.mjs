@@ -106,6 +106,10 @@ for (const category of categories) {
     checkContains(categoryPage, "initSitePage('" + category.id + "')", `分类页 ${category.url}`);
     checkContains(categoryPage, 'id="games-grid"', `分类页 ${category.url}`);
     checkContains(categoryPage, 'assets/i18n.js', `分类页 ${category.url}`);
+    checkContains(categoryPage, 'assets/icons.svg', `分类页 ${category.url}`);
+    checkContains(categoryPage, 'site.webmanifest', `分类页 ${category.url}`);
+    checkContains(categoryPage, 'assets/icon.svg', `分类页 ${category.url}`);
+    checkContains(categoryPage, 'apple-touch-icon.png', `分类页 ${category.url}`);
   }
 }
 
@@ -164,6 +168,11 @@ for (const game of games) {
   checkContains(page, 'assets/game-shell.css', pagePath);
   checkContains(page, 'assets/site-data.js', pagePath);
   checkContains(page, 'assets/i18n.js', pagePath);
+  checkContains(page, 'assets/icons.svg', pagePath);
+  checkContains(page, 'game-' + game.icon, pagePath);
+  checkContains(page, 'site.webmanifest', pagePath);
+  checkContains(page, 'assets/icon.svg', pagePath);
+  checkContains(page, 'apple-touch-icon.png', pagePath);
   checkContains(page, 'data-lang-toggle', pagePath);
   checkContains(page, 'assets/games.js', pagePath);
   checkContains(page, 'assets/game-kit.js', pagePath);
@@ -190,7 +199,14 @@ try {
 checkContains(read('index.html'), "initSitePage('all')", 'index.html');
 checkContains(read('index.html'), 'id="games-grid"', 'index.html');
 checkContains(read('index.html'), 'assets/i18n.js', 'index.html');
+checkContains(read('index.html'), 'site.webmanifest', 'index.html');
+checkContains(read('index.html'), 'assets/icon.svg', 'index.html');
+checkContains(read('index.html'), 'apple-touch-icon.png', 'index.html');
 checkContains(read('404.html'), 'assets/i18n.js', '404.html');
+checkContains(read('404.html'), 'assets/icons.svg', '404.html');
+checkContains(read('404.html'), 'site.webmanifest', '404.html');
+checkContains(read('404.html'), 'assets/icon.svg', '404.html');
+checkContains(read('404.html'), 'apple-touch-icon.png', '404.html');
 checkFile('404.html', '404.html');
 
 for (const asset of [
@@ -202,8 +218,31 @@ for (const asset of [
   'assets/app.js',
   'assets/game-kit.js',
   'assets/canvas-polyfill.js',
+  'assets/icons.svg',
+  'assets/icon.svg',
+  'assets/icons/icon-192.png',
+  'assets/icons/icon-512.png',
+  'assets/icons/apple-touch-icon.png',
+  'site.webmanifest',
 ]) {
   checkFile(asset, asset);
+}
+
+// ---------- 图标与 manifest ----------
+const iconSprite = read('assets/icons.svg') || '';
+for (const game of games) {
+  checkContains(iconSprite, 'id="game-' + game.icon + '"', 'assets/icons.svg');
+}
+const manifestSource = read('site.webmanifest');
+if (manifestSource) {
+  try {
+    const manifest = JSON.parse(manifestSource);
+    if (!Array.isArray(manifest.icons) || manifest.icons.length < 2) fail('site.webmanifest 缺少 192/512 图标');
+    if (manifest.display !== 'standalone') fail('site.webmanifest display 不是 standalone');
+    if (!manifest.start_url) fail('site.webmanifest 缺少 start_url');
+  } catch (error) {
+    fail('site.webmanifest 不是合法 JSON：' + error.message);
+  }
 }
 
 // ---------- 模板 ----------

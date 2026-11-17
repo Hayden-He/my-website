@@ -58,10 +58,10 @@
     '撤回': 'Undo',
     '← 返回大厅': '← Lobby',
     '返回全部游戏': 'Back to all games',
-    '🏀 来一局投篮': '🏀 Play some hoops',
+    '来一局投篮': 'Play some hoops',
 
     // ---- 首页 ----
-    '随时随地，轻松开局 🎮': 'Pick up and play, anytime 🎮',
+    '随时随地，轻松开局': 'Pick up and play, anytime',
     '零下载、打开即玩，键盘鼠标与手机触屏都能上手；每款游戏的最高纪录会自动保存在本机，2048 棋局还能随时续玩。':
       'No downloads, instant play with keyboard, mouse or touch. Your best scores are saved on this device, and your 2048 game can be resumed anytime.',
 

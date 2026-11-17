@@ -7,7 +7,12 @@
   <meta name="description" content="街头投篮：点击或按空格起跳，空心入网、打板进球，挑战你的最高分。" />
   <meta name="author" content="Hayden-He" />
   <meta name="theme-color" content="#1e1b4b" />
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E%F0%9F%8F%80%3C/text%3E%3C/svg%3E" />
+  <link rel="icon" type="image/svg+xml" href="/assets/icon.svg" />
+  <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png" />
+  <link rel="manifest" href="/site.webmanifest" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="小游乐场" />
   <script src="/assets/canvas-polyfill.js"></script>
   <link rel="stylesheet" href="/assets/style.css" />
   <link rel="stylesheet" href="/assets/game-shell.css" />
@@ -157,7 +162,10 @@
   <header class="game-topbar">
     <div class="container game-topbar-inner">
       <a class="back-link" href="/" data-i18n="← 返回大厅">← 返回大厅</a>
-      <h1 class="game-topbar-title" data-i18n="街头投篮 🏀">街头投篮 🏀</h1>
+      <h1 class="game-topbar-title">
+        <svg class="title-icon" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><use href="/assets/icons.svg#game-basketball"></use></svg>
+        <span data-i18n="街头投篮">街头投篮</span>
+      </h1>
       <div class="game-topbar-actions">
         <a class="game-topbar-cat" href="/categories/arcade.html" data-i18n="动作街机">动作街机</a>
         <button class="lang-btn" type="button" data-lang-toggle>EN</button>

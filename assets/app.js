@@ -57,6 +57,18 @@
     return el;
   }
 
+  function createIcon(name, className, viewBox) {
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('class', className || 'icon');
+    svg.setAttribute('viewBox', viewBox || '0 0 24 24');
+    svg.setAttribute('aria-hidden', 'true');
+    svg.setAttribute('focusable', 'false');
+    const use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
+    use.setAttribute('href', '/assets/icons.svg#' + name);
+    svg.appendChild(use);
+    return svg;
+  }
+
   function renderHeader(activeKey) {
     const header = document.getElementById('site-header');
     if (!header || !window.SITE_CONFIG) return;
@@ -66,8 +78,10 @@
 
     const brand = createEl('a', 'brand');
     brand.href = '/';
-    brand.appendChild(createEl('span', 'brand-badge', '🎮'));
-    brand.appendChild(createEl('span', '', t(siteTitle)));
+    const brandBadge = createEl('span', 'brand-badge');
+    brandBadge.appendChild(createIcon('brand', 'brand-mark', '0 0 40 40'));
+    brand.appendChild(brandBadge);
+    brand.appendChild(createEl('span', 'brand-name', t(siteTitle)));
 
     const nav = createEl('nav', 'nav-links');
     nav.setAttribute('aria-label', t('主导航'));
@@ -92,7 +106,7 @@
       const syncLabel = () => {
         const on = window.SiteData.getSound();
         soundBtn.textContent = '';
-        soundBtn.appendChild(createEl('span', 'sound-ico', on ? '🔊' : '🔇'));
+        soundBtn.appendChild(createIcon(on ? 'sound-on' : 'sound-off', 'sound-ico', '0 0 24 24'));
         soundBtn.appendChild(createEl('span', 'sound-label', t(on ? '音效开' : '音效关')));
         soundBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
         soundBtn.setAttribute('aria-label', t(on ? '音效已开启，点击关闭' : '音效已关闭，点击开启'));
@@ -126,7 +140,9 @@
     const card = createEl('article', 'game-card ' + game.category);
 
     const top = createEl('div', 'game-card-top');
-    top.appendChild(createEl('div', 'game-icon ' + game.category, game.icon));
+    const gameIcon = createEl('div', 'game-icon ' + game.category);
+    gameIcon.appendChild(createIcon('game-' + game.icon, 'game-icon-svg', '0 0 32 32'));
+    top.appendChild(gameIcon);
     top.appendChild(
       createEl('span', 'game-category-pill ' + game.category, t(game.categoryName))
     );

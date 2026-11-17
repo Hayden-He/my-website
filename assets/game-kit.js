@@ -13,6 +13,18 @@
     return window.I18N ? window.I18N.t(key, params) : key;
   }
 
+  function createIcon(name, className, viewBox) {
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('class', className || 'icon');
+    svg.setAttribute('viewBox', viewBox || '0 0 24 24');
+    svg.setAttribute('aria-hidden', 'true');
+    svg.setAttribute('focusable', 'false');
+    const use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
+    use.setAttribute('href', '/assets/icons.svg#' + name);
+    svg.appendChild(use);
+    return svg;
+  }
+
   function readBest(key) {
     try {
       const value = parseInt(localStorage.getItem(key) || '0', 10);
@@ -43,7 +55,12 @@
       : (window.SiteData ? SiteData.getSound() : true);
 
     function renderLabel() {
-      button.textContent = t(enabled ? '音效: 开' : '音效: 关');
+      button.textContent = '';
+      button.appendChild(createIcon(enabled ? 'sound-on' : 'sound-off', 'sound-ico', '0 0 24 24'));
+      const label = document.createElement('span');
+      label.className = 'sound-label';
+      label.textContent = t(enabled ? '音效: 开' : '音效: 关');
+      button.appendChild(label);
       button.setAttribute('aria-pressed', enabled ? 'true' : 'false');
       button.setAttribute('aria-label', t(enabled ? '关闭音效' : '开启音效'));
       button.title = t(enabled ? '关闭音效' : '开启音效');
@@ -109,7 +126,7 @@
         const icon = document.createElement('span');
         icon.className = 'more-game-icon';
         icon.setAttribute('aria-hidden', 'true');
-        icon.textContent = game.icon || '🎮';
+        icon.appendChild(createIcon('game-' + (game.icon || 'basketball'), 'more-game-svg', '0 0 32 32'));
 
         const info = document.createElement('span');
         const name = document.createElement('span');

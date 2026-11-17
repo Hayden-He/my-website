@@ -7,7 +7,12 @@
   <meta name="robots" content="noindex" />
   <meta name="author" content="Hayden-He" />
   <meta name="theme-color" content="#2563eb" />
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E%F0%9F%8E%AE%3C/text%3E%3C/svg%3E" />
+  <link rel="icon" type="image/svg+xml" href="/assets/icon.svg" />
+  <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png" />
+  <link rel="manifest" href="/site.webmanifest" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="小游乐场" />
   <link rel="stylesheet" href="/assets/style.css" />
   <style>
     .not-found-wrap {
@@ -122,13 +127,18 @@
 
   <main class="container not-found-wrap">
     <section class="not-found-card" aria-labelledby="not-found-heading">
-      <div class="not-found-icon" aria-hidden="true">🕹️</div>
+      <div class="not-found-icon" aria-hidden="true">
+        <svg class="not-found-mark" viewBox="0 0 40 40" focusable="false"><use href="/assets/icons.svg#brand"></use></svg>
+      </div>
       <div><span class="not-found-code">404</span></div>
       <h1 id="not-found-heading" class="not-found-title" data-i18n="这关还没解锁">这关还没解锁</h1>
       <p class="not-found-desc" data-i18n="你似乎走到了地图边缘，不如回到大厅挑一局新游戏。">你似乎走到了地图边缘，不如回到大厅挑一局新游戏。</p>
       <div class="not-found-actions">
         <a href="/" class="play-btn" data-i18n="返回全部游戏">返回全部游戏</a>
-        <a href="/games/basketball/" class="secondary-btn" data-i18n="🏀 来一局投篮">🏀 来一局投篮</a>
+        <a href="/games/basketball/" class="secondary-btn">
+          <svg class="btn-inline-icon" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><use href="/assets/icons.svg#game-basketball"></use></svg>
+          <span data-i18n="来一局投篮">来一局投篮</span>
+        </a>
       </div>
     </section>
   </main>

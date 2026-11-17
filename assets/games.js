@@ -22,7 +22,7 @@ window.SITE_CONFIG = {
     {
       id: 'basketball',
       title: '街头投篮',
-      icon: '🏀',
+      icon: 'basketball',
       category: 'arcade',
       categoryName: '动作街机',
       description: '连点升空，把握落点让球空心入网；打板、火焰连击与金球加倍，挑战高分极限。',
@@ -34,7 +34,7 @@ window.SITE_CONFIG = {
     {
       id: 'snake',
       title: '经典贪吃蛇',
-      icon: '🐍',
+      icon: 'snake',
       category: 'arcade',
       categoryName: '动作街机',
       description: '吃掉果子与限时金星不断成长，还有冰果减速；支持经典撞墙与自由穿墙双模式。',
@@ -46,7 +46,7 @@ window.SITE_CONFIG = {
     {
       id: '2048',
       title: '经典 2048',
-      icon: '🔢',
+      icon: '2048',
       category: 'puzzle',
       categoryName: '益智休闲',
       description: '滑动合并相同数字，支持 4×4 与 5×5 棋盘、自动存档与单步撤回。',
@@ -58,7 +58,7 @@ window.SITE_CONFIG = {
     {
       id: 'minesweeper',
       title: '经典扫雷',
-      icon: '💣',
+      icon: 'minesweeper',
       category: 'puzzle',
       categoryName: '益智休闲',
       description: '首击必安全、点击数字即可快捷排雷，三档难度，用最稳的推理清空雷区。',
@@ -71,7 +71,7 @@ window.SITE_CONFIG = {
     {
       id: 'memory',
       title: '记忆翻牌',
-      icon: '🃏',
+      icon: 'memory',
       category: 'puzzle',
       categoryName: '益智休闲',
       description: '翻开两张相同图案配对，记住位置，用更少步数清空牌桌。',

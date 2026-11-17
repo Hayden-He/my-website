@@ -315,3 +315,24 @@
 .nowrap {
   white-space: nowrap;
 }
+
+/* 游戏页图标适配 */
+.btn-small {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.btn-small .sound-ico {
+  width: 15px;
+  height: 15px;
+}
+
+.more-game-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+}
