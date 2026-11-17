@@ -513,6 +513,8 @@ textarea {
   text-decoration: underline;
   cursor: pointer;
   font: inherit;
+  -webkit-appearance: none;
+  appearance: none;
 }
 
 .update-check-btn:hover {
