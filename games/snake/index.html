@@ -36,6 +36,7 @@
   <script src="/assets/i18n.js"></script>
   <script src="/assets/games.js"></script>
   <script src="/assets/game-kit.js"></script>
+  <script src="/assets/game-art.js"></script>
   <script src="/assets/canvas-polyfill.js"></script>
   <style>
 
@@ -168,7 +169,11 @@
       <button class="dpad-btn" data-dir="right" type="button">→</button>
     </div>
 
-    <p class="hint-text" data-i18n="🍎+10 · ⭐金星+30（限时）· ❄️冰果减速 · 方向键/WASD/划屏 · 空格/P 暂停">🍎+10 · ⭐金星+30（限时）· ❄️冰果减速 · 方向键/WASD/划屏 · 空格/P 暂停</p>
+    <p class="hint-text hint-with-icons">
+      <span class="hint-ico" aria-hidden="true"><svg viewBox="0 0 32 32"><use href="/assets/icons.svg#mem-apple"></use></svg></span><span data-i18n="+10 · ">+10 · </span>
+      <span class="hint-ico" aria-hidden="true"><svg viewBox="0 0 32 32"><use href="/assets/icons.svg#art-star"></use></svg></span><span data-i18n="金星+30（限时）· ">金星+30（限时）· </span>
+      <span class="hint-ico" aria-hidden="true"><svg viewBox="0 0 32 32"><use href="/assets/icons.svg#art-snowflake"></use></svg></span><span data-i18n="冰果减速 · 方向键/WASD/划屏 · 空格/P 暂停">冰果减速 · 方向键/WASD/划屏 · 空格/P 暂停</span>
+    </p>
 
     <div id="more-games" class="more-games"></div>
   </main>
@@ -434,13 +439,13 @@
             score += 30;
             playTone(660, 0.14, 1040);
             spawnParticles(head.x, head.y, '#f59e0b', 16);
-            addPopup(head.x, head.y, '+30 ★', '#d97706');
+            addPopup(head.x, head.y, '+30', '#d97706');
           } else {
             score += 15;
             speedOffset = Math.min(48, speedOffset + 28);
             playTone(440, 0.14, 300);
             spawnParticles(head.x, head.y, '#38bdf8', 14);
-            addPopup(head.x, head.y, t('+15 ❄️减速'), '#0284c7');
+            addPopup(head.x, head.y, t('+15 减速'), '#0284c7');
           }
           bonusItem = null;
         }
@@ -451,7 +456,7 @@
             addPopup(
               bonusItem.x,
               bonusItem.y,
-              t(bonusItem.type === 'star' ? '★ 消失了' : '❄️ 消失了'),
+              t(bonusItem.type === 'star' ? '星星消失了' : '冰果消失了'),
               '#94a3b8'
             );
             bonusItem = null;
@@ -558,7 +563,10 @@
           ctx.font = 'bold 12px sans-serif';
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
-          ctx.fillText(isStar ? '★' : '❄', bx, by + 0.5);
+          if (window.GameArt) {
+            if (isStar) GameArt.drawStar(ctx, bx, by, 8, '#fff');
+            else GameArt.drawSnowflake(ctx, bx, by, 9, '#fff');
+          }
           ctx.restore();
         }
 
@@ -644,7 +652,8 @@
           ctx.font = 'bold 12px sans-serif';
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
-          ctx.fillText(t('❄️ 减速中'), SIZE - 54, 25);
+          if (window.GameArt) GameArt.drawSnowflake(ctx, SIZE - 82, 25, 7);
+          ctx.fillText(t('减速中'), SIZE - 58, 25);
           ctx.restore();
         }
 

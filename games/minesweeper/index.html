@@ -248,6 +248,24 @@
   <script>
     (function () {
       const t = (key, params) => (window.I18N ? I18N.t(key, params) : key);
+
+      function createIcon(name, className, viewBox) {
+        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.setAttribute('class', className || 'icon');
+        svg.setAttribute('viewBox', viewBox || '0 0 24 24');
+        svg.setAttribute('aria-hidden', 'true');
+        svg.setAttribute('focusable', 'false');
+        const use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
+        use.setAttribute('href', '/assets/icons.svg#' + name);
+        svg.appendChild(use);
+        return svg;
+      }
+
+      function appendCellIcon(btn, name) {
+        btn.textContent = '';
+        btn.appendChild(createIcon(name, 'cell-icon', '0 0 32 32'));
+      }
+
       const GLOBAL_BEST_KEY = 'game_best_minesweeper';
       const DIFF_BEST_PREFIX = 'game_best_minesweeper_';
       const MODE_KEY = 'game_mode_minesweeper';
@@ -480,7 +498,7 @@
             best: endBest,
           });
         } else if (endState === 'lose') {
-          overlayTitle.textContent = t('踩到地雷了 💥');
+          overlayTitle.textContent = t('踩到地雷了');
           overlayDesc.textContent = t('坚持了 {elapsed} 秒，再试一次吧！', { elapsed: endSec });
         }
       }
@@ -569,16 +587,16 @@
             if (ended) {
               if (cell.mine && hitPos === r + ',' + c) {
                 btn.className = 'cell mine-hit';
-                btn.textContent = '💥';
+                appendCellIcon(btn, 'art-explosion');
               } else if (cell.mine && !cell.flag) {
                 btn.className = 'cell mine-show';
-                btn.textContent = '💣';
+                appendCellIcon(btn, 'game-minesweeper');
               } else if (!cell.mine && cell.flag) {
                 btn.className = 'cell wrong-flag';
-                btn.textContent = '❌';
+                appendCellIcon(btn, 'art-cross');
               } else if (cell.flag) {
                 btn.className = 'cell closed flagged';
-                btn.textContent = '🚩';
+                appendCellIcon(btn, 'icon-flag');
               } else if (cell.open) {
                 btn.className = 'cell open' + (cell.adj > 0 ? ' n' + cell.adj : '');
                 btn.textContent = cell.adj > 0 ? String(cell.adj) : '';
@@ -590,7 +608,7 @@
               btn.textContent = cell.adj > 0 ? String(cell.adj) : '';
             } else if (cell.flag) {
               btn.className = 'cell closed flagged';
-              btn.textContent = '🚩';
+              appendCellIcon(btn, 'icon-flag');
             } else {
               btn.className = 'cell closed';
             }
@@ -711,7 +729,11 @@
       }
 
       function renderToolMode() {
-        toolBtn.textContent = flagMode ? t('模式: 🚩插旗') : t('模式: 翻开');
+        toolBtn.textContent = '';
+        toolBtn.appendChild(createIcon('icon-flag', 'tool-icon', '0 0 24 24'));
+        const label = document.createElement('span');
+        label.textContent = t(flagMode ? '模式: 插旗' : '模式: 翻开');
+        toolBtn.appendChild(label);
         toolBtn.classList.toggle('flag-active', flagMode);
       }
 
@@ -741,22 +763,22 @@
 
       const TUTORIAL_STEPS = [
         {
-          icon: '🎯',
+          icon: 'art-target',
           title: '目标：翻开所有安全格',
           text: '把所有不是雷的格子翻开就赢；不需要去点雷。',
         },
         {
-          icon: '🔢',
+          icon: 'art-grid',
           title: '数字 = 周围 8 格雷数',
           text: '数字表示它周围 8 格里有几颗雷，不是全盘剩余的雷数。',
         },
         {
-          icon: '🚩',
+          icon: 'icon-flag',
           title: '翻开与插旗',
           text: '点击或左键翻开；右键或手机长按插旗。第一下一定安全，会先翻出一片空白。',
         },
         {
-          icon: '⚡',
+          icon: 'art-zap',
           title: '快捷排雷',
           text: '当一个数字周围的旗子数等于它时，点击这个数字可一次翻开其余相邻格。',
         },

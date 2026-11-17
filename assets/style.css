@@ -836,3 +836,19 @@ body:has(#site-footer) > main {
     gap: 8px;
   }
 }
+
+
+/* 游戏内自绘内容图标 */
+.hint-ico {
+  display: inline-flex;
+  width: 16px;
+  height: 16px;
+  margin: 0 2px 0 4px;
+  vertical-align: -3px;
+}
+
+.hint-ico svg {
+  width: 16px;
+  height: 16px;
+  display: block;
+}

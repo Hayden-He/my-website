@@ -336,3 +336,25 @@
   width: 24px;
   height: 24px;
 }
+
+
+/* 扫雷棋子 / 教学图标 */
+.cell-icon {
+  display: block;
+  width: 72%;
+  height: 72%;
+}
+
+.tool-icon {
+  display: block;
+  width: 15px;
+  height: 15px;
+  flex: 0 0 auto;
+}
+
+.gk-tutorial-svg {
+  display: block;
+  width: 46px;
+  height: 46px;
+  margin: 0 auto;
+}

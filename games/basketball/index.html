@@ -37,6 +37,7 @@
   <script src="/assets/i18n.js"></script>
   <script src="/assets/games.js"></script>
   <script src="/assets/game-kit.js"></script>
+  <script src="/assets/game-art.js"></script>
   <style>
 
 
@@ -228,7 +229,7 @@
     <div class="stage-box">
       <canvas id="court" width="640" height="420" role="img" aria-label="街头投篮球场" data-i18n-attr="aria-label:街头投篮球场"></canvas>
       <div id="game-overlay" class="overlay" role="status" aria-live="polite">
-        <h2 data-i18n="时间到！🏀">时间到！🏀</h2>
+        <h2 data-i18n="时间到！">时间到！</h2>
         <p id="final-summary">本局得分：0</p>
         <p id="final-stats"></p>
         <button id="overlay-restart" class="btn-small" data-i18n="再来一局">再来一局</button>
@@ -989,7 +990,7 @@
                 state.combo += 1;
                 if (state.combo >= 2) base += 1;
                 label = state.combo >= 2
-                  ? t('🔥 火焰空心×{combo}', { combo: state.combo })
+                  ? t('火焰空心×{combo}', { combo: state.combo })
                   : t('空心入网');
                 color = '#fbbf24';
                 state.shake = Math.max(state.shake, 5.5);
@@ -1033,7 +1034,7 @@
                 state.targetRimY = 140 + Math.random() * 88;
               }
 
-              addPopup((b.isGold ? t('⭐金球×2 ') : '') + label + ' +' + gained, RIM_CENTER_X + 24, state.rimY - 26, color);
+              addPopup((b.isGold ? t('金球×2 ') : '') + label + ' +' + gained, RIM_CENTER_X + 24, state.rimY - 26, color);
               b.resetCooldown = 0.52;
             }
           }
@@ -1953,7 +1954,7 @@
           ctx.fillStyle = '#f8fafc';
           ctx.font = 'bold 16px sans-serif';
           ctx.textAlign = 'center';
-          ctx.fillText(t('连续点击升空 · 停手落网 🏀'), W / 2, 148);
+          ctx.fillText(t('连续点击升空 · 停手落网'), W / 2, 148);
         }
 
         if (state.paused) {
@@ -1979,17 +1980,20 @@
         if (state.started && !state.ended) {
           let badgeText = '';
           let badgeColor = '#fb923c';
+          let badgeIcon = '';
           if (state.ball && state.ball.isGold) {
-            badgeText = t('⭐ 金球回合 ×2');
+            badgeText = t('金球回合 ×2');
             badgeColor = '#facc15';
+            badgeIcon = 'star';
           } else if (state.combo >= 2) {
-            badgeText = t('🔥 火焰连击 ×{combo}', { combo: state.combo });
+            badgeText = t('火焰连击 ×{combo}', { combo: state.combo });
             badgeColor = '#fb923c';
+            badgeIcon = 'fire';
           }
           if (badgeText) {
             ctx.save();
             ctx.font = 'bold 13px sans-serif';
-            const tw = ctx.measureText(badgeText).width + 22;
+            const tw = ctx.measureText(badgeText).width + 22 + (badgeIcon ? 18 : 0);
             ctx.fillStyle = 'rgba(15, 23, 42, 0.68)';
             ctx.beginPath();
             ctx.roundRect(W - tw - 14, 14, tw, 28, 999);
@@ -1997,10 +2001,15 @@
             ctx.strokeStyle = badgeColor;
             ctx.lineWidth = 1.5;
             ctx.stroke();
+            if (badgeIcon && window.GameArt) {
+              const iconX = W - tw - 14 + 15;
+              if (badgeIcon === 'star') GameArt.drawStar(ctx, iconX, 28, 7);
+              else GameArt.drawFire(ctx, iconX, 28, 7);
+            }
             ctx.fillStyle = badgeColor;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText(badgeText, W - tw / 2 - 14, 28.5);
+            ctx.fillText(badgeText, W - tw / 2 - 12, 28.5);
             ctx.restore();
           }
         }
@@ -2037,8 +2046,8 @@
       GameKit.showTutorial({
         id: 'basketball',
         steps: [
-          { icon: '👆', title: t('连点升空'), text: t('连续点击球场，或连按空格键，让球持续升高。') },
-          { icon: '🏀', title: t('停手落网'), text: t('在篮筐上方停止点击，让球自然下落；空心入网得分最高。') },
+          { icon: 'art-tap', title: t('连点升空'), text: t('连续点击球场，或连按空格键，让球持续升高。') },
+          { icon: 'game-basketball', title: t('停手落网'), text: t('在篮筐上方停止点击，让球自然下落；空心入网得分最高。') },
         ],
       });
       requestAnimationFrame(loop);

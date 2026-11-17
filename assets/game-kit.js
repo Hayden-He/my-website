@@ -223,7 +223,12 @@
 
     function render() {
       const step = steps[index] || {};
-      icon.textContent = step.icon || '💡';
+      icon.textContent = '';
+      if (typeof step.icon === 'string' && step.icon.indexOf('-') !== -1) {
+        icon.appendChild(createIcon(step.icon, 'gk-tutorial-svg', '0 0 32 32'));
+      } else {
+        icon.appendChild(createIcon('brand', 'gk-tutorial-svg', '0 0 40 40'));
+      }
       title.textContent = step.title || '';
       text.textContent = step.text || '';
       dots.textContent = '';

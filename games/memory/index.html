@@ -93,6 +93,12 @@
       transform: rotateY(180deg);
     }
 
+    .memory-icon {
+      display: block;
+      width: 58%;
+      height: 58%;
+    }
+
     .memory-face {
       position: absolute;
       inset: 0;
@@ -219,7 +225,18 @@
       const t = (key, params) => (window.I18N ? I18N.t(key, params) : key);
       const BEST_PREFIX = 'game_best_memory_';
       const MODE_KEY = 'game_mode_memory';
-      const ICONS = ['🍎', '🍊', '🍋', '🍇', '🍉', '🍓', '🍒', '🥝', '🍑', '🥥'];
+      const ICONS = [
+        { id: 'apple', name: '苹果' },
+        { id: 'orange', name: '橙子' },
+        { id: 'lemon', name: '柠檬' },
+        { id: 'grape', name: '葡萄' },
+        { id: 'watermelon', name: '西瓜' },
+        { id: 'strawberry', name: '草莓' },
+        { id: 'cherry', name: '樱桃' },
+        { id: 'kiwi', name: '猕猴桃' },
+        { id: 'peach', name: '桃子' },
+        { id: 'coconut', name: '椰子' },
+      ];
       const MODES = {
         4: { cols: 4, pairs: 8, label: '4×4 轻松' },
         5: { cols: 5, pairs: 10, label: '5×4 标准' },
@@ -321,8 +338,8 @@
         const pairs = MODES[size].pairs;
         const items = [];
         for (let i = 0; i < pairs; i++) {
-          items.push({ icon: ICONS[i] });
-          items.push({ icon: ICONS[i] });
+          items.push({ icon: ICONS[i].id, name: ICONS[i].name });
+          items.push({ icon: ICONS[i].id, name: ICONS[i].name });
         }
         return shuffle(items);
       }
@@ -336,6 +353,7 @@
           btn.className = 'memory-card';
           btn.dataset.index = String(index);
           btn.dataset.icon = card.icon;
+          btn.dataset.name = card.name;
           btn.setAttribute('aria-label', t('未翻开的牌'));
 
           const inner = document.createElement('span');
@@ -349,7 +367,14 @@
           const front = document.createElement('span');
           front.className = 'memory-face memory-front';
           front.setAttribute('aria-hidden', 'true');
-          front.textContent = card.icon;
+          const frontIcon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+          frontIcon.setAttribute('class', 'memory-icon');
+          frontIcon.setAttribute('viewBox', '0 0 32 32');
+          frontIcon.setAttribute('aria-hidden', 'true');
+          const use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
+          use.setAttribute('href', '/assets/icons.svg#mem-' + card.icon);
+          frontIcon.appendChild(use);
+          front.appendChild(frontIcon);
 
           inner.appendChild(back);
           inner.appendChild(front);
@@ -386,9 +411,9 @@
       function refreshCardAria() {
         boardEl.querySelectorAll('.memory-card').forEach((card) => {
           if (card.classList.contains('matched')) {
-            card.setAttribute('aria-label', t('已配对，{icon}', { icon: card.dataset.icon }));
+            card.setAttribute('aria-label', t('已配对，{icon}', { icon: t(card.dataset.name) }));
           } else if (card.classList.contains('flipped')) {
-            card.setAttribute('aria-label', t('已翻开，{icon}', { icon: card.dataset.icon }));
+            card.setAttribute('aria-label', t('已翻开，{icon}', { icon: t(card.dataset.name) }));
           } else {
             card.setAttribute('aria-label', t('未翻开的牌'));
           }
@@ -430,7 +455,7 @@
         }
 
         card.classList.add('flipped');
-        card.setAttribute('aria-label', t('已翻开，{icon}', { icon: card.dataset.icon }));
+        card.setAttribute('aria-label', t('已翻开，{icon}', { icon: t(card.dataset.name) }));
         playTone(520, 0.05);
 
         if (!first) {
@@ -449,8 +474,8 @@
           second = null;
           a.classList.add('matched');
           b.classList.add('matched');
-          a.setAttribute('aria-label', t('已配对，{icon}', { icon: a.dataset.icon }));
-          b.setAttribute('aria-label', t('已配对，{icon}', { icon: b.dataset.icon }));
+          a.setAttribute('aria-label', t('已配对，{icon}', { icon: t(a.dataset.name) }));
+          b.setAttribute('aria-label', t('已配对，{icon}', { icon: t(b.dataset.name) }));
           matches += 1;
           playTone(700, 0.07, 900);
           if (matches === MODES[mode].pairs) finishGame();
