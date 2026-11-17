@@ -105,6 +105,7 @@ for (const category of categories) {
   if (categoryPage) {
     checkContains(categoryPage, "initSitePage('" + category.id + "')", `分类页 ${category.url}`);
     checkContains(categoryPage, 'id="games-grid"', `分类页 ${category.url}`);
+    checkContains(categoryPage, 'assets/i18n.js', `分类页 ${category.url}`);
   }
 }
 
@@ -162,6 +163,8 @@ for (const game of games) {
   checkContains(page, 'assets/style.css', pagePath);
   checkContains(page, 'assets/game-shell.css', pagePath);
   checkContains(page, 'assets/site-data.js', pagePath);
+  checkContains(page, 'assets/i18n.js', pagePath);
+  checkContains(page, 'data-lang-toggle', pagePath);
   checkContains(page, 'assets/games.js', pagePath);
   checkContains(page, 'assets/game-kit.js', pagePath);
   checkContains(page, 'id="more-games"', pagePath);
@@ -186,12 +189,15 @@ try {
 // ---------- 首页 / 404 / 公共资源 ----------
 checkContains(read('index.html'), "initSitePage('all')", 'index.html');
 checkContains(read('index.html'), 'id="games-grid"', 'index.html');
+checkContains(read('index.html'), 'assets/i18n.js', 'index.html');
+checkContains(read('404.html'), 'assets/i18n.js', '404.html');
 checkFile('404.html', '404.html');
 
 for (const asset of [
   'assets/style.css',
   'assets/game-shell.css',
   'assets/site-data.js',
+  'assets/i18n.js',
   'assets/games.js',
   'assets/app.js',
   'assets/game-kit.js',

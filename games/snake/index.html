@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="/assets/style.css" />
   <link rel="stylesheet" href="/assets/game-shell.css" />
   <script src="/assets/site-data.js"></script>
+  <script src="/assets/i18n.js"></script>
   <script src="/assets/games.js"></script>
   <script src="/assets/game-kit.js"></script>
   <script src="/assets/canvas-polyfill.js"></script>
@@ -93,30 +94,33 @@
 <body>
   <header class="game-topbar">
     <div class="container game-topbar-inner">
-      <a class="back-link" href="/">← 返回大厅</a>
-      <h1 class="game-topbar-title">经典贪吃蛇 🐍</h1>
-      <a class="game-topbar-cat" href="/categories/arcade.html">动作街机</a>
+      <a class="back-link" href="/" data-i18n="← 返回大厅">← 返回大厅</a>
+      <h1 class="game-topbar-title" data-i18n="经典贪吃蛇 🐍">经典贪吃蛇 🐍</h1>
+      <div class="game-topbar-actions">
+        <a class="game-topbar-cat" href="/categories/arcade.html" data-i18n="动作街机">动作街机</a>
+        <button class="lang-btn" type="button" data-lang-toggle>EN</button>
+      </div>
     </div>
   </header>
 
   <main class="game-wrap">
     <div class="hud">
       <div class="hud-box">
-        <div class="hud-label">当前得分</div>
+        <div class="hud-label" data-i18n="当前得分">当前得分</div>
         <div id="score-el" class="hud-value">0</div>
       </div>
       <div class="hud-box">
-        <div class="hud-label">模式最高</div>
+        <div class="hud-label" data-i18n="模式最高">模式最高</div>
         <div id="best-el" class="hud-value" style="color: var(--accent);">0</div>
       </div>
       <button id="pause-btn" class="btn-small secondary">暂停</button>
-      <button id="restart-btn" class="btn-small">重开</button>
+      <button id="restart-btn" class="btn-small" data-i18n="重开">重开</button>
     </div>
 
     <div class="toolbar">
-      <div class="mode-pills" role="group" aria-label="游戏模式">
-        <button id="mode-classic" class="mode-pill active">经典撞墙</button>
-        <button id="mode-wrap" class="mode-pill">自由穿墙</button>
+      <div class="mode-pills" role="group" aria-label="游戏模式" data-i18n-attr="aria-label:游戏模式">
+        <button id="mode-classic" class="mode-pill active" data-i18n="经典撞墙">经典撞墙</button>
+        <button id="mode-wrap" class="mode-pill" data-i18n="自由穿墙">自由穿墙</button>
       </div>
       <button id="sound-btn" class="btn-small secondary">音效: 开</button>
     </div>
@@ -126,11 +130,11 @@
       <div id="overlay" class="overlay">
         <h2 id="overlay-title">游戏结束</h2>
         <p id="overlay-desc">得分：0</p>
-        <button id="overlay-btn" class="overlay-btn">再来一局</button>
+        <button id="overlay-btn" class="overlay-btn" data-i18n="再来一局">再来一局</button>
       </div>
     </div>
 
-    <div class="dpad" aria-label="方向控制">
+    <div class="dpad" aria-label="方向控制" data-i18n-attr="aria-label:方向控制">
       <div class="dpad-empty"></div>
       <button class="dpad-btn" data-dir="up" type="button">↑</button>
       <div class="dpad-empty"></div>
@@ -139,13 +143,14 @@
       <button class="dpad-btn" data-dir="right" type="button">→</button>
     </div>
 
-    <p class="hint-text">🍎+10 · ⭐金星+30（限时）· ❄️冰果减速 · 方向键/WASD/划屏 · 空格/P 暂停</p>
+    <p class="hint-text" data-i18n="🍎+10 · ⭐金星+30（限时）· ❄️冰果减速 · 方向键/WASD/划屏 · 空格/P 暂停">🍎+10 · ⭐金星+30（限时）· ❄️冰果减速 · 方向键/WASD/划屏 · 空格/P 暂停</p>
 
     <div id="more-games" class="more-games"></div>
   </main>
 
   <script>
     (function () {
+      const t = (key, params) => (window.I18N ? I18N.t(key, params) : key);
       const LEGACY_BEST_KEY = 'game_best_snake';
       const BEST_PREFIX = LEGACY_BEST_KEY + '_';
       const canvas = document.getElementById('board');
@@ -216,6 +221,7 @@
       let bestScore = 0;
 
       let snake, dir, nextDirs, food, bonusItem, score, eatenCount, speedOffset, started, paused, gameOver, timer;
+      let endTitleKey = '游戏结束';
       let particles = [];
       let popups = [];
       let wrapMode = false;
@@ -300,7 +306,7 @@
         gameOver = false;
         food = randomEmptyCell();
         overlay.classList.remove('show');
-        pauseBtn.textContent = '暂停';
+        pauseBtn.textContent = t('暂停');
         scoreEl.textContent = '0';
         if (timer) clearTimeout(timer);
       }
@@ -308,7 +314,7 @@
       function togglePause() {
         if (!started || gameOver) return;
         paused = !paused;
-        pauseBtn.textContent = paused ? '继续' : '暂停';
+        pauseBtn.textContent = paused ? t('继续') : t('暂停');
         if (paused) {
           if (timer) clearTimeout(timer);
         } else {
@@ -409,7 +415,7 @@
             speedOffset = Math.min(48, speedOffset + 28);
             playTone(440, 0.14, 300);
             spawnParticles(head.x, head.y, '#38bdf8', 14);
-            addPopup(head.x, head.y, '+15 ❄️减速', '#0284c7');
+            addPopup(head.x, head.y, t('+15 ❄️减速'), '#0284c7');
           }
           bonusItem = null;
         }
@@ -420,7 +426,7 @@
             addPopup(
               bonusItem.x,
               bonusItem.y,
-              bonusItem.type === 'star' ? '★ 消失了' : '❄️ 消失了',
+              t(bonusItem.type === 'star' ? '★ 消失了' : '❄️ 消失了'),
               '#94a3b8'
             );
             bonusItem = null;
@@ -438,11 +444,19 @@
         timer = setTimeout(tick, delay);
       }
 
-      function endGame(title) {
+      function renderEnd() {
+        overlayTitle.textContent = t(endTitleKey);
+        overlayDesc.textContent = t('本局得分：{score}（本模式最高：{best}）', {
+          score,
+          best: bestScore,
+        });
+      }
+
+      function endGame(titleKey) {
         gameOver = true;
+        endTitleKey = titleKey || '游戏结束';
         playTone(220, 0.22, 95);
-        overlayTitle.textContent = title || '游戏结束';
-        overlayDesc.textContent = '本局得分：' + score + '（本模式最高：' + bestScore + '）';
+        renderEnd();
         overlay.classList.add('show');
       }
 
@@ -605,7 +619,7 @@
           ctx.font = 'bold 12px sans-serif';
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
-          ctx.fillText('❄️ 减速中', SIZE - 54, 25);
+          ctx.fillText(t('❄️ 减速中'), SIZE - 54, 25);
           ctx.restore();
         }
 
@@ -617,14 +631,14 @@
           ctx.fillStyle = '#ffffff';
           ctx.font = 'bold 14px sans-serif';
           ctx.textAlign = 'center';
-          ctx.fillText('按方向键 / WASD 或点击画面开始 🐍', SIZE / 2, SIZE / 2 - 51);
+          ctx.fillText(t('按方向键 / WASD 或点击画面开始 🐍'), SIZE / 2, SIZE / 2 - 51);
         } else if (paused && !gameOver) {
           ctx.fillStyle = 'rgba(15, 23, 42, 0.56)';
           ctx.fillRect(0, 0, SIZE, SIZE);
           ctx.fillStyle = '#ffffff';
           ctx.font = 'bold 24px sans-serif';
           ctx.textAlign = 'center';
-          ctx.fillText('已暂停（点击或按空格继续）', SIZE / 2, SIZE / 2);
+          ctx.fillText(t('已暂停（点击或按空格继续）'), SIZE / 2, SIZE / 2);
         }
       }
 
@@ -726,6 +740,11 @@
       modeWrapBtn.addEventListener('click', () => setWrapMode(true));
 
       pauseBtn.addEventListener('click', togglePause);
+
+      document.addEventListener('i18n:change', () => {
+        pauseBtn.textContent = paused ? t('继续') : t('暂停');
+        if (gameOver) renderEnd();
+      });
 
       // 打开清数据等原生确认框时先暂停，避免蛇在弹窗后面继续走
       document.addEventListener('site:dialogopen', () => {

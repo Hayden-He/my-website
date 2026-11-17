@@ -9,6 +9,10 @@
  * 依赖：assets/site-data.js（SiteData）、assets/games.js（SITE_CONFIG，仅“换个游戏”需要）
  */
 (function () {
+  function t(key, params) {
+    return window.I18N ? window.I18N.t(key, params) : key;
+  }
+
   function readBest(key) {
     try {
       const value = parseInt(localStorage.getItem(key) || '0', 10);
@@ -38,10 +42,15 @@
       ? initial
       : (window.SiteData ? SiteData.getSound() : true);
 
-    function sync() {
-      button.textContent = enabled ? '音效: 开' : '音效: 关';
+    function renderLabel() {
+      button.textContent = t(enabled ? '音效: 开' : '音效: 关');
       button.setAttribute('aria-pressed', enabled ? 'true' : 'false');
-      button.setAttribute('aria-label', enabled ? '关闭音效' : '开启音效');
+      button.setAttribute('aria-label', t(enabled ? '关闭音效' : '开启音效'));
+      button.title = t(enabled ? '关闭音效' : '开启音效');
+    }
+
+    function sync() {
+      renderLabel();
       if (onChange) onChange(enabled);
     }
 
@@ -51,6 +60,7 @@
       sync();
     });
 
+    document.addEventListener('i18n:change', renderLabel);
     sync();
     return {
       isEnabled: () => enabled,
@@ -79,42 +89,47 @@
 
   function mountMoreGames(currentId, container) {
     if (!container || !window.SITE_CONFIG || !Array.isArray(window.SITE_CONFIG.games)) return;
-    const games = window.SITE_CONFIG.games.filter((game) => game.id !== currentId).slice(0, 3);
+    const games = window.SITE_CONFIG.games.filter((game) => game.id !== currentId).slice(0, 4);
     if (games.length === 0) return;
 
-    container.textContent = '';
-    const title = document.createElement('div');
-    title.className = 'more-games-title';
-    title.textContent = '换个游戏';
-    container.appendChild(title);
+    function render() {
+      container.textContent = '';
+      const title = document.createElement('div');
+      title.className = 'more-games-title';
+      title.textContent = t('换个游戏');
+      container.appendChild(title);
 
-    const grid = document.createElement('div');
-    grid.className = 'more-games-grid';
-    games.forEach((game) => {
-      const link = document.createElement('a');
-      link.className = 'more-game-link';
-      link.href = game.url;
+      const grid = document.createElement('div');
+      grid.className = 'more-games-grid';
+      games.forEach((game) => {
+        const link = document.createElement('a');
+        link.className = 'more-game-link';
+        link.href = game.url;
 
-      const icon = document.createElement('span');
-      icon.className = 'more-game-icon';
-      icon.setAttribute('aria-hidden', 'true');
-      icon.textContent = game.icon || '🎮';
+        const icon = document.createElement('span');
+        icon.className = 'more-game-icon';
+        icon.setAttribute('aria-hidden', 'true');
+        icon.textContent = game.icon || '🎮';
 
-      const info = document.createElement('span');
-      const name = document.createElement('span');
-      name.className = 'more-game-name';
-      name.textContent = game.title;
-      const category = document.createElement('span');
-      category.className = 'more-game-cat';
-      category.textContent = game.categoryName || '';
-      info.appendChild(name);
-      info.appendChild(category);
+        const info = document.createElement('span');
+        const name = document.createElement('span');
+        name.className = 'more-game-name';
+        name.textContent = t(game.title);
+        const category = document.createElement('span');
+        category.className = 'more-game-cat';
+        category.textContent = t(game.categoryName || '');
+        info.appendChild(name);
+        info.appendChild(category);
 
-      link.appendChild(icon);
-      link.appendChild(info);
-      grid.appendChild(link);
-    });
-    container.appendChild(grid);
+        link.appendChild(icon);
+        link.appendChild(info);
+        grid.appendChild(link);
+      });
+      container.appendChild(grid);
+    }
+
+    render();
+    document.addEventListener('i18n:change', render);
   }
 
   let tutorialOpen = false;
@@ -171,7 +186,7 @@
     const skipBtn = document.createElement('button');
     skipBtn.type = 'button';
     skipBtn.className = 'gk-tutorial-btn secondary';
-    skipBtn.textContent = '跳过';
+    skipBtn.textContent = t('跳过');
 
     const nextBtn = document.createElement('button');
     nextBtn.type = 'button';
@@ -200,7 +215,7 @@
         dot.className = 'gk-tutorial-dot' + (i === index ? ' active' : '');
         dots.appendChild(dot);
       });
-      nextBtn.textContent = index === steps.length - 1 ? '开始游戏' : '下一步';
+      nextBtn.textContent = index === steps.length - 1 ? t('开始游戏') : t('下一步');
     }
 
     function close() {

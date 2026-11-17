@@ -14,7 +14,7 @@ window.SITE_CONFIG = {
     {
       id: 'puzzle',
       name: '益智休闲',
-      description: '轻松动脑、节奏自在的经典数字与逻辑小游戏',
+      description: '轻松动脑、节奏自在的经典数字、逻辑与记忆小游戏',
       url: '/categories/puzzle.html',
     },
   ],
@@ -67,6 +67,19 @@ window.SITE_CONFIG = {
       bestPrefix: '任意难度最快: ',
       bestSuffix: 's',
       tags: ['推理排雷', '三档难度'],
+    },
+    {
+      id: 'memory',
+      title: '记忆翻牌',
+      icon: '🃏',
+      category: 'puzzle',
+      categoryName: '益智休闲',
+      description: '翻开两张相同图案配对，记住位置，用更少步数清空牌桌。',
+      url: '/games/memory/',
+      storageKey: 'game_best_memory_4',
+      bestPrefix: '4×4 最少步: ',
+      bestSuffix: ' 步',
+      tags: ['记忆配对', '双尺寸'],
     },
   ],
 };

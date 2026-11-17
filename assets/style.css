@@ -657,3 +657,82 @@ body:has(#site-footer) > main {
   opacity: 1;
   transform: translate(-50%, 0);
 }
+
+/* 语言切换按钮（站点头部 / 游戏顶栏共用一套视觉） */
+.nav-lang-btn,
+.lang-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 34px;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.nav-lang-btn:hover,
+.lang-btn:hover {
+  background: #f1f5f9;
+  color: var(--text);
+  border-color: #cbd5e1;
+}
+
+.nav-lang-btn:focus-visible,
+.lang-btn:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.game-topbar-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  justify-self: end;
+  min-width: 0;
+}
+
+.game-topbar-actions .game-topbar-cat {
+  justify-self: auto;
+}
+
+@media (max-width: 600px) {
+  .nav-lang-btn {
+    padding: 5px 8px;
+    font-size: 0.77rem;
+  }
+
+  .lang-btn {
+    min-width: 30px;
+    padding: 5px 7px;
+    font-size: 0.76rem;
+  }
+}
+
+@media (max-width: 400px) {
+  .nav-links {
+    gap: 4px;
+  }
+
+  .nav-link {
+    padding: 5px 7px;
+    font-size: 0.8rem;
+  }
+
+  .nav-sound-btn {
+    padding: 5px 6px;
+  }
+
+  .nav-lang-btn {
+    padding: 5px 6px;
+    font-size: 0.75rem;
+  }
+}

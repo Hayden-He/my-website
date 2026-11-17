@@ -2,6 +2,10 @@
  * 公共页面渲染脚本：负责顶部导航、游戏卡片网格和页脚
  */
 (function () {
+  function t(key, params) {
+    return window.I18N ? window.I18N.t(key, params) : key;
+  }
+
   function getBestScore(storageKey) {
     if (!storageKey) return null;
     try {
@@ -63,12 +67,12 @@
     const brand = createEl('a', 'brand');
     brand.href = '/';
     brand.appendChild(createEl('span', 'brand-badge', '🎮'));
-    brand.appendChild(createEl('span', '', siteTitle));
+    brand.appendChild(createEl('span', '', t(siteTitle)));
 
     const nav = createEl('nav', 'nav-links');
-    nav.setAttribute('aria-label', '主导航');
+    nav.setAttribute('aria-label', t('主导航'));
 
-    const allLink = createEl('a', 'nav-link' + (activeKey === 'all' ? ' active' : ''), '全部游戏');
+    const allLink = createEl('a', 'nav-link' + (activeKey === 'all' ? ' active' : ''), t('全部游戏'));
     allLink.href = '/';
     nav.appendChild(allLink);
 
@@ -76,7 +80,7 @@
       const link = createEl(
         'a',
         'nav-link' + (activeKey === cat.id ? ' active' : ''),
-        cat.name
+        t(cat.name)
       );
       link.href = cat.url;
       nav.appendChild(link);
@@ -89,10 +93,10 @@
         const on = window.SiteData.getSound();
         soundBtn.textContent = '';
         soundBtn.appendChild(createEl('span', 'sound-ico', on ? '🔊' : '🔇'));
-        soundBtn.appendChild(createEl('span', 'sound-label', on ? '音效开' : '音效关'));
+        soundBtn.appendChild(createEl('span', 'sound-label', t(on ? '音效开' : '音效关')));
         soundBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
-        soundBtn.setAttribute('aria-label', on ? '音效已开启，点击关闭' : '音效已关闭，点击开启');
-        soundBtn.title = on ? '关闭音效' : '开启音效';
+        soundBtn.setAttribute('aria-label', t(on ? '音效已开启，点击关闭' : '音效已关闭，点击开启'));
+        soundBtn.title = t(on ? '关闭音效' : '开启音效');
       };
       syncLabel();
       soundBtn.addEventListener('click', () => {
@@ -101,6 +105,15 @@
         syncLabel();
       });
       nav.appendChild(soundBtn);
+    }
+
+    if (window.I18N) {
+      const langBtn = createEl('button', 'nav-lang-btn', window.I18N.langLabel());
+      langBtn.type = 'button';
+      langBtn.setAttribute('data-lang-toggle', '');
+      langBtn.setAttribute('aria-label', window.I18N.langAria());
+      langBtn.title = window.I18N.langAria();
+      nav.appendChild(langBtn);
     }
 
     container.appendChild(brand);
@@ -115,39 +128,39 @@
     const top = createEl('div', 'game-card-top');
     top.appendChild(createEl('div', 'game-icon ' + game.category, game.icon));
     top.appendChild(
-      createEl('span', 'game-category-pill ' + game.category, game.categoryName)
+      createEl('span', 'game-category-pill ' + game.category, t(game.categoryName))
     );
     card.appendChild(top);
 
-    card.appendChild(createEl('h3', 'game-title', game.title));
-    card.appendChild(createEl('p', 'game-desc', game.description));
+    card.appendChild(createEl('h3', 'game-title', t(game.title)));
+    card.appendChild(createEl('p', 'game-desc', t(game.description)));
 
     const meta = createEl('div', 'game-meta');
     const tagsWrap = createEl('div', 'game-tags');
-    (game.tags || []).forEach((t) => {
-      tagsWrap.appendChild(createEl('span', 'game-tag', t));
+    (game.tags || []).forEach((tag) => {
+      tagsWrap.appendChild(createEl('span', 'game-tag', t(tag)));
     });
     meta.appendChild(tagsWrap);
 
     const best = getBestScore(game.storageKey);
     if (best !== null) {
-      const prefix = game.bestPrefix !== undefined ? game.bestPrefix : '最高分: ';
-      const suffix = game.bestSuffix || '';
+      const prefix = t(game.bestPrefix !== undefined ? game.bestPrefix : '最高分: ');
+      const suffix = game.bestSuffix ? t(game.bestSuffix) : '';
       meta.appendChild(createEl('span', 'best-score', prefix + best + suffix));
     }
     card.appendChild(meta);
 
     const resume = game.id === '2048' ? get2048Resume() : null;
-    const btn = createEl(
-      'a',
-      'play-btn',
-      resume
-        ? '继续上局 · ' + resume.size + '×' + resume.size +
-          (resume.score > 0 ? ' ' + resume.score + ' 分' : '') + ' →'
-        : '开始游戏 →'
-    );
+    let btnLabel = t('开始游戏 →');
+    if (resume) {
+      const board = resume.size + '×' + resume.size;
+      btnLabel = resume.score > 0
+        ? t('继续上局 · {board} {score} 分 →', { board, score: resume.score })
+        : t('继续上局 · {board} →', { board });
+    }
+    const btn = createEl('a', 'play-btn', btnLabel);
     btn.href = game.url;
-    if (resume) btn.title = '继续上次未完成的棋局';
+    if (resume) btn.title = t('继续上次未完成的棋局');
     card.appendChild(btn);
 
     card.addEventListener('click', (e) => {
@@ -170,8 +183,8 @@
     if (countEl) {
       const recorded = games.filter((g) => getBestScore(g.storageKey) !== null).length;
       countEl.textContent = recorded > 0
-        ? '共 ' + games.length + ' 款 · 已留纪录 ' + recorded + ' 款'
-        : '共 ' + games.length + ' 款';
+        ? t('共 {n} 款 · 已留纪录 {recorded} 款', { n: games.length, recorded })
+        : t('共 {n} 款', { n: games.length });
     }
 
     grid.classList.toggle('cols-2', games.length === 2 || games.length === 4);
@@ -187,10 +200,11 @@
     const container = createEl('div', 'container');
     if (window.SiteData) {
       container.appendChild(window.SiteData.createCredit());
-      container.appendChild(createEl('div', 'site-tagline', '无需下载 · 电脑与手机均可畅玩'));
+      container.appendChild(createEl('div', 'site-tagline', t('无需下载 · 电脑与手机均可畅玩')));
     } else {
       container.textContent =
-        '© ' + new Date().getFullYear() + ' ' + window.SITE_CONFIG.siteTitle + ' · 无需下载，电脑与手机均可畅玩';
+        '© ' + new Date().getFullYear() + ' ' + t(window.SITE_CONFIG.siteTitle) +
+        ' · ' + t('无需下载 · 电脑与手机均可畅玩');
     }
     footer.innerHTML = '';
     footer.appendChild(container);
@@ -201,10 +215,22 @@
     }
   }
 
+  let i18nBound = false;
+
   window.initSitePage = function (activeKey) {
     renderHeader(activeKey);
     renderGamesGrid(activeKey);
     renderFooter();
+
+    if (!i18nBound) {
+      i18nBound = true;
+      document.addEventListener('i18n:change', () => {
+        renderHeader(activeKey);
+        renderGamesGrid(activeKey);
+        renderFooter();
+      });
+    }
+
     // 从游戏页后退（bfcache 恢复）时，同步音效按钮与卡片上的最高分
     window.addEventListener('pageshow', (e) => {
       if (e.persisted) {

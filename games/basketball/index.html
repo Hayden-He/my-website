@@ -12,6 +12,7 @@
   <link rel="stylesheet" href="/assets/style.css" />
   <link rel="stylesheet" href="/assets/game-shell.css" />
   <script src="/assets/site-data.js"></script>
+  <script src="/assets/i18n.js"></script>
   <script src="/assets/games.js"></script>
   <script src="/assets/game-kit.js"></script>
   <style>
@@ -155,34 +156,37 @@
 <body>
   <header class="game-topbar">
     <div class="container game-topbar-inner">
-      <a class="back-link" href="/">← 返回大厅</a>
-      <h1 class="game-topbar-title">街头投篮 🏀</h1>
-      <a class="game-topbar-cat" href="/categories/arcade.html">动作街机</a>
+      <a class="back-link" href="/" data-i18n="← 返回大厅">← 返回大厅</a>
+      <h1 class="game-topbar-title" data-i18n="街头投篮 🏀">街头投篮 🏀</h1>
+      <div class="game-topbar-actions">
+        <a class="game-topbar-cat" href="/categories/arcade.html" data-i18n="动作街机">动作街机</a>
+        <button class="lang-btn" type="button" data-lang-toggle>EN</button>
+      </div>
     </div>
   </header>
 
   <main class="game-wrap">
     <div class="hud">
       <div class="hud-box">
-        <div class="hud-label">总得分</div>
+        <div class="hud-label" data-i18n="总得分">总得分</div>
         <div id="score-el" class="hud-value">0</div>
       </div>
       <div class="hud-box">
-        <div class="hud-label">进球倒计时</div>
+        <div class="hud-label" data-i18n="进球倒计时">进球倒计时</div>
         <div id="time-el" class="hud-value">10.0s</div>
       </div>
       <div class="hud-box">
-        <div class="hud-label">空心入网</div>
+        <div class="hud-label" data-i18n="空心入网">空心入网</div>
         <div id="swish-el" class="hud-value accent">0</div>
-        <div class="hud-sub">+4 · 火焰+5</div>
+        <div class="hud-sub" data-i18n="+4 · 火焰+5">+4 · 火焰+5</div>
       </div>
       <div class="hud-box">
-        <div class="hud-label">打板进球</div>
+        <div class="hud-label" data-i18n="打板进球">打板进球</div>
         <div id="bank-el" class="hud-value">0</div>
         <div class="hud-sub">+3</div>
       </div>
       <div class="hud-box">
-        <div class="hud-label">最高分</div>
+        <div class="hud-label" data-i18n="最高分">最高分</div>
         <div id="best-el" class="hud-value">0</div>
       </div>
     </div>
@@ -192,31 +196,31 @@
     </div>
 
     <div class="scene-hint">
-      <span>当前场景 <strong id="scene-name">黄昏街头</strong></span>
+      <span><span data-i18n="当前场景">当前场景</span> <strong id="scene-name">黄昏街头</strong></span>
       <span id="scene-next">下一场景 15 分</span>
     </div>
 
     <div class="stage-box">
       <canvas id="court" width="640" height="420"></canvas>
       <div id="game-overlay" class="overlay">
-        <h2>时间到！🏀</h2>
+        <h2 data-i18n="时间到！🏀">时间到！🏀</h2>
         <p id="final-summary">本局得分：0</p>
         <p id="final-stats"></p>
-        <button id="overlay-restart" class="btn-small">再来一局</button>
-        <p style="font-size:0.8rem">按空格或回车也可重开</p>
+        <button id="overlay-restart" class="btn-small" data-i18n="再来一局">再来一局</button>
+        <p style="font-size:0.8rem" data-i18n="按空格或回车也可重开">按空格或回车也可重开</p>
       </div>
     </div>
 
     <div class="controls-row">
       <div class="hint-block">
-        <span class="hint-text">操作：连续点击球场 / 连按空格升空，停手后下落；<span class="nowrap">P 暂停</span></span>
-        <span class="hint-text">机制：进球重置倒计时 · 连续空心触发火焰连击 · 每 5 球金球 ×2 · 25/50/80 分护盾进阶</span>
+        <span class="hint-text"><span data-i18n="操作：连续点击球场 / 连按空格升空，停手后下落；">操作：连续点击球场 / 连按空格升空，停手后下落；</span><span class="nowrap" data-i18n="P 暂停">P 暂停</span></span>
+        <span class="hint-text" data-i18n="机制：进球重置倒计时 · 连续空心触发火焰连击 · 每 5 球金球 ×2 · 25/50/80 分护盾进阶">机制：进球重置倒计时 · 连续空心触发火焰连击 · 每 5 球金球 ×2 · 25/50/80 分护盾进阶</span>
       </div>
       <div class="btn-group">
         <button id="skin-btn" class="btn-small secondary">用球: 经典篮球</button>
         <button id="sound-btn" class="btn-small secondary">音效: 开</button>
         <button id="pause-btn" class="btn-small secondary">暂停</button>
-        <button id="restart-btn" class="btn-small">重开</button>
+        <button id="restart-btn" class="btn-small" data-i18n="重开">重开</button>
       </div>
     </div>
 
@@ -225,6 +229,7 @@
 
   <script>
     (function () {
+      const t = (key, params) => (window.I18N ? I18N.t(key, params) : key);
       const STORAGE_KEY = 'game_best_basketball';
       const SKIN_STORAGE_KEY = 'game_skin_basketball';
       const canvas = document.getElementById('court');
@@ -274,7 +279,10 @@
         const savedSkin = parseInt(localStorage.getItem(SKIN_STORAGE_KEY) || '0', 10);
         if (savedSkin >= 0 && savedSkin < BALL_SKINS.length) skinIndex = savedSkin;
       } catch {}
-      skinBtn.textContent = '用球: ' + BALL_SKINS[skinIndex].name;
+      function renderSkinButton() {
+        skinBtn.textContent = t('用球: {name}', { name: t(BALL_SKINS[skinIndex].name) });
+      }
+      renderSkinButton();
 
       // 城市天际线预设建筑
       const SKYLINE = [
@@ -479,7 +487,7 @@
         };
         spawnBall();
         overlay.classList.remove('show');
-        pauseBtn.textContent = '暂停';
+        pauseBtn.textContent = t('暂停');
         updateHud();
       }
 
@@ -504,11 +512,23 @@
       }
 
       function getSceneInfo(score) {
-        if (score >= 100) return { name: '星河球场', next: '已解锁全部场景' };
-        if (score >= 60) return { name: '极光球场', next: '下一场景 100 分' };
-        if (score >= 30) return { name: '夜场灯光', next: '下一场景 60 分' };
-        if (score >= 15) return { name: '暮色球场', next: '下一场景 30 分' };
-        return { name: '黄昏街头', next: '下一场景 15 分' };
+        if (score >= 100) return { name: t('星河球场'), next: t('已解锁全部场景') };
+        if (score >= 60) return { name: t('极光球场'), next: t('下一场景 100 分') };
+        if (score >= 30) return { name: t('夜场灯光'), next: t('下一场景 60 分') };
+        if (score >= 15) return { name: t('暮色球场'), next: t('下一场景 30 分') };
+        return { name: t('黄昏街头'), next: t('下一场景 15 分') };
+      }
+
+      function renderFinal() {
+        finalSummary.textContent = t('本局总分：{score} 分（最高纪录：{best} 分）', {
+          score: state.score,
+          best: bestScore,
+        });
+        finalStats.textContent = t('空心入网 {swish} 次 · 打板进球 {bank} 次 · 普通命中 {normal} 次', {
+          swish: state.swishCount,
+          bank: state.bankCount,
+          normal: state.normalCount,
+        });
       }
 
       function updateHud() {
@@ -606,7 +626,7 @@
         if (!state.started || state.ended) return;
         if (state.paused === flag) return;
         state.paused = flag;
-        pauseBtn.textContent = flag ? '继续' : '暂停';
+        pauseBtn.textContent = flag ? t('继续') : t('暂停');
         lastTime = 0;
       }
 
@@ -636,6 +656,13 @@
       GameKit.onHidden(() => setPaused(true));
       document.addEventListener('site:dialogopen', () => {
         if (state.started && !state.ended) setPaused(true);
+      });
+
+      document.addEventListener('i18n:change', () => {
+        renderSkinButton();
+        pauseBtn.textContent = state.paused ? t('继续') : t('暂停');
+        if (state.ended) renderFinal();
+        updateHud();
       });
       pauseBtn.addEventListener('click', () => setPaused(!state.paused));
 
@@ -680,9 +707,7 @@
             playSound('buzzer');
             saveBest();
             updateHud();
-            finalSummary.textContent = '本局总分：' + state.score + ' 分（最高纪录：' + bestScore + ' 分）';
-            finalStats.textContent =
-              '空心入网 ' + state.swishCount + ' 次 · 打板进球 ' + state.bankCount + ' 次 · 普通命中 ' + state.normalCount + ' 次';
+            renderFinal();
             overlay.classList.add('show');
             return;
           }
@@ -930,7 +955,7 @@
               state.rimSpring = 0.7;
 
               let base = 2;
-              let label = '命中';
+              let label = t('命中');
               let color = '#4ade80';
 
               if (!b.hitBoard && !b.hitRim) {
@@ -938,7 +963,9 @@
                 state.swishCount += 1;
                 state.combo += 1;
                 if (state.combo >= 2) base += 1;
-                label = state.combo >= 2 ? '🔥 火焰空心×' + state.combo : '空心入网';
+                label = state.combo >= 2
+                  ? t('🔥 火焰空心×{combo}', { combo: state.combo })
+                  : t('空心入网');
                 color = '#fbbf24';
                 state.shake = Math.max(state.shake, 5.5);
                 addRing(RIM_CENTER_X, state.rimY + 8, '#fbbf24', 52);
@@ -948,7 +975,7 @@
                 base = 3;
                 state.bankCount += 1;
                 state.combo = 0;
-                label = '打板进球';
+                label = t('打板进球');
                 color = '#38bdf8';
                 addRing(RIM_CENTER_X, state.rimY + 8, '#38bdf8', 38);
                 playSound('score');
@@ -981,7 +1008,7 @@
                 state.targetRimY = 140 + Math.random() * 88;
               }
 
-              addPopup((b.isGold ? '⭐金球×2 ' : '') + label + ' +' + gained, RIM_CENTER_X + 24, state.rimY - 26, color);
+              addPopup((b.isGold ? t('⭐金球×2 ') : '') + label + ' +' + gained, RIM_CENTER_X + 24, state.rimY - 26, color);
               b.resetCooldown = 0.52;
             }
           }
@@ -1844,7 +1871,7 @@
           ctx.fillStyle = '#fef08a';
           ctx.font = 'bold 12px sans-serif';
           ctx.textAlign = 'center';
-          ctx.fillText('×2 金球', b.x, b.y - BALL_R - 8);
+          ctx.fillText(t('×2 金球'), b.x, b.y - BALL_R - 8);
         }
       }
 
@@ -1901,7 +1928,7 @@
           ctx.fillStyle = '#f8fafc';
           ctx.font = 'bold 16px sans-serif';
           ctx.textAlign = 'center';
-          ctx.fillText('连续点击升空 · 停手落网 🏀', W / 2, 148);
+          ctx.fillText(t('连续点击升空 · 停手落网 🏀'), W / 2, 148);
         }
 
         if (state.paused) {
@@ -1910,7 +1937,7 @@
           ctx.fillStyle = '#fff';
           ctx.font = 'bold 26px sans-serif';
           ctx.textAlign = 'center';
-          ctx.fillText('已暂停（P / 点击继续）', W / 2, H / 2);
+          ctx.fillText(t('已暂停（P / 点击继续）'), W / 2, H / 2);
         }
 
         state.popups.forEach((p) => {
@@ -1928,10 +1955,10 @@
           let badgeText = '';
           let badgeColor = '#fb923c';
           if (state.ball && state.ball.isGold) {
-            badgeText = '⭐ 金球回合 ×2';
+            badgeText = t('⭐ 金球回合 ×2');
             badgeColor = '#facc15';
           } else if (state.combo >= 2) {
-            badgeText = '🔥 火焰连击 ×' + state.combo;
+            badgeText = t('🔥 火焰连击 ×{combo}', { combo: state.combo });
             badgeColor = '#fb923c';
           }
           if (badgeText) {
@@ -1969,7 +1996,7 @@
 
       skinBtn.addEventListener('click', () => {
         skinIndex = (skinIndex + 1) % BALL_SKINS.length;
-        skinBtn.textContent = '用球: ' + BALL_SKINS[skinIndex].name;
+        renderSkinButton();
         try {
           localStorage.setItem(SKIN_STORAGE_KEY, String(skinIndex));
         } catch {}
@@ -1985,8 +2012,8 @@
       GameKit.showTutorial({
         id: 'basketball',
         steps: [
-          { icon: '👆', title: '连点升空', text: '连续点击球场，或连按空格键，让球持续升高。' },
-          { icon: '🏀', title: '停手落网', text: '在篮筐上方停止点击，让球自然下落；空心入网得分最高。' },
+          { icon: '👆', title: t('连点升空'), text: t('连续点击球场，或连按空格键，让球持续升高。') },
+          { icon: '🏀', title: t('停手落网'), text: t('在篮筐上方停止点击，让球自然下落；空心入网得分最高。') },
         ],
       });
       requestAnimationFrame(loop);

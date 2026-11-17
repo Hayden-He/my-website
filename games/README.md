@@ -10,16 +10,18 @@ assets/
   games.js          分类与游戏清单（唯一数据源）
   app.js            首页/分类页渲染
   site-data.js      音效上下文、清除本地数据、自定义弹窗、toast
+  i18n.js           中英文词典与切换逻辑（中文原文作为 key）
 games/
   _template/        可复制的新游戏模板
   <id>/index.html   每个游戏一个页面
 scripts/
   check-site.mjs    部署前结构校验
+  check-i18n.mjs    中英文案覆盖校验
 ```
 
 游戏页只保留**自己棋盘/球场/网格**的 CSS 和玩法 JS；HUD、按钮、遮罩、提示、更多游戏、音效按钮、最高分读写都用公共外壳。
 
-## 新增一个游戏（6 步）
+## 新增一个游戏（7 步）
 
 1. 复制 `games/_template/` 为 `games/<id>/`，把 `<id>` 换成小写字母/数字/短横线。
 2. 在 `assets/games.js` 的 `games` 里加一条：
@@ -68,7 +70,20 @@ scripts/
    if (ok) restart();
    SiteData.toast('已保存');
    ```
-6. 跑校验：`node scripts/check-site.mjs`。
+6. **国际化（必须）**：
+   - 所有上屏文案都要中英双语。静态文案加 `data-i18n="中文原文"`，属性加 `data-i18n-attr="aria-label:中文原文"`；动态文案用 `I18N.t('中文原文 {param}', { param })`。
+   - 页面 `<head>` 里在 `site-data.js` 之后加载 `<script src="/assets/i18n.js"></script>`；顶栏右侧加语言按钮：
+     ```html
+     <div class="game-topbar-actions">
+       <a class="game-topbar-cat" href="/categories/puzzle.html" data-i18n="益智休闲">益智休闲</a>
+       <button class="lang-btn" type="button" data-lang-toggle>EN</button>
+     </div>
+     ```
+   - 给 `assets/i18n.js` 的 `EN` 词典补：页面 title/meta description、h1、返回/分类、HUD 标签、按钮、提示、遮罩、教学、画布文案、aria，以及游戏卡片的 title/description/tags/bestPrefix/bestSuffix。
+   - **不要**给 JS 会动态改写的元素（结算标题/说明、计时、最高分、场景名、暂停按钮等）加 `data-i18n`，否则页面初始化时 `I18N.apply` 会把动态值覆盖掉；这些元素在展示时用 `I18N.t(...)` 设置，并监听 `i18n:change` 重设。静态文案由 `I18N.apply` 自动处理。
+   - 游戏页默认中文；语言选择记在 `site_lang`，同 URL 即时切换，不需要 `/en/` 路由。
+   - 通过变量/条件传入 `I18N.t` 的文案（如 `t(step.title)`）不会被静态扫描到，记得一并补词典。
+7. 跑校验：`node scripts/check-site.mjs && node scripts/check-i18n.mjs`。
 
 ## 移动端与可访问性底线
 
@@ -87,6 +102,7 @@ scripts/
 - `game_save_<id>_...`：进行中的存档
 - `game_skin_<id>`：外观
 - `game_tutorial_<id>`：首次教学是否看过
+- `site_lang`：站点语言偏好（zh/en），清除本地数据不会重置它
 
 ## 进行中存档 / 首页“继续上局”
 
@@ -100,5 +116,6 @@ scripts/
 
 - 模板：`games/_template/index.html`，包含 HUD、音效、最高分、重开确认、更多游戏、自定义弹窗的完整示例。
 - 扫雷是“首次教学 + 工具栏常驻玩法按钮”的现成例子：首次自动展示，之后可用 `GameKit.showTutorial({ ..., force: true })` 重看。
-- 校验：`node scripts/check-site.mjs`，会检查配置文件、页面存在性、分类名一致、storageKey 唯一、公共外壳引用、h1/meta、更多游戏入口、禁止缩放等。
-- 建议在部署前（或 CI）执行一次；校验通过再 push。
+- 结构校验：`node scripts/check-site.mjs`，会检查配置文件、页面存在性、分类名一致、storageKey 唯一、公共外壳与 i18n 引用、语言按钮、h1/meta、更多游戏入口、禁止缩放等。
+- 英文覆盖：`node scripts/check-i18n.mjs`，检查页面、脚本、游戏元数据里的中文 key 是否都在 `assets/i18n.js` 的 EN 词典里。
+- 建议在部署前（或 CI）执行；两个校验都通过再 push。

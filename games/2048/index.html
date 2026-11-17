@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="/assets/style.css" />
   <link rel="stylesheet" href="/assets/game-shell.css" />
   <script src="/assets/site-data.js"></script>
+  <script src="/assets/i18n.js"></script>
   <script src="/assets/games.js"></script>
   <script src="/assets/game-kit.js"></script>
   <style>
@@ -185,15 +186,18 @@
 <body>
   <header class="game-topbar">
     <div class="container game-topbar-inner">
-      <a class="back-link" href="/">← 返回大厅</a>
-      <h1 class="game-topbar-title">经典 2048 🔢</h1>
-      <a class="game-topbar-cat" href="/categories/puzzle.html">益智休闲</a>
+      <a class="back-link" href="/" data-i18n="← 返回大厅">← 返回大厅</a>
+      <h1 class="game-topbar-title" data-i18n="经典 2048 🔢">经典 2048 🔢</h1>
+      <div class="game-topbar-actions">
+        <a class="game-topbar-cat" href="/categories/puzzle.html" data-i18n="益智休闲">益智休闲</a>
+        <button class="lang-btn" type="button" data-lang-toggle>EN</button>
+      </div>
     </div>
   </header>
 
   <main class="game-wrap">
     <div class="rule-banner">
-      <span><strong>玩法：</strong>相同数字相撞合并翻倍，目标合成 <strong>2048</strong></span>
+      <span><strong data-i18n="玩法：">玩法：</strong><span data-i18n="相同数字相撞合并翻倍，目标合成">相同数字相撞合并翻倍，目标合成</span> <strong>2048</strong></span>
       <span class="rule-demo">
         <span class="mini-chip">2</span>+<span class="mini-chip">2</span>=<span class="mini-chip four">4</span>
       </span>
@@ -201,28 +205,28 @@
 
     <div class="hud">
       <div id="score-box" class="hud-box">
-        <div class="hud-label">当前得分</div>
+        <div class="hud-label" data-i18n="当前得分">当前得分</div>
         <div id="score-el" class="hud-value">0</div>
       </div>
       <div class="hud-box">
-        <div class="hud-label">最大方块</div>
+        <div class="hud-label" data-i18n="最大方块">最大方块</div>
         <div id="max-el" class="hud-value" style="color: var(--primary);">2</div>
       </div>
       <div class="hud-box">
-        <div class="hud-label">模式最高</div>
+        <div class="hud-label" data-i18n="模式最高">模式最高</div>
         <div id="best-el" class="hud-value" style="color: var(--accent);">0</div>
       </div>
     </div>
 
     <div class="toolbar">
-      <div class="mode-pills" role="group" aria-label="棋盘尺寸">
-        <button id="size-4" class="mode-pill active">4×4 经典</button>
-        <button id="size-5" class="mode-pill">5×5 轻松</button>
+      <div class="mode-pills" role="group" aria-label="棋盘尺寸" data-i18n-attr="aria-label:棋盘尺寸">
+        <button id="size-4" class="mode-pill active" data-i18n="4×4 经典">4×4 经典</button>
+        <button id="size-5" class="mode-pill" data-i18n="5×5 轻松">5×5 轻松</button>
       </div>
       <div class="btn-group">
         <button id="sound-btn" class="btn-small secondary">音效: 开</button>
-        <button id="undo-btn" class="btn-small secondary" disabled>撤回</button>
-        <button id="restart-btn" class="btn-small">重开</button>
+        <button id="undo-btn" class="btn-small secondary" disabled data-i18n="撤回">撤回</button>
+        <button id="restart-btn" class="btn-small" data-i18n="重开">重开</button>
       </div>
     </div>
 
@@ -235,19 +239,20 @@
         <h2 id="overlay-title">没有可移动的方块了</h2>
         <p id="overlay-desc">本局得分：0</p>
         <div class="overlay-actions">
-          <button id="keep-btn" class="overlay-btn secondary" style="display: none;">继续挑战</button>
-          <button id="overlay-btn" class="overlay-btn">再来一局</button>
+          <button id="keep-btn" class="overlay-btn secondary" style="display: none;" data-i18n="继续挑战">继续挑战</button>
+          <button id="overlay-btn" class="overlay-btn" data-i18n="再来一局">再来一局</button>
         </div>
       </div>
     </div>
 
-    <p class="hint-text">电脑按 ↑ ↓ ← → 或 WASD 移动，手机在棋盘上滑动；新手推荐先试 5×5</p>
+    <p class="hint-text" data-i18n="电脑按 ↑ ↓ ← → 或 WASD 移动，手机在棋盘上滑动；新手推荐先试 5×5">电脑按 ↑ ↓ ← → 或 WASD 移动，手机在棋盘上滑动；新手推荐先试 5×5</p>
 
     <div id="more-games" class="more-games"></div>
   </main>
 
   <script>
     (function () {
+      const t = (key, params) => (window.I18N ? I18N.t(key, params) : key);
       const LEGACY_BEST_KEY = 'game_best_2048';
       const BEST_PREFIX = LEGACY_BEST_KEY + '_';
       const SAVE_PREFIX = 'game_save_2048_';
@@ -550,16 +555,19 @@
       function showOutcome() {
         const isNewRecord = newBestThisGame && score > 0 && score >= bestScore;
         if (victory === 'pending') {
-          overlayTitle.textContent = '恭喜合成 2048！🎉';
-          overlayDesc.textContent = (isNewRecord ? '🎉 新纪录！' : '') +
-            '当前得分：' + score + '，你可以继续挑战更高数字！';
+          overlayTitle.textContent = t('恭喜合成 2048！🎉');
+          overlayDesc.textContent = (isNewRecord ? t('🎉 新纪录！') : '') +
+            t('当前得分：{score}，你可以继续挑战更高数字！', { score });
           keepBtn.style.display = 'inline-block';
           overlay.classList.add('show');
         } else if (!canMove()) {
-          overlayTitle.textContent = '没有可移动的方块了';
-          overlayDesc.textContent = (isNewRecord ? '🎉 新纪录！' : '') +
-            '本局得分：' + score + ' · 最大方块：' + getMaxTile() +
-            '（本模式最高：' + bestScore + '）';
+          overlayTitle.textContent = t('没有可移动的方块了');
+          overlayDesc.textContent = (isNewRecord ? t('🎉 新纪录！') : '') +
+            t('本局得分：{score} · 最大方块：{tile}（本模式最高：{best}）', {
+              score,
+              tile: getMaxTile(),
+              best: bestScore,
+            });
           keepBtn.style.display = 'none';
           overlay.classList.add('show');
         } else {
@@ -737,10 +745,10 @@
           return;
         }
         const ok = await window.SiteData.confirmDialog({
-          title: '重开棋局',
-          message: `重开 ${size}×${size} 棋局？当前进度将被清除。`,
-          confirmText: '重开',
-          cancelText: '继续本局',
+          title: t('重开棋局'),
+          message: t('重开 {size}×{size} 棋局？当前进度将被清除。', { size }),
+          confirmText: t('重开'),
+          cancelText: t('继续本局'),
           danger: true,
         });
         if (ok) forceRestart();
@@ -748,6 +756,10 @@
 
       document.getElementById('restart-btn').addEventListener('click', restartWithConfirm);
       document.getElementById('overlay-btn').addEventListener('click', forceRestart);
+
+      document.addEventListener('i18n:change', () => {
+        if (overlay.classList.contains('show')) showOutcome();
+      });
 
       window.addEventListener('pageshow', (event) => {
         if (event.persisted) openGame(false);

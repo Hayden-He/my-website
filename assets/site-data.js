@@ -3,6 +3,10 @@
  * 处理本站保存的最高分、球色、2048 棋局与音效设置。
  */
 (function () {
+  function t(key, params) {
+    return window.I18N ? window.I18N.t(key, params) : key;
+  }
+
   const SOUND_KEY = 'site_sound';
   const PREFIXES = ['game_best_', 'game_skin_', 'game_save_2048_', 'game_mode_', 'game_tutorial_'];
   const EXACT_KEYS = [SOUND_KEY];
@@ -124,7 +128,7 @@
       const title = document.createElement('h2');
       title.className = 'site-dialog-title';
       title.id = 'site-dialog-title';
-      title.textContent = opts.title || '提示';
+      title.textContent = opts.title || t('提示');
 
       const message = document.createElement('p');
       message.className = 'site-dialog-message';
@@ -137,12 +141,12 @@
       const cancelBtn = document.createElement('button');
       cancelBtn.type = 'button';
       cancelBtn.className = 'site-dialog-btn';
-      cancelBtn.textContent = opts.cancelText || '取消';
+      cancelBtn.textContent = opts.cancelText || t('取消');
 
       const confirmBtn = document.createElement('button');
       confirmBtn.type = 'button';
       confirmBtn.className = 'site-dialog-btn ' + (opts.danger ? 'danger' : 'primary');
-      confirmBtn.textContent = opts.confirmText || '确定';
+      confirmBtn.textContent = opts.confirmText || t('确定');
 
       const hasCancel = opts.cancelText !== null;
       if (hasCancel) actions.appendChild(cancelBtn);
@@ -232,25 +236,25 @@
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'data-clear-btn';
-    btn.textContent = '清除本地数据';
+    btn.textContent = t('清除本地数据');
     btn.addEventListener('click', async () => {
       const ok = await confirmDialog({
-        title: '清除本地数据',
-        message: '将清除本站保存在此浏览器中的最高纪录、游戏存档、球色、音效设置与教学提示，且无法恢复。',
-        confirmText: '清除',
-        cancelText: '取消',
+        title: t('清除本地数据'),
+        message: t('将清除本站保存在此浏览器中的最高纪录、游戏存档、球色、音效设置与教学提示，且无法恢复。'),
+        confirmText: t('清除'),
+        cancelText: t('取消'),
         danger: true,
       });
       if (!ok) return;
 
       if (clearAll()) {
-        toast('本地数据已清除');
+        toast(t('本地数据已清除'));
         setTimeout(() => location.reload(), 500);
       } else {
         alertDialog({
-          title: '清除失败',
-          message: '浏览器禁止访问本地存储，请检查浏览器的隐私设置后重试。',
-          confirmText: '知道了',
+          title: t('清除失败'),
+          message: t('浏览器禁止访问本地存储，请检查浏览器的隐私设置后重试。'),
+          confirmText: t('知道了'),
         });
       }
     });
@@ -264,7 +268,12 @@
     const title = (window.SITE_CONFIG && window.SITE_CONFIG.siteTitle) || '小游乐场';
     const el = document.createElement('div');
     el.className = 'site-credit';
-    el.appendChild(document.createTextNode('© ' + new Date().getFullYear() + ' ' + title + ' · by '));
+    el.appendChild(document.createTextNode('© ' + new Date().getFullYear() + ' '));
+    const site = document.createElement('span');
+    site.className = 'credit-site';
+    site.textContent = t(title);
+    el.appendChild(site);
+    el.appendChild(document.createTextNode(' · by '));
     const a = document.createElement('a');
     a.href = AUTHOR.url;
     a.target = '_blank';
@@ -279,6 +288,17 @@
     getAudioContext, unlockAudio, withAudio,
     isDialogOpen, confirmDialog, alertDialog, toast,
   };
+
+  // 语言切换时更新游戏页上已追加的作者标识与清除入口
+  document.addEventListener('i18n:change', () => {
+    const title = (window.SITE_CONFIG && window.SITE_CONFIG.siteTitle) || '小游乐场';
+    document.querySelectorAll('.credit-site').forEach((el) => {
+      el.textContent = t(title);
+    });
+    document.querySelectorAll('.data-clear-btn').forEach((el) => {
+      el.textContent = t('清除本地数据');
+    });
+  });
 
   // 游戏页：自动在页面底部追加入口（列表页由 app.js 在页脚渲染）
   document.addEventListener('DOMContentLoaded', () => {

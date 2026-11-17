@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>益智休闲 - 小游乐场</title>
-  <meta name="description" content="益智休闲分类：经典 2048、经典扫雷等轻松动脑的小游戏。" />
+  <meta name="description" content="益智休闲分类：经典 2048、经典扫雷、记忆翻牌等轻松动脑的小游戏。" />
   <meta name="author" content="Hayden-He" />
   <meta name="theme-color" content="#2563eb" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E%F0%9F%8E%AE%3C/text%3E%3C/svg%3E" />
@@ -16,14 +16,14 @@
   <main class="container">
     <section class="hero">
       <div class="hero-card">
-        <h1 class="hero-title">益智休闲 🧩</h1>
-        <p class="hero-desc">轻松动脑、节奏自在的经典数字与逻辑游戏，适合碎片时间放松一下。</p>
+        <h1 class="hero-title" data-i18n="益智休闲 🧩">益智休闲 🧩</h1>
+        <p class="hero-desc" data-i18n="轻松动脑、节奏自在的经典数字、逻辑与记忆游戏，适合碎片时间放松一下。">轻松动脑、节奏自在的经典数字、逻辑与记忆游戏，适合碎片时间放松一下。</p>
       </div>
     </section>
 
     <section>
       <div class="section-head">
-        <h2 class="section-title">益智休闲游戏</h2>
+        <h2 class="section-title" data-i18n="益智休闲游戏">益智休闲游戏</h2>
         <span id="games-count" class="section-count"></span>
       </div>
       <div id="games-grid" class="games-grid"></div>
@@ -33,6 +33,7 @@
   <footer id="site-footer" class="site-footer"></footer>
 
   <script src="/assets/site-data.js"></script>
+  <script src="/assets/i18n.js"></script>
   <script src="/assets/games.js"></script>
   <script src="/assets/app.js"></script>
   <script>initSitePage('puzzle');</script>

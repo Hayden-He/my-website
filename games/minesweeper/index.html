@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="/assets/style.css" />
   <link rel="stylesheet" href="/assets/game-shell.css" />
   <script src="/assets/site-data.js"></script>
+  <script src="/assets/i18n.js"></script>
   <script src="/assets/games.js"></script>
   <script src="/assets/game-kit.js"></script>
   <style>
@@ -161,43 +162,46 @@
 <body>
   <header class="game-topbar">
     <div class="container game-topbar-inner">
-      <a class="back-link" href="/">← 返回大厅</a>
-      <h1 class="game-topbar-title">经典扫雷 💣</h1>
-      <a class="game-topbar-cat" href="/categories/puzzle.html">益智休闲</a>
+      <a class="back-link" href="/" data-i18n="← 返回大厅">← 返回大厅</a>
+      <h1 class="game-topbar-title" data-i18n="经典扫雷 💣">经典扫雷 💣</h1>
+      <div class="game-topbar-actions">
+        <a class="game-topbar-cat" href="/categories/puzzle.html" data-i18n="益智休闲">益智休闲</a>
+        <button class="lang-btn" type="button" data-lang-toggle>EN</button>
+      </div>
     </div>
   </header>
 
   <main class="game-wrap">
     <div class="hud">
       <div class="hud-box">
-        <div class="hud-label">剩余地雷</div>
+        <div class="hud-label" data-i18n="剩余地雷">剩余地雷</div>
         <div id="mines-el" class="hud-value">10</div>
       </div>
       <div class="hud-box">
-        <div class="hud-label">当前用时</div>
+        <div class="hud-label" data-i18n="当前用时">当前用时</div>
         <div id="time-el" class="hud-value" style="color: var(--primary);">0s</div>
       </div>
       <div class="hud-box">
-        <div class="hud-label">最佳用时</div>
+        <div class="hud-label" data-i18n="最佳用时">最佳用时</div>
         <div id="best-el" class="hud-value" style="color: var(--accent);">--</div>
       </div>
     </div>
 
     <div class="toolbar">
-      <div class="mode-pills" role="group" aria-label="难度选择">
+      <div class="mode-pills" role="group" aria-label="难度选择" data-i18n-attr="aria-label:难度选择">
         <button class="mode-pill active" data-diff="easy">9×9</button>
         <button class="mode-pill" data-diff="medium">12×12</button>
         <button class="mode-pill" data-diff="hard">16×16</button>
       </div>
       <div class="btn-group">
-        <button id="help-btn" class="btn-small secondary" title="查看玩法">玩法</button>
+        <button id="help-btn" class="btn-small secondary" title="查看玩法" data-i18n="玩法" data-i18n-attr="title:查看玩法">玩法</button>
         <button id="tool-btn" class="btn-small secondary">模式: 翻开</button>
         <button id="sound-btn" class="btn-small secondary">音效: 开</button>
-        <button id="restart-btn" class="btn-small">重开</button>
+        <button id="restart-btn" class="btn-small" data-i18n="重开">重开</button>
       </div>
     </div>
 
-    <p class="mobile-diff-note">12×12 / 16×16 建议在平板或桌面挑战</p>
+    <p class="mobile-diff-note" data-i18n="12×12 / 16×16 建议在平板或桌面挑战">12×12 / 16×16 建议在平板或桌面挑战</p>
 
     <div class="board-wrap">
       <div id="mine-grid" class="mine-grid"></div>
@@ -205,19 +209,20 @@
         <h2 id="overlay-title">排雷成功！🎉</h2>
         <p id="overlay-desc">用时：0s</p>
         <div class="overlay-actions">
-          <button id="view-board-btn" class="overlay-btn secondary">查看棋盘</button>
-          <button id="overlay-btn" class="overlay-btn">再来一局</button>
+          <button id="view-board-btn" class="overlay-btn secondary" data-i18n="查看棋盘">查看棋盘</button>
+          <button id="overlay-btn" class="overlay-btn" data-i18n="再来一局">再来一局</button>
         </div>
       </div>
     </div>
 
-    <p class="hint-text">电脑左键翻开、右键插旗；手机长按或切换「插旗模式」标记；点击已翻开数字可快捷排雷</p>
+    <p class="hint-text" data-i18n="电脑左键翻开、右键插旗；手机长按或切换「插旗模式」标记；点击已翻开数字可快捷排雷">电脑左键翻开、右键插旗；手机长按或切换「插旗模式」标记；点击已翻开数字可快捷排雷</p>
 
     <div id="more-games" class="more-games"></div>
   </main>
 
   <script>
     (function () {
+      const t = (key, params) => (window.I18N ? I18N.t(key, params) : key);
       const GLOBAL_BEST_KEY = 'game_best_minesweeper';
       const DIFF_BEST_PREFIX = 'game_best_minesweeper_';
       const MODE_KEY = 'game_mode_minesweeper';
@@ -286,6 +291,9 @@
       let flagCount = 0;
       let hitPos = null;
       let dialogOpen = false;
+      let endState = '';
+      let endSec = 0;
+      let endBest = 0;
 
       function readBest(key) {
         return GameKit.readBest(key);
@@ -374,6 +382,9 @@
         openedCount = 0;
         flagCount = 0;
         hitPos = null;
+        endState = '';
+        endSec = 0;
+        endBest = 0;
 
         board = Array.from({ length: size }, () =>
           Array.from({ length: size }, () => ({
@@ -427,9 +438,25 @@
           render();
           playTone(523, 0.12, 'triangle', 784);
           setTimeout(() => playTone(784, 0.18, 'sine', 1046), 80);
-          overlayTitle.textContent = '排雷成功！🎉';
-          overlayDesc.textContent = DIFFS[diff].label + ' · 用时 ' + finalSec + ' 秒（最佳 ' + readBest(DIFF_BEST_PREFIX + diff) + ' 秒）';
+          endState = 'win';
+          endSec = finalSec;
+          endBest = readBest(DIFF_BEST_PREFIX + diff);
+          renderEndText();
           overlay.classList.add('show');
+        }
+      }
+
+      function renderEndText() {
+        if (endState === 'win') {
+          overlayTitle.textContent = t('排雷成功！🎉');
+          overlayDesc.textContent = t('{label} · 用时 {sec} 秒（最佳 {best} 秒）', {
+            label: t(DIFFS[diff].label),
+            sec: endSec,
+            best: endBest,
+          });
+        } else if (endState === 'lose') {
+          overlayTitle.textContent = t('踩到地雷了 💥');
+          overlayDesc.textContent = t('坚持了 {elapsed} 秒，再试一次吧！', { elapsed: endSec });
         }
       }
 
@@ -438,9 +465,10 @@
         hitPos = r + ',' + c;
         stopTimer();
         playTone(170, 0.28, 'sawtooth', 75);
+        endState = 'lose';
+        endSec = elapsed;
         render();
-        overlayTitle.textContent = '踩到地雷了 💥';
-        overlayDesc.textContent = '坚持了 ' + elapsed + ' 秒，再试一次吧！';
+        renderEndText();
         overlay.classList.add('show');
       }
 
@@ -544,17 +572,25 @@
 
             let stateLabel;
             if (cell.mine && ended) {
-              stateLabel = hitPos === r + ',' + c ? '踩中的地雷' : '地雷';
+              stateLabel = t(hitPos === r + ',' + c ? '踩中的地雷' : '地雷');
             } else if (!cell.mine && cell.flag && ended) {
-              stateLabel = '插错的旗子';
+              stateLabel = t('插错的旗子');
             } else if (cell.flag) {
-              stateLabel = '已插旗';
+              stateLabel = t('已插旗');
             } else if (cell.open) {
-              stateLabel = cell.adj > 0 ? '已翻开，周围 ' + cell.adj + ' 颗雷' : '已翻开，空白';
+              stateLabel = cell.adj > 0
+                ? (cell.adj === 1
+                  ? t('已翻开，周围 1 颗雷')
+                  : t('已翻开，周围 {adj} 颗雷', { adj: cell.adj }))
+                : t('已翻开，空白');
             } else {
-              stateLabel = '未翻开';
+              stateLabel = t('未翻开');
             }
-            btn.setAttribute('aria-label', '第 ' + (r + 1) + ' 行第 ' + (c + 1) + ' 列，' + stateLabel);
+            btn.setAttribute('aria-label', t('第 {row} 行第 {col} 列，{state}', {
+              row: r + 1,
+              col: c + 1,
+              state: stateLabel,
+            }));
 
             gridEl.appendChild(btn);
           }
@@ -649,10 +685,14 @@
         });
       }
 
+      function renderToolMode() {
+        toolBtn.textContent = flagMode ? t('模式: 🚩插旗') : t('模式: 翻开');
+        toolBtn.classList.toggle('flag-active', flagMode);
+      }
+
       toolBtn.addEventListener('click', () => {
         flagMode = !flagMode;
-        toolBtn.textContent = flagMode ? '模式: 🚩插旗' : '模式: 翻开';
-        toolBtn.classList.toggle('flag-active', flagMode);
+        renderToolMode();
       });
 
       document.addEventListener('site:dialogopen', () => {
@@ -666,6 +706,12 @@
       document.getElementById('overlay-btn').addEventListener('click', initGame);
       document.getElementById('view-board-btn').addEventListener('click', () => {
         overlay.classList.remove('show');
+      });
+
+      document.addEventListener('i18n:change', () => {
+        renderToolMode();
+        if (ended) renderEndText();
+        render();
       });
 
       const TUTORIAL_STEPS = [
@@ -694,7 +740,11 @@
       function showRules(force) {
         GameKit.showTutorial({
           id: 'minesweeper',
-          steps: TUTORIAL_STEPS,
+          steps: TUTORIAL_STEPS.map((step) => ({
+            icon: step.icon,
+            title: t(step.title),
+            text: t(step.text),
+          })),
           force: !!force,
         });
       }
@@ -702,6 +752,7 @@
       helpBtn.addEventListener('click', () => showRules(true));
 
       initGame();
+      renderToolMode();
       GameKit.mountMoreGames('minesweeper', document.getElementById('more-games'));
       showRules(false);
     })();
