@@ -62,7 +62,7 @@ const SITE_URL = 'https://my-website-all.pages.dev';
 const assetVersionPattern = /\?v=\d{11}/;
 const assetVersions = new Set();
 const OG_IMAGE = SITE_URL + '/assets/og-image.jpg';
-const OG_ALT = '小游乐场 · Little Playground：5 款即开即玩的小游戏';
+const OG_ALT = '小游乐场 · Little Playground：6 款即开即玩的小游戏';
 
 // 每个可索引页面：canonical + OG/Twitter 必须齐全，且 og:title 为“页面名 · Little Playground”
 function checkSeoPage(page, { label, urlPath, ogTitle }) {

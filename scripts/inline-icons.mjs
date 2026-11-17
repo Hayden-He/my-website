@@ -27,6 +27,7 @@ const pages = [
   'games/2048/index.html',
   'games/minesweeper/index.html',
   'games/memory/index.html',
+  'games/slide/index.html',
 ];
 for (const relative of pages) {
   const file = path.join(root, relative);

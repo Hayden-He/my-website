@@ -92,6 +92,10 @@
     '经典 2048': '2048',
     '经典扫雷': 'Minesweeper',
     '记忆翻牌': 'Memory Match',
+    '数字华容道': 'Sliding Puzzle',
+    '数字华容道 - 小游乐场': 'Sliding Puzzle - Little Playground',
+    '数字华容道：滑动数字方块，把 1–8 / 1–15 按顺序排好；支持 3×3 与 4×4 棋盘，步数越少越好。':
+      'Sliding Puzzle: slide the numbered tiles back into order (1–8 or 1–15); 3×3 and 4×4 boards, fewer moves is better.',
     '连点升空，把握落点让球空心入网；打板、火焰连击与金球加倍，挑战高分极限。':
       'Tap to rise and time your drop for a swish; bank shots, fire combos and gold balls double the score.',
     '吃掉果子与限时金星不断成长，还有冰果减速；支持经典撞墙与自由穿墙双模式。':
@@ -102,6 +106,8 @@
       'Your first click is always safe; click a number to chord. Three difficulties—clear the field with solid deduction.',
     '翻开两张相同图案配对，记住位置，用更少步数清空牌桌。':
       'Flip two matching tiles and remember their spots; clear the board in as few moves as possible.',
+    '滑动数字方块，把 1–8 / 1–15 按顺序排好；支持 3×3 与 4×4 棋盘，步数越少越好。':
+      'Slide the numbered tiles back into order (1–8 or 1–15); 3×3 and 4×4 boards, fewer moves is better.',
     '连击挑战': 'Combo challenge',
     '键盘/划屏': 'Keys / swipe',
     '双模式': 'Two modes',
@@ -111,6 +117,8 @@
     '三档难度': '3 difficulties',
     '记忆配对': 'Memory match',
     '双尺寸': 'Two sizes',
+    '滑动拼图': 'Slide puzzle',
+    '3×3 最少步: ': '3×3 fewest: ',
     '最高分: ': 'Best: ',
     '经典模式最高: ': 'Classic best: ',
     '4×4 最高: ': '4×4 best: ',
@@ -121,14 +129,14 @@
 
     // ---- 页面标题 / 描述 ----
     '小游乐场 - 在线小游戏合集': 'Little Playground - Free Online Mini Games',
-    '小游乐场：打开即玩的在线轻游戏合集，包含街头投篮、经典贪吃蛇、经典 2048、经典扫雷与记忆翻牌，支持电脑与手机。':
-      'Little Playground: instant online mini games—Street Hoops, Classic Snake, 2048, Minesweeper and Memory Match. Play on desktop or mobile.',
+    '小游乐场：打开即玩的在线轻游戏合集，包含街头投篮、经典贪吃蛇、经典 2048、经典扫雷、记忆翻牌与数字华容道，支持电脑与手机。':
+      'Little Playground: instant online mini games—Street Hoops, Classic Snake, 2048, Minesweeper, Memory Match and Sliding Puzzle. Play on desktop or mobile.',
     '动作街机 - 小游乐场': 'Arcade - Little Playground',
     '动作街机分类：街头投篮、经典贪吃蛇等考验反应的小游戏。':
       'Arcade games: Street Hoops, Classic Snake and more reflex-based challenges.',
     '益智休闲 - 小游乐场': 'Puzzle - Little Playground',
-    '益智休闲分类：经典 2048、经典扫雷、记忆翻牌等轻松动脑的小游戏。':
-      'Puzzle games: 2048, Minesweeper, Memory Match and more relaxed brain-teasers.',
+    '益智休闲分类：经典 2048、经典扫雷、记忆翻牌与数字华容道等轻松动脑的小游戏。':
+      'Puzzle games: 2048, Minesweeper, Memory Match, Sliding Puzzle and more relaxed brain-teasers.',
     '街头投篮 - 小游乐场': 'Street Hoops - Little Playground',
     '街头投篮：点击或按空格起跳，空心入网、打板进球，挑战你的最高分。':
       'Street Hoops: tap or press Space to rise, sink swishes and bank shots, and chase your best score.',
@@ -159,6 +167,7 @@
     '恭喜合成 2048！🎉': 'You made 2048! 🎉',
     '当前得分：{score}，你可以继续挑战更高数字！': 'Score: {score}. Keep going for higher tiles!',
     '🎉 新纪录！': '🎉 New record! ',
+    '新纪录！': 'New record! ',
     '本局得分：{score} · 最大方块：{tile}（本模式最高：{best}）':
       'Score: {score} · Best tile: {tile} (mode best: {best})',
     '重开棋局': 'Restart game',
@@ -288,6 +297,18 @@
     '最少步数': 'Best',
     '4×4 轻松': '4×4 Easy',
     '5×4 标准': '5×4 Standard',
+    '3×3 轻松': '3×3 Easy',
+    '4×4 标准': '4×4 Standard',
+    '完成！': 'Solved!',
+    '步数：0 · 用时：0s': 'Moves: 0 · Time: 0s',
+    '点击或轻触空格旁的方块滑动；方向键也可操作；3×3 先热身。':
+      'Tap a tile next to the blank to slide it; arrow keys work too. Start with 3×3.',
+    '重开本局': 'Restart this game',
+    '当前进度将被清除，确定重开吗？': 'Current progress will be lost. Restart?',
+    '空格': 'Blank',
+    '第 {row} 行第 {col} 列，数字 {n}': 'Row {row}, column {col}, number {n}',
+    '步数：{moves} · 用时：{elapsed}s · 最少 {best} 步': 'Moves: {moves} · Time: {elapsed}s · Best: {best} moves',
+    '数字华容道棋盘': 'Sliding puzzle board',
     '全部配对！🎉': 'All matched! 🎉',
     '步数：0 · 用时：0s': 'Moves: 0 · Time: 0s',
     '翻开两张相同图案配对；全部配对即通关，步数越少越好':
