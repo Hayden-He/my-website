@@ -59,6 +59,8 @@ function checkContains(content, needle, label) {
 }
 
 const SITE_URL = 'https://my-website-all.pages.dev';
+const assetVersionPattern = /\?v=\d{11}/;
+const assetVersions = new Set();
 const OG_IMAGE = SITE_URL + '/assets/og-image.jpg';
 const OG_ALT = '小游乐场 · Little Playground：5 款即开即玩的小游戏';
 
@@ -324,6 +326,25 @@ for (const asset of [
   'site.webmanifest',
 ]) {
   checkFile(asset, asset);
+}
+
+// ---------- 资源版本号一致性 ----------
+for (const relative of [
+  'index.html',
+  'categories/arcade.html',
+  'categories/puzzle.html',
+  '404.html',
+  ...games.map((game) => 'games/' + game.id + '/index.html'),
+]) {
+  const html = read(relative) || '';
+  if (!assetVersionPattern.test(html)) {
+    fail(`${relative} 缺少 ?v=YYYYMMDDNNN 资源版本号`);
+    continue;
+  }
+  for (const match of html.matchAll(/\?v=(\d{11})/g)) assetVersions.add(match[1]);
+}
+if (assetVersions.size > 1) {
+  fail('各页面资源版本号不一致：' + [...assetVersions].join(', '));
 }
 
 // ---------- 图标与 manifest ----------
