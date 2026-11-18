@@ -52,7 +52,7 @@ window.SITE_CONFIG = {
       preview: '/assets/previews/fruit.webp',
       category: 'arcade',
       categoryName: '动作街机',
-      description: '划屏或拖拽切开飞起的水果，连击爆汁、躲避炸弹，支持经典与 60 秒狂热双模式。',
+      description: '划屏或移动鼠标切开飞起的水果，连击爆汁、躲避炸弹，支持经典与 60 秒狂热双模式。',
       url: '/games/fruit/',
       storageKey: 'game_best_fruit_classic',
       bestPrefix: '经典模式最高: ',

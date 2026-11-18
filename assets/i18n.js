@@ -40,7 +40,6 @@
     '清除本地数据': 'Clear local data',
     '检查更新': 'Check for updates',
     '检查中…': 'Checking…',
-    '发现新版本，正在刷新…': 'New version found. Refreshing…',
     '已是最新版本': 'You are up to date.',
     '检查失败，请稍后重试': "Couldn't check. Try again.",
     '换个游戏': 'More games',
@@ -72,8 +71,8 @@
 
     // ---- 分类页 ----
     '动作街机 🏀': 'Arcade 🏀',
-    '考验反应与手感的街机挑战，投篮、贪吃蛇各有玩法，随时刷新自己的纪录。':
-      'Fast-paced arcade challenges—shoot hoops or grow the snake and chase a new personal best.',
+    '考验反应与手感的街机挑战，投篮、贪吃蛇与切水果各有玩法，随时刷新自己的纪录。':
+      'Fast-paced arcade challenges—shoot hoops, grow the snake or slice fruit and chase a new personal best.',
     '动作街机游戏': 'Arcade games',
     '益智休闲 🧩': 'Puzzle 🧩',
     '轻松动脑、节奏自在的经典数字、逻辑与记忆游戏，适合碎片时间放松一下。':
@@ -136,11 +135,11 @@
 
     // ---- 页面标题 / 描述 ----
     '小游乐场 - 在线小游戏合集': 'Little Playground - Free Online Mini Games',
-    '小游乐场：打开即玩的在线轻游戏合集，包含街头投篮、经典贪吃蛇、经典 2048、经典扫雷、记忆翻牌与数字华容道，支持电脑与手机。':
-      'Little Playground: instant online mini games—Street Hoops, Classic Snake, 2048, Minesweeper, Memory Match and Sliding Puzzle. Play on desktop or mobile.',
+    '小游乐场：打开即玩的在线轻游戏合集，包含街头投篮、经典贪吃蛇、极速切水果、经典 2048、经典扫雷、记忆翻牌与数字华容道，支持电脑与手机。':
+      'Little Playground: instant online mini games—Street Hoops, Classic Snake, Fruit Slicer, 2048, Minesweeper, Memory Match and Sliding Puzzle. Play on desktop or mobile.',
     '动作街机 - 小游乐场': 'Arcade - Little Playground',
-    '动作街机分类：街头投篮、经典贪吃蛇等考验反应的小游戏。':
-      'Arcade games: Street Hoops, Classic Snake and more reflex-based challenges.',
+    '动作街机分类：街头投篮、经典贪吃蛇、极速切水果等考验反应的小游戏。':
+      'Arcade games: Street Hoops, Classic Snake, Fruit Slicer and more reflex-based challenges.',
     '益智休闲 - 小游乐场': 'Puzzle - Little Playground',
     '益智休闲分类：经典 2048、经典扫雷、记忆翻牌与数字华容道等轻松动脑的小游戏。':
       'Puzzle games: 2048, Minesweeper, Memory Match, Sliding Puzzle and more relaxed brain-teasers.',
@@ -373,12 +372,11 @@
     '极速切水果 - 小游乐场': 'Fruit Slicer - Little Playground',
     '剩余时间': 'Time',
     '继续游戏': 'Resume',
-    '划屏或拖拽切开飞起的水果，连击爆汁、躲避炸弹，支持经典与 60 秒狂热双模式。':
-      'Swipe or drag to slice flying fruit, chain combos, dodge bombs, and play Classic or 60s Frenzy.',
+    '划屏或移动鼠标切开飞起的水果，连击爆汁、躲避炸弹，支持经典与 60 秒狂热双模式。':
+      'Swipe or move your mouse to slice flying fruit, chain combos, dodge bombs, and play Classic or 60s Frenzy.',
     '划屏/鼠标': 'Swipe / Mouse',
     '剩余生命': 'Lives',
     '{n} 条命': '{n} lives',
-    '游戏模式': 'Game mode',
     '经典 3 命': 'Classic 3 Lives',
     '60秒狂热': '60s Frenzy',
     '刀锋外观': 'Blade skin',
@@ -388,8 +386,8 @@
     '霓虹电刃': 'Neon Volt',
     '落樱之刃': 'Sakura Blade',
     '极速切水果画布': 'Fruit Slicer canvas',
-    '按住鼠标拖拽或手指划屏切开水果，连续一刀多切触发连击，小心炸弹！':
-      'Drag with mouse or swipe to slice fruit. Chain multi-fruit cuts for combos and watch out for bombs!',
+    '移动鼠标或手指划屏切开水果，连续一刀多切触发连击，小心炸弹！':
+      'Move your mouse or swipe to slice fruit. Chain multi-fruit cuts for combos and watch out for bombs!',
     '划屏或移动鼠标挥砍 · 空格/回车开始或暂停 · 14 种水果与 5 款特效刀锋':
       'Swipe or move mouse to slice · Space/Enter to start or pause · 14 fruits & 5 FX blades',
     '经典 3 命：漏掉完整水果扣 1 命，每满 100 分回 1 命，切到炸弹立即结束！':
@@ -413,8 +411,8 @@
     '{c} 连击 +{n}': '{c}x Combo +{n}',
     '连切 ×{h} +{n}': 'Multi ×{h} +{n}',
     '划屏挥砍水果': 'Swipe to Slice',
-    '手指划屏或按住鼠标左键拖拽切开飞起的水果，一次切中 3 个以上触发连击加分！':
-      'Swipe or drag with the mouse to slice flying fruit. Slice 3+ in one stroke for a combo bonus!',
+    '手指划屏或移动鼠标挥砍飞起的水果，一次切中 3 个以上触发连击加分！':
+      'Swipe or move your mouse to slice flying fruit. Slice 3+ in one stroke for a combo bonus!',
     '小心炸弹': 'Watch for Bombs',
     '经典模式下切到炸弹会直接结束，漏掉完整水果扣 1 命；60 秒狂热模式切到炸弹扣 10 分。':
       'In Classic mode, bombs end the game and missed fruits cost 1 life. In 60s Frenzy, bombs deduct 10 points.',
