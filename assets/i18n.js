@@ -30,6 +30,8 @@
     '音效已关闭，点击开启': 'Sound is off. Click to unmute.',
     '关闭音效': 'Mute',
     '开启音效': 'Unmute',
+    '音效已开启（iPhone 静音模式下无声，请关闭手机静音）':
+      'Sound on (muted if your iPhone Silent switch is on)',
     '开始游戏 →': 'Play →',
     '开始游戏': 'Start',
     '继续上局 · {board} →': 'Continue · {board} →',

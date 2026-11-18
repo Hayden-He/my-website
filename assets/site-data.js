@@ -8,8 +8,28 @@
   }
 
   const SOUND_KEY = 'site_sound';
+  const SILENT_HINT_KEY = 'site_ios_silent_hint_shown';
   const PREFIXES = ['game_best_', 'game_skin_', 'game_save_', 'game_mode_', 'game_tutorial_'];
   const EXACT_KEYS = [SOUND_KEY];
+
+  function isAppleMobile() {
+    try {
+      const ua = navigator.userAgent || '';
+      if (/iPhone|iPad|iPod/i.test(ua)) return true;
+      return navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
+    } catch {
+      return false;
+    }
+  }
+
+  function maybeHintSilentMode() {
+    if (!isAppleMobile()) return;
+    try {
+      if (sessionStorage.getItem(SILENT_HINT_KEY)) return;
+      sessionStorage.setItem(SILENT_HINT_KEY, '1');
+    } catch {}
+    toast(t('音效已开启（iPhone 静音模式下无声，请关闭手机静音）'), { duration: 3200 });
+  }
 
   function getSound() {
     try {
@@ -23,6 +43,7 @@
     try {
       localStorage.setItem(SOUND_KEY, on ? '1' : '0');
     } catch {}
+    if (on) maybeHintSilentMode();
   }
 
   // ---- 共用音频：解决 iOS Safari 等浏览器的自动播放限制 ----
