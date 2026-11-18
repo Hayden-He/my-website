@@ -842,6 +842,7 @@
 
       // 连击判定
       let comboCount = 0;
+      let comboEnergyCount = 0;
       let comboTimer = 0;
       let comboX = W * 0.5;
       let comboY = H * 0.5;
@@ -1288,6 +1289,7 @@
         shakeTimer = 0;
         flashAlpha = 0;
         comboCount = 0;
+        comboEnergyCount = 0;
         comboTimer = 0;
         activePointerId = null;
         prevPt = null;
@@ -1351,6 +1353,7 @@
         const isBomb = specialKind === 'bomb';
         const isMini = !!(custom && custom.isMini);
         const isBonus = !!(custom && custom.isBonus);
+        const isFeverFruit = !!(custom && custom.isFeverFruit);
         const r = (custom && custom.r) || (isBomb ? 28 : (specialKind === 'pomegranate' ? 35 : fruit.r));
 
         let x, y, vx, vy;
@@ -1382,6 +1385,7 @@
           special: specialKind || null, // null | 'bomb' | 'freeze' | 'frenzy' | 'double' | 'pomegranate' | 'lightning' | 'heal' | 'splitter' | 'magnet' | 'shield' | 'clock'
           isMini,
           isBonus,
+          isFeverFruit,
           r,
           x,
           y,
@@ -1755,7 +1759,10 @@
         comboTimer = 0.2;
         comboX = item.x;
         comboY = item.y;
-        addFeverEnergy(item.special ? 5 : 3);
+        if (!item.isFeverFruit) {
+          comboEnergyCount += 1;
+          addFeverEnergy(item.special ? 5 : 3);
+        }
         playSlice(comboCount);
       }
 
@@ -1764,6 +1771,7 @@
         feverMeter += amount;
         if (feverMeter >= 100) {
           feverMeter = 0;
+          comboEnergyCount = 0;
           feverActiveTimer = 4.5;
           feverSpawnCd = 0.05;
           playSpecial('fever');
@@ -1777,11 +1785,14 @@
           const bonus = addPoints(comboCount);
           addFloatText(comboX, comboY - 28, t('{c} 连击 +{n}', { c: comboCount, n: bonus }), '#fde047', 1.4);
           triggerShake(Math.min(7, 2 + comboCount), 0.16);
-          const comboEnergy = comboCount >= 5 ? 25 : (comboCount === 4 ? 18 : 12);
-          addFeverEnergy(comboEnergy);
+          if (comboEnergyCount >= 3) {
+            const comboEnergy = comboEnergyCount >= 5 ? 25 : (comboEnergyCount === 4 ? 18 : 12);
+            addFeverEnergy(comboEnergy);
+          }
           playCombo(comboCount);
         }
         comboCount = 0;
+        comboEnergyCount = 0;
         comboTimer = 0;
       }
 
@@ -1847,6 +1858,7 @@
             flashAlpha = 0.55;
             feverMeter = 0;
             comboCount = 0;
+            comboEnergyCount = 0;
             comboTimer = 0;
             score = Math.max(0, score - 10);
             addFloatText(item.x, item.y - 12, '-10', '#ef4444', 1.45);
@@ -2024,7 +2036,7 @@
           if (feverSpawnCd <= 0) {
             feverSpawnCd = 0.16;
             const sideRoll = Math.random();
-            spawnFruitObject(null, null, sideRoll < 0.35 ? 'left' : (sideRoll < 0.7 ? 'right' : null), { isBonus: true });
+            spawnFruitObject(null, null, sideRoll < 0.35 ? 'left' : (sideRoll < 0.7 ? 'right' : null), { isBonus: true, isFeverFruit: true });
           }
         }
 
