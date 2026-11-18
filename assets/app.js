@@ -222,6 +222,7 @@
     }
 
     grid.classList.toggle('cols-2', games.length === 2 || games.length === 4);
+    grid.classList.toggle('cols-4', games.length === 8);
     grid.innerHTML = '';
     games.forEach((game) => {
       grid.appendChild(renderGameCard(game));

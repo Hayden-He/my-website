@@ -26,6 +26,6 @@
 ## Cloudflare Pages
 
 - 构建命令为 `node scripts/build-site.mjs`，输出目录为 `dist`。构建先执行结构和双语校验，产物只包含正式页面、站点资源和响应头配置。
-- 分类链接与 canonical 使用 `/categories/<id>`。构建保留 `categories/<id>.html` 文件，由 Pages 处理无扩展名路由。首页、两个分类与七款游戏共十个可索引页面，404 和模板不进站点地图。
+- 分类链接与 canonical 使用 `/categories/<id>`。构建保留 `categories/<id>.html` 文件，由 Pages 处理无扩展名路由。首页、两个分类与八款游戏共十一个可索引页面，404 和模板不进站点地图。
 - 用 `node scripts/sync-site.mjs [已更新页面的 URL 路径…]` 从游戏清单同步 canonical、分享标签、站点地图及内联图标。参数仅用于更新指定页面的 `lastmod`。
 - 构建按资源内容生成带指纹的 URL，并写入供「检查更新」使用的构建编号。固定 URL 的分享图可重新验证。`node scripts/bump-assets.mjs` 保留给仍依赖旧版查询参数的页面兼容使用。

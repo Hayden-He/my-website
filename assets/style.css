@@ -210,6 +210,27 @@ textarea {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+@media (min-width: 1120px) {
+  .container:has(.games-grid.cols-4) {
+    max-width: 1180px;
+  }
+
+  .games-grid.cols-4 {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+  }
+
+  .games-grid.cols-4 .game-card {
+    padding: 18px;
+  }
+}
+
+@media (max-width: 1119px) and (min-width: 601px) {
+  .games-grid.cols-4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 .game-card {
   display: flex;
   flex-direction: column;
@@ -413,7 +434,8 @@ textarea {
   }
 
   .games-grid,
-  .games-grid.cols-2 {
+  .games-grid.cols-2,
+  .games-grid.cols-4 {
     grid-template-columns: 1fr;
     gap: 14px;
   }

@@ -73,8 +73,8 @@
 
     // ---- 分类页 ----
     '动作街机 🏀': 'Arcade 🏀',
-    '考验反应与手感的街机挑战，投篮、贪吃蛇与切水果各有玩法，随时刷新自己的纪录。':
-      'Fast-paced arcade challenges—shoot hoops, grow the snake or slice fruit and chase a new personal best.',
+    '考验反应与手感的街机挑战，投篮、贪吃蛇、切水果与太空战机各有玩法，随时刷新自己的纪录。':
+      'Fast-paced arcade challenges—hoops, snake, fruit slicing and starfighter action to beat your personal best.',
     '动作街机游戏': 'Arcade games',
     '益智休闲 🧩': 'Puzzle 🧩',
     '轻松动脑、节奏自在的经典数字、逻辑与记忆游戏，适合碎片时间放松一下。':
@@ -137,11 +137,11 @@
 
     // ---- 页面标题 / 描述 ----
     '小游乐场 - 在线小游戏合集': 'Little Playground - Free Online Mini Games',
-    '小游乐场：打开即玩的在线轻游戏合集，包含街头投篮、经典贪吃蛇、极速切水果、经典 2048、经典扫雷、记忆翻牌与数字华容道，支持电脑与手机。':
-      'Little Playground: instant online mini games—Street Hoops, Classic Snake, Fruit Slicer, 2048, Minesweeper, Memory Match and Sliding Puzzle. Play on desktop or mobile.',
+    '小游乐场：打开即玩的在线轻游戏合集，包含街头投篮、经典贪吃蛇、极速切水果、太空战机、经典 2048、经典扫雷、记忆翻牌与数字华容道，支持电脑与手机。':
+      'Little Playground: instant online mini games—Street Hoops, Classic Snake, Fruit Slicer, Space Shooter, 2048, Minesweeper, Memory Match and Sliding Puzzle. Play on desktop or mobile.',
     '动作街机 - 小游乐场': 'Arcade - Little Playground',
-    '动作街机分类：街头投篮、经典贪吃蛇、极速切水果等考验反应的小游戏。':
-      'Arcade games: Street Hoops, Classic Snake, Fruit Slicer and more reflex-based challenges.',
+    '动作街机分类：街头投篮、经典贪吃蛇、极速切水果、太空战机等考验反应的小游戏。':
+      'Arcade games: Street Hoops, Classic Snake, Fruit Slicer, Space Shooter and more reflex-based challenges.',
     '益智休闲 - 小游乐场': 'Puzzle - Little Playground',
     '益智休闲分类：经典 2048、经典扫雷、记忆翻牌与数字华容道等轻松动脑的小游戏。':
       'Puzzle games: 2048, Minesweeper, Memory Match, Sliding Puzzle and more relaxed brain-teasers.',
@@ -449,6 +449,67 @@
     '善用特殊水果与暴走': 'Special Fruits & Fever',
     '新增分裂果、磁力聚拢、防爆护盾、回血果与 +3s 时钟果；冰冻/石榴期间会暂停 60 秒倒计时，连击攒满能量槽还会触发无炸弹双倍暴走！':
       'Slice Splitter, Magnet, Shield, Heal (+1♥) & +3s Clock fruits. Freeze/Pomegranate pause the 60s clock; fill the Fever bar for a bomb-free 2× rush!',
+
+    // ---- 太空战机 ----
+    '太空战机': 'Space Shooter',
+    '太空战机 - 小游乐场': 'Space Shooter - Little Playground',
+    '操控战机躲避弹幕、升级主炮火力、释放清屏脉冲并挑战每 5 波的星际 Boss。':
+      'Pilot your starfighter, dodge bullet waves, upgrade cannons, fire EMP blasts, and battle bosses every 5 waves.',
+    '标准模式最高: ': 'Standard best: ',
+    '拖动/键盘': 'Drag / Keys',
+    '当前波次': 'Wave',
+    '标准闯关': 'Standard',
+    '王牌极速': 'Ace Rush',
+    '护盾激活': 'Shield On',
+    '星际旗舰 BOSS': 'FLAGSHIP BOSS',
+    '太空战机画布': 'Space Shooter canvas',
+    '拖动战机躲避弹幕、拾取火力升级，每 5 波迎战星际 Boss！':
+      'Drag your starfighter, collect weapon upgrades, and defeat a Boss every 5 waves!',
+    '⚡ 脉冲清屏': '⚡ EMP Pulse',
+    '战机涂装': 'Fighter skin',
+    '苍穹蓝翼': 'Cobalt Wing',
+    '烈焰红隼': 'Crimson Hawk',
+    '暗夜幽灵': 'Phantom',
+    '触屏拖动 / 鼠标移动 / 方向键操控 · 空格释放清屏脉冲 · P 暂停':
+      'Touch drag / mouse / arrows or WASD · Space for EMP pulse · P to pause',
+    '战机道具与敌机图鉴': 'Power-ups & mechanics guide',
+    '道具与机制说明': 'Power-ups & Mechanics',
+    '火力升级：最高Lv.4五向炮': 'Weapon Up: up to Lv.4 5-way',
+    '能量护盾：抵消一次伤害': 'Shield: blocks one hit',
+    '超载暴走：5.5秒双倍射速': 'Overdrive: 2× fire rate for 5.5s',
+    '护甲修复：恢复1点护甲': 'Repair: restore +1 armor',
+    '脉冲补给：清弹冲击波+1': 'EMP Supply: +1 blast charge',
+    'Boss预警：预警线锁定后发射激光': 'Boss Laser: dodge after the sightline locks',
+    '剩余护甲：{hp}': 'Armor left: {hp}',
+    '主炮 Lv.{lv}': 'Cannon Lv.{lv}',
+    '标准闯关：3 点护甲起步，升级主炮、释放脉冲清弹，每 5 波迎战星际 Boss！':
+      'Standard: 3 armor, upgrade cannons, clear bullets with EMP, and fight a Boss every 5 waves!',
+    '王牌极速：初始 Lv.2 主炮、弹幕更密集、得分 1.5 倍加成，挑战极限操作！':
+      'Ace Rush: start at Lv.2 cannon with denser waves and 1.5× score multiplier!',
+    '战机坠毁': 'Ship Destroyed',
+    '击毁 {kills} 架 · 抵达第 {wave} 波 · 最高 {combo} 连击':
+      '{kills} destroyed · Wave {wave} · Max {combo}x combo',
+    '绯红裁决者 BOSS': 'Crimson Arbiter BOSS',
+    '苍蓝棱镜 BOSS': 'Azure Prism BOSS',
+    '紫曜母舰 BOSS': 'Void Mothership BOSS',
+    '⚠ 第 {w} 波 · {name}': '⚠ Wave {w} · {name}',
+    '第 {w} 波': 'Wave {w}',
+    '脉冲清屏！': 'EMP BLAST!',
+    '护盾抵消！': 'Shield Blocked!',
+    '火力 Lv.{lv}!': 'Cannon Lv.{lv}!',
+    '能量护盾!': 'Shield Ready!',
+    '超载暴走!': 'OVERDRIVE!',
+    '+1 脉冲!': '+1 EMP!',
+    '×{c} 连击！': '{c}× COMBO!',
+    '拖动战机迎战': 'Pilot Your Fighter',
+    '手机在画布内拖动、电脑移动鼠标或按方向键/WASD 控制战机走位，主炮会自动连射。':
+      'Drag on touchscreens, move your mouse, or use arrow keys / WASD to steer. Cannons fire automatically.',
+    '拾取强化与脉冲清屏': 'Power-ups & EMP Pulse',
+    '击毁敌机掉落火力升级、护盾、超载与修甲道具；危机时按空格或点脉冲按钮消除全屏弹幕！':
+      'Collect weapon, shield, overdrive & repair drops. Press Space or tap EMP Pulse to wipe enemy bullets!',
+    '迎战星际 Boss': 'Boss Battles',
+    '每 5 波登场 1 架旗舰 Boss，看到激光预警线请立刻走位躲避，击破 Boss 补充脉冲次数。':
+      'A Boss arrives every 5 waves. Dodge laser sightlines; defeating a Boss refills +1 EMP!',
 
     // ---- 清数据 / 弹窗 ----
     '将清除本站保存在此浏览器中的最高纪录、游戏存档、球色、音效设置与教学提示，且无法恢复。':
