@@ -388,24 +388,47 @@
     '极速切水果画布': 'Fruit Slicer canvas',
     '移动鼠标或手指划屏切开水果，连续一刀多切触发连击，小心炸弹！':
       'Move your mouse or swipe to slice fruit. Chain multi-fruit cuts for combos and watch out for bombs!',
-    '划屏或移动鼠标挥砍 · 空格/回车开始或暂停 · 14 种水果与 5 款特效刀锋':
-      'Swipe or move mouse to slice · Space/Enter to start or pause · 14 fruits & 5 FX blades',
-    '经典 3 命：漏掉完整水果扣 1 命，每满 100 分回 1 命，切到炸弹立即结束！':
-      'Classic 3 Lives: Missing a whole fruit costs 1 life (+1 life every 100 pts). Slicing a bomb ends the run!',
-    '60 秒狂热：尽情连击拿高分，切到炸弹扣 10 分，善用冰冻/狂热/双倍/石榴/闪电果！':
-      '60s Frenzy: Chain combos for high scores. Bombs cost 10 pts. Use Freeze, Frenzy, Double, Pomegranate & Bolt!',
+    '划屏或移动鼠标挥砍 · 空格/回车开始或暂停 · 关注底部炸弹预警与暴走能量槽':
+      'Swipe or move mouse to slice · Space/Enter to start/pause · Watch bottom bomb alerts & Fever bar',
+    '🔥 暴走能量': '🔥 Fever',
+    '🔥 超级暴走 ×2': '🔥 FEVER ×2',
+    '特殊果实与机制图鉴': 'Special fruits & mechanics guide',
+    '特殊果实与机制说明': 'Special Fruits & Mechanics',
+    '冰冻：减速并暂停60s计时': 'Freeze: slow motion & pause clock',
+    '狂热：侧向连发水果潮': 'Frenzy: side fruit barrage',
+    '双倍：6秒内全得分翻倍': 'Double: 2× score for 6s',
+    '闪电：链式劈开全场水果': 'Bolt: chain-slice all fruits',
+    '分裂：爆出4颗高分小果': 'Splitter: bursts into 4 bonus minis',
+    '磁力：吸近水果并推开炸弹': 'Magnet: pulls fruits, pushes bombs',
+    '护盾：抵消一次炸弹伤害': 'Shield: blocks one bomb hit',
+    '石榴：慢动作连续狂切': 'Pomegranate: slow-mo multi-slice',
+    '时钟：60s模式加3秒（限2次）': 'Clock: +3s in 60s mode (max 2)',
+    '回血：经典模式恢复1命': 'Heal: +1 life in Classic',
+    '暴走槽：连击攒满4.5s无雷×2': 'Fever: fill via combos for 4.5s 2× rush',
+    '经典 3 命：漏掉常规水果扣 1 命，善用回血/护盾/分裂/磁力/冰冻/闪电果，切到炸弹立即结束！':
+      'Classic 3 Lives: Missing regular fruits costs 1 life. Use Heal, Shield, Splitter, Magnet, Freeze & Bolt—avoid bombs!',
+    '60 秒狂热：冰冻与石榴期间暂停倒计时，连击攒满触发无炸弹暴走，还有+3s时钟/护盾/分裂果！':
+      '60s Frenzy: Freeze & Pomegranate pause the clock. Fill Fever for a bomb-free rush, plus +3s Clock, Shield & Splitter!',
     '已暂停': 'Paused',
     '当前得分：{score}': 'Current score: {score}',
     '切到炸弹！': 'Sliced a Bomb!',
     '生命耗尽！': 'Out of Lives!',
     '（新纪录！）': ' (New Record!)',
+    '防爆护盾': 'Blast Shield',
+    '超级暴走 {s}s': 'Fever {s}s',
     '冰冻减速 {s}s': 'Freeze {s}s',
     '水果狂热 {s}s': 'Frenzy {s}s',
     '双倍得分 {s}s': 'Double ×2 {s}s',
+    '磁力聚拢 {s}s': 'Magnet {s}s',
     '狂切石榴！': 'Multi-Slice!',
     '冰冻减速!': 'Freeze!',
     '水果狂热!': 'Frenzy!',
     '双倍得分 ×2!': 'Double ×2!',
+    '磁力聚拢!': 'Magnet!',
+    '防爆护盾!': 'Shield Ready!',
+    '护盾抵消!': 'Shield Blocked!',
+    '分裂连爆!': 'Fruit Split!',
+    '超级暴走 ×2！': 'FEVER ×2!',
     '闪电连劈 +{n}': 'Bolt Chain +{n}',
     '暴击 +{n}!': 'Critical +{n}!',
     '{c} 连击 +{n}': '{c}x Combo +{n}',
@@ -414,11 +437,11 @@
     '手指划屏或移动鼠标挥砍飞起的水果，一次切中 3 个以上触发连击加分！':
       'Swipe or move your mouse to slice flying fruit. Slice 3+ in one stroke for a combo bonus!',
     '小心炸弹': 'Watch for Bombs',
-    '经典模式下切到炸弹会直接结束，漏掉完整水果扣 1 命；60 秒狂热模式切到炸弹扣 10 分。':
-      'In Classic mode, bombs end the game and missed fruits cost 1 life. In 60s Frenzy, bombs deduct 10 points.',
-    '善用特殊水果': 'Special Fruits',
-    '冰冻减速、水果狂热、双倍得分、连续狂切石榴与全屏闪电果，帮你轻松冲刺新高！':
-      'Use Freeze, Frenzy, Double Score, Multi-Slice Pomegranate, and Lightning fruits to boost your score!',
+    '炸弹发射前会在底部亮起红色 ! 预警并响起警示音。经典模式切到炸弹立即结束，60 秒狂热扣 10 分（有护盾可抵消一次）。':
+      'A red ! alert and warning chirp appear at the bottom before bombs launch. Bombs end Classic or cost 10 pts in Frenzy (Shield blocks once).',
+    '善用特殊水果与暴走': 'Special Fruits & Fever',
+    '新增分裂果、磁力聚拢、防爆护盾、回血果与 +3s 时钟果；冰冻/石榴期间会暂停 60 秒倒计时，连击攒满能量槽还会触发无炸弹双倍暴走！':
+      'Slice Splitter, Magnet, Shield, Heal (+1♥) & +3s Clock fruits. Freeze/Pomegranate pause the 60s clock; fill the Fever bar for a bomb-free 2× rush!',
 
     // ---- 清数据 / 弹窗 ----
     '将清除本站保存在此浏览器中的最高纪录、游戏存档、球色、音效设置与教学提示，且无法恢复。':

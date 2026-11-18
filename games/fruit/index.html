@@ -74,7 +74,7 @@
       overflow: hidden;
     }
 
-    .timer-bar-wrap.classic { visibility: hidden; }
+    .timer-bar-wrap.classic { display: none; }
 
     .timer-bar {
       width: 100%;
@@ -85,6 +85,11 @@
 
     .timer-bar.low {
       background: linear-gradient(90deg, #ef4444, #f97316);
+    }
+
+    .timer-bar.frozen {
+      background: linear-gradient(90deg, #38bdf8, #a5f3fc);
+      box-shadow: 0 0 8px rgba(56, 189, 248, 0.55);
     }
 
     .toolbar-row {
@@ -186,12 +191,126 @@
     .buff-pill.frenzy { background: rgba(190, 24, 93, 0.82); border-color: rgba(249, 168, 212, 0.55); }
     .buff-pill.double { background: rgba(180, 83, 9, 0.86); border-color: rgba(253, 224, 71, 0.6); }
     .buff-pill.pomegranate { background: rgba(153, 27, 27, 0.86); border-color: rgba(252, 165, 165, 0.6); }
+    .buff-pill.magnet { background: rgba(109, 40, 217, 0.86); border-color: rgba(196, 181, 253, 0.6); }
+    .buff-pill.shield { background: rgba(8, 145, 178, 0.88); border-color: rgba(103, 232, 249, 0.65); }
+    .buff-pill.fever { background: rgba(217, 119, 6, 0.9); border-color: rgba(253, 224, 71, 0.72); }
+
+    .fever-bar-box {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 6px 12px;
+      border-radius: 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .fever-bar-box.active {
+      background: linear-gradient(90deg, #fffbeb 0%, #fff1f2 100%);
+      border-color: #f59e0b;
+      box-shadow: 0 4px 14px rgba(245, 158, 11, 0.18);
+    }
+
+    .fever-label {
+      font-size: 0.76rem;
+      font-weight: 800;
+      color: #b45309;
+      white-space: nowrap;
+    }
+
+    .fever-bar-box.active .fever-label {
+      color: #be123c;
+    }
+
+    .fever-track {
+      flex: 1;
+      height: 9px;
+      border-radius: 999px;
+      background: #fef3c7;
+      overflow: hidden;
+    }
+
+    .fever-fill {
+      width: 0%;
+      height: 100%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #f59e0b, #f97316);
+      transition: width 0.1s ease-out, background 0.2s ease;
+    }
+
+    .fever-bar-box.active .fever-fill {
+      background: linear-gradient(90deg, #f43f5e, #f59e0b, #fde047);
+    }
+
+    .fever-pct {
+      min-width: 38px;
+      text-align: right;
+      font-size: 0.76rem;
+      font-weight: 800;
+      color: #92400e;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .skin-row {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+    }
+
+    .fruit-legend {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px 14px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .legend-title {
+      font-size: 0.78rem;
+      font-weight: 800;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    .legend-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(146px, 1fr));
+      gap: 7px 10px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 0.75rem;
+      line-height: 1.3;
+      color: var(--text);
+    }
+
+    .legend-badge {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 0.66rem;
+      font-weight: 800;
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.18);
+    }
 
     @media (max-width: 560px) {
       .hud { gap: 8px; }
       .hud-box { padding: 8px 6px; }
       .hud-value { font-size: 1.15rem; }
       .skin-pill { padding: 4px 8px; font-size: 0.72rem; }
+      .fever-bar-box { padding: 5px 10px; gap: 8px; }
+      .legend-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 8px; }
     }
   </style>
 </head>
@@ -495,15 +614,12 @@
           <button id="restart-btn" class="btn-small" type="button" data-i18n="重开">重开</button>
         </div>
       </div>
-      <div class="toolbar-row">
-        <div class="skin-pills" role="group" aria-label="刀锋外观" data-i18n-attr="aria-label:刀锋外观">
-          <button class="skin-pill active" type="button" data-skin="silver"><span class="skin-swatch" style="background:#e2e8f0;border:1px solid #94a3b8"></span><span data-i18n="经典银刃">经典银刃</span></button>
-          <button class="skin-pill" type="button" data-skin="flame"><span class="skin-swatch" style="background:#f97316"></span><span data-i18n="烈焰之刃">烈焰之刃</span></button>
-          <button class="skin-pill" type="button" data-skin="ice"><span class="skin-swatch" style="background:#38bdf8"></span><span data-i18n="寒冰之刃">寒冰之刃</span></button>
-          <button class="skin-pill" type="button" data-skin="neon"><span class="skin-swatch" style="background:#d946ef"></span><span data-i18n="霓虹电刃">霓虹电刃</span></button>
-          <button class="skin-pill" type="button" data-skin="sakura"><span class="skin-swatch" style="background:#fb7185"></span><span data-i18n="落樱之刃">落樱之刃</span></button>
-        </div>
-      </div>
+    </div>
+
+    <div id="fever-bar-box" class="fever-bar-box">
+      <span id="fever-label" class="fever-label" data-i18n="🔥 暴走能量">🔥 暴走能量</span>
+      <div class="fever-track" aria-hidden="true"><div id="fever-fill" class="fever-fill"></div></div>
+      <span id="fever-pct" class="fever-pct">0%</span>
     </div>
 
     <div class="stage-box">
@@ -518,7 +634,34 @@
       </div>
     </div>
 
-    <p class="hint" data-i18n="划屏或移动鼠标挥砍 · 空格/回车开始或暂停 · 14 种水果与 5 款特效刀锋">划屏或移动鼠标挥砍 · 空格/回车开始或暂停 · 14 种水果与 5 款特效刀锋</p>
+    <div class="skin-row">
+      <div class="skin-pills" role="group" aria-label="刀锋外观" data-i18n-attr="aria-label:刀锋外观">
+        <button class="skin-pill active" type="button" data-skin="silver"><span class="skin-swatch" style="background:#e2e8f0;border:1px solid #94a3b8"></span><span data-i18n="经典银刃">经典银刃</span></button>
+        <button class="skin-pill" type="button" data-skin="flame"><span class="skin-swatch" style="background:#f97316"></span><span data-i18n="烈焰之刃">烈焰之刃</span></button>
+        <button class="skin-pill" type="button" data-skin="ice"><span class="skin-swatch" style="background:#38bdf8"></span><span data-i18n="寒冰之刃">寒冰之刃</span></button>
+        <button class="skin-pill" type="button" data-skin="neon"><span class="skin-swatch" style="background:#d946ef"></span><span data-i18n="霓虹电刃">霓虹电刃</span></button>
+        <button class="skin-pill" type="button" data-skin="sakura"><span class="skin-swatch" style="background:#fb7185"></span><span data-i18n="落樱之刃">落樱之刃</span></button>
+      </div>
+    </div>
+
+    <p class="hint" data-i18n="划屏或移动鼠标挥砍 · 空格/回车开始或暂停 · 关注底部炸弹预警与暴走能量槽">划屏或移动鼠标挥砍 · 空格/回车开始或暂停 · 关注底部炸弹预警与暴走能量槽</p>
+
+    <section class="fruit-legend" aria-label="特殊果实与机制图鉴" data-i18n-attr="aria-label:特殊果实与机制图鉴">
+      <div class="legend-title" data-i18n="特殊果实与机制说明">特殊果实与机制说明</div>
+      <div class="legend-grid">
+        <div class="legend-item"><span class="legend-badge" style="background:#0284c7">❄</span><span data-i18n="冰冻：减速并暂停60s计时">冰冻：减速并暂停60s计时</span></div>
+        <div class="legend-item"><span class="legend-badge" style="background:#db2777">★</span><span data-i18n="狂热：侧向连发水果潮">狂热：侧向连发水果潮</span></div>
+        <div class="legend-item"><span class="legend-badge" style="background:#d97706">×2</span><span data-i18n="双倍：6秒内全得分翻倍">双倍：6秒内全得分翻倍</span></div>
+        <div class="legend-item"><span class="legend-badge" style="background:#ca8a04">⚡</span><span data-i18n="闪电：链式劈开全场水果">闪电：链式劈开全场水果</span></div>
+        <div class="legend-item"><span class="legend-badge" style="background:#ea580c">❖</span><span data-i18n="分裂：爆出4颗高分小果">分裂：爆出4颗高分小果</span></div>
+        <div class="legend-item"><span class="legend-badge" style="background:#7c3aed">◎</span><span data-i18n="磁力：吸近水果并推开炸弹">磁力：吸近水果并推开炸弹</span></div>
+        <div class="legend-item"><span class="legend-badge" style="background:#0891b2">◈</span><span data-i18n="护盾：抵消一次炸弹伤害">护盾：抵消一次炸弹伤害</span></div>
+        <div class="legend-item"><span class="legend-badge" style="background:#be123c">✦</span><span data-i18n="石榴：慢动作连续狂切">石榴：慢动作连续狂切</span></div>
+        <div class="legend-item"><span class="legend-badge" style="background:#d97706">+3s</span><span data-i18n="时钟：60s模式加3秒（限2次）">时钟：60s模式加3秒（限2次）</span></div>
+        <div class="legend-item"><span class="legend-badge" style="background:#16a34a">+♥</span><span data-i18n="回血：经典模式恢复1命">回血：经典模式恢复1命</span></div>
+        <div class="legend-item"><span class="legend-badge" style="background:#f97316">🔥</span><span data-i18n="暴走槽：连击攒满4.5s无雷×2">暴走槽：连击攒满4.5s无雷×2</span></div>
+      </div>
+    </section>
 
     <div id="more-games" class="more-games"></div>
   </main>
@@ -548,6 +691,10 @@
       const bestEl = document.getElementById('best-el');
       const timerBarWrap = document.getElementById('timer-bar-wrap');
       const timerBar = document.getElementById('timer-bar');
+      const feverBarBox = document.getElementById('fever-bar-box');
+      const feverLabel = document.getElementById('fever-label');
+      const feverFill = document.getElementById('fever-fill');
+      const feverPct = document.getElementById('fever-pct');
       const buffBar = document.getElementById('buff-bar');
       const overlay = document.getElementById('overlay');
       const overlayTitle = document.getElementById('overlay-title');
@@ -664,11 +811,18 @@
       let frenzyTimer = 0;
       let frenzySpawnCd = 0;
       let doubleTimer = 0;
+      let magnetTimer = 0;
+      let hasShield = false;
+      let clockSpawnCount = 0;
+      let feverMeter = 0;
+      let feverActiveTimer = 0;
+      let feverSpawnCd = 0;
       let pomegranateTarget = null;
       let waveTimer = 0.6;
 
       // 实体与特效
       let items = [];
+      let pendingBombs = [];
       let halves = [];
       let particles = [];
       let splatters = [];
@@ -799,33 +953,37 @@
       function playBombFuse() {
         withAudio((ac) => {
           const t0 = ac.currentTime;
-          // 引线火花滋滋声 + 低沉金属预警
+          // 1. 持续引线嘶嘶火花声（0.34s），提前提醒有炸弹即将发射
           const src = ac.createBufferSource();
           src.buffer = getNoiseBuffer(ac);
           const bp = ac.createBiquadFilter();
           bp.type = 'bandpass';
-          bp.frequency.setValueAtTime(3600, t0);
-          bp.Q.setValueAtTime(3.0, t0);
+          bp.frequency.setValueAtTime(3200, t0);
+          bp.frequency.exponentialRampToValueAtTime(4400, t0 + 0.34);
+          bp.Q.setValueAtTime(2.6, t0);
           const nGain = ac.createGain();
-          nGain.gain.setValueAtTime(0.075, t0);
-          nGain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.13);
+          nGain.gain.setValueAtTime(0.11, t0);
+          nGain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.34);
           src.connect(bp);
           bp.connect(nGain);
           nGain.connect(ac.destination);
           src.start(t0);
-          src.stop(t0 + 0.14);
+          src.stop(t0 + 0.36);
 
-          const osc = ac.createOscillator();
-          const gain = ac.createGain();
-          osc.type = 'triangle';
-          osc.frequency.setValueAtTime(310, t0);
-          osc.frequency.exponentialRampToValueAtTime(210, t0 + 0.11);
-          gain.gain.setValueAtTime(0.09, t0);
-          gain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.12);
-          osc.connect(gain);
-          gain.connect(ac.destination);
-          osc.start(t0);
-          osc.stop(t0 + 0.125);
+          // 2. 双声短促高频警示滴答，在切水果声中也能听清
+          for (const [freq, delay] of [[880, 0], [1046, 0.14]]) {
+            const osc = ac.createOscillator();
+            const gain = ac.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(freq, t0 + delay);
+            osc.frequency.exponentialRampToValueAtTime(freq * 0.72, t0 + delay + 0.085);
+            gain.gain.setValueAtTime(0.13, t0 + delay);
+            gain.gain.exponentialRampToValueAtTime(0.001, t0 + delay + 0.095);
+            osc.connect(gain);
+            gain.connect(ac.destination);
+            osc.start(t0 + delay);
+            osc.stop(t0 + delay + 0.1);
+          }
         });
       }
 
@@ -873,34 +1031,67 @@
       function playBomb() {
         withAudio((ac) => {
           const t0 = ac.currentTime;
-          // 1. 中低频爆破白噪声冲击
+          // 1. 起爆瞬间脆裂高频冲击头（0.05s）
+          const crack = ac.createBufferSource();
+          crack.buffer = getNoiseBuffer(ac);
+          const hp = ac.createBiquadFilter();
+          hp.type = 'highpass';
+          hp.frequency.setValueAtTime(1600, t0);
+          const cGain = ac.createGain();
+          cGain.gain.setValueAtTime(0.24, t0);
+          cGain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.06);
+          crack.connect(hp);
+          hp.connect(cGain);
+          cGain.connect(ac.destination);
+          crack.start(t0);
+          crack.stop(t0 + 0.065);
+
+          // 2. 中低频爆破白噪声冲击
           const src = ac.createBufferSource();
           src.buffer = getNoiseBuffer(ac);
           const lp = ac.createBiquadFilter();
           lp.type = 'lowpass';
-          lp.frequency.setValueAtTime(1400, t0);
-          lp.frequency.exponentialRampToValueAtTime(180, t0 + 0.45);
+          lp.frequency.setValueAtTime(1800, t0);
+          lp.frequency.exponentialRampToValueAtTime(140, t0 + 0.5);
           const nGain = ac.createGain();
-          nGain.gain.setValueAtTime(0.28, t0);
-          nGain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.48);
+          nGain.gain.setValueAtTime(0.3, t0);
+          nGain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.52);
           src.connect(lp);
           lp.connect(nGain);
           nGain.connect(ac.destination);
           src.start(t0);
-          src.stop(t0 + 0.5);
+          src.stop(t0 + 0.54);
 
-          // 2. 适配手机喇叭的中低频共振轰鸣（260 -> 60Hz）
+          // 3. 适配手机喇叭的中低频共振轰鸣（240 -> 48Hz）
           const osc = ac.createOscillator();
           const gain = ac.createGain();
           osc.type = 'sawtooth';
-          osc.frequency.setValueAtTime(260, t0);
-          osc.frequency.exponentialRampToValueAtTime(60, t0 + 0.42);
-          gain.gain.setValueAtTime(0.22, t0);
-          gain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.45);
+          osc.frequency.setValueAtTime(240, t0);
+          osc.frequency.exponentialRampToValueAtTime(48, t0 + 0.45);
+          gain.gain.setValueAtTime(0.24, t0);
+          gain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.48);
           osc.connect(gain);
           gain.connect(ac.destination);
           osc.start(t0);
-          osc.stop(t0 + 0.46);
+          osc.stop(t0 + 0.49);
+        });
+      }
+
+      function playShieldBlock() {
+        withAudio((ac) => {
+          const t0 = ac.currentTime;
+          for (const [freq, delay] of [[523, 0], [784, 0.055], [1046, 0.11]]) {
+            const osc = ac.createOscillator();
+            const gain = ac.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(freq, t0 + delay);
+            gain.gain.setValueAtTime(0.16, t0 + delay);
+            gain.gain.exponentialRampToValueAtTime(0.001, t0 + delay + 0.16);
+            osc.connect(gain);
+            gain.connect(ac.destination);
+            osc.start(t0 + delay);
+            osc.stop(t0 + delay + 0.17);
+          }
         });
       }
 
@@ -910,8 +1101,18 @@
           const osc = ac.createOscillator();
           const gain = ac.createGain();
           osc.type = kind === 'lightning' ? 'sawtooth' : 'triangle';
-          const f1 = kind === 'freeze' ? 920 : kind === 'lightning' ? 1100 : 587;
-          const f2 = kind === 'freeze' ? 460 : kind === 'lightning' ? 280 : 1174;
+          const f1 = kind === 'freeze' ? 920
+            : kind === 'lightning' ? 1100
+            : kind === 'magnet' ? 420
+            : kind === 'clock' ? 784
+            : kind === 'fever' ? 523
+            : 587;
+          const f2 = kind === 'freeze' ? 460
+            : kind === 'lightning' ? 280
+            : kind === 'magnet' ? 840
+            : kind === 'clock' ? 1318
+            : kind === 'fever' ? 1396
+            : 1174;
           osc.frequency.setValueAtTime(f1, t0);
           osc.frequency.exponentialRampToValueAtTime(f2, t0 + 0.22);
           gain.gain.setValueAtTime(0.13, t0);
@@ -970,22 +1171,40 @@
         } else {
           thirdLabel.textContent = t('剩余时间');
           const sec = Math.max(0, Math.ceil(timeLeft));
-          thirdEl.className = 'hud-value' + (sec <= 10 ? ' danger' : '');
+          const isClockFrozen = freezeTimer > 0 || !!pomegranateTarget;
+          thirdEl.className = 'hud-value' + (sec <= 10 && !isClockFrozen ? ' danger' : '');
           thirdEl.textContent = sec + 's';
           timerBarWrap.className = 'timer-bar-wrap';
           const pct = Math.max(0, Math.min(100, (timeLeft / ARCADE_SECONDS) * 100));
           timerBar.style.width = pct + '%';
-          timerBar.className = 'timer-bar' + (sec <= 10 ? ' low' : '');
+          timerBar.className = 'timer-bar' + (isClockFrozen ? ' frozen' : (sec <= 10 ? ' low' : ''));
         }
 
         pauseBtn.disabled = state !== 'playing' && state !== 'paused';
         pauseBtn.textContent = t(state === 'paused' ? '继续' : '暂停');
 
+        // 暴走能量条（位于画布正上方）
+        if (feverActiveTimer > 0) {
+          feverBarBox.classList.add('active');
+          feverLabel.textContent = t('🔥 超级暴走 ×2');
+          feverFill.style.width = Math.max(0, Math.min(100, (feverActiveTimer / 4.5) * 100)) + '%';
+          feverPct.textContent = feverActiveTimer.toFixed(1) + 's';
+        } else {
+          feverBarBox.classList.remove('active');
+          feverLabel.textContent = t('🔥 暴走能量');
+          const pct = Math.max(0, Math.min(100, Math.round(feverMeter)));
+          feverFill.style.width = pct + '%';
+          feverPct.textContent = pct + '%';
+        }
+
         // Buff 状态胶囊
         buffBar.textContent = '';
+        if (hasShield) addBuffPill('shield', t('防爆护盾'));
+        if (feverActiveTimer > 0) addBuffPill('fever', t('超级暴走 {s}s', { s: feverActiveTimer.toFixed(1) }));
         if (freezeTimer > 0) addBuffPill('freeze', t('冰冻减速 {s}s', { s: freezeTimer.toFixed(1) }));
         if (frenzyTimer > 0) addBuffPill('frenzy', t('水果狂热 {s}s', { s: frenzyTimer.toFixed(1) }));
         if (doubleTimer > 0) addBuffPill('double', t('双倍得分 {s}s', { s: doubleTimer.toFixed(1) }));
+        if (magnetTimer > 0) addBuffPill('magnet', t('磁力聚拢 {s}s', { s: magnetTimer.toFixed(1) }));
         if (pomegranateTarget) addBuffPill('pomegranate', t('狂切石榴！'));
       }
 
@@ -1005,8 +1224,8 @@
         if (state === 'ready') {
           overlayTitle.textContent = t('极速切水果');
           overlayDesc.textContent = t(mode === 'classic'
-            ? '经典 3 命：漏掉完整水果扣 1 命，每满 100 分回 1 命，切到炸弹立即结束！'
-            : '60 秒狂热：尽情连击拿高分，切到炸弹扣 10 分，善用冰冻/狂热/双倍/石榴/闪电果！');
+            ? '经典 3 命：漏掉常规水果扣 1 命，善用回血/护盾/分裂/磁力/冰冻/闪电果，切到炸弹立即结束！'
+            : '60 秒狂热：冰冻与石榴期间暂停倒计时，连击攒满触发无炸弹暴走，还有+3s时钟/护盾/分裂果！');
           overlayBtn.textContent = t('开始游戏');
         } else if (state === 'paused') {
           overlayTitle.textContent = t('已暂停');
@@ -1046,9 +1265,16 @@
         frenzyTimer = 0;
         frenzySpawnCd = 0;
         doubleTimer = 0;
+        magnetTimer = 0;
+        hasShield = false;
+        clockSpawnCount = 0;
+        feverMeter = 0;
+        feverActiveTimer = 0;
+        feverSpawnCd = 0;
         pomegranateTarget = null;
         waveTimer = 0.35;
         items = [];
+        pendingBombs = [];
         halves = [];
         particles = [];
         splatters = [];
@@ -1079,6 +1305,7 @@
         lastEndReason = reason;
         newBest = updateBest(score);
         pomegranateTarget = null;
+        pendingBombs = [];
         renderHud();
         renderOverlay();
       }
@@ -1119,23 +1346,30 @@
       }
 
       // ---------- 投掷生成逻辑 ----------
-      function spawnFruitObject(kind, specialKind, fromSide) {
+      function spawnFruitObject(kind, specialKind, fromSide, custom) {
         const fruit = kind || FRUITS[Math.floor(Math.random() * FRUITS.length)];
         const isBomb = specialKind === 'bomb';
-        const r = isBomb ? 28 : (specialKind === 'pomegranate' ? 35 : fruit.r);
+        const isMini = !!(custom && custom.isMini);
+        const isBonus = !!(custom && custom.isBonus);
+        const r = (custom && custom.r) || (isBomb ? 28 : (specialKind === 'pomegranate' ? 35 : fruit.r));
 
         let x, y, vx, vy;
-        if (fromSide) {
+        if (custom && typeof custom.x === 'number' && typeof custom.y === 'number') {
+          x = custom.x;
+          y = custom.y;
+          vx = custom.vx;
+          vy = custom.vy;
+        } else if (fromSide) {
           const left = fromSide === 'left';
           x = left ? -r : W + r;
           y = H * (0.42 + Math.random() * 0.34);
           vx = (left ? 1 : -1) * (270 + Math.random() * 140);
           vy = -(340 + Math.random() * 170);
         } else {
-          x = 80 + Math.random() * (W - 160);
+          x = (custom && typeof custom.launchX === 'number') ? custom.launchX : (80 + Math.random() * (W - 160));
           y = H + r + 8;
-          const targetX = 120 + Math.random() * (W - 240);
-          const peakH = 55 + Math.random() * 125;
+          const targetX = (custom && typeof custom.targetX === 'number') ? custom.targetX : (120 + Math.random() * (W - 240));
+          const peakH = (custom && typeof custom.peakH === 'number') ? custom.peakH : (55 + Math.random() * 125);
           const rise = (H + r) - peakH;
           vy = -Math.sqrt(2 * GRAVITY * rise);
           const flightTime = (-vy * 1.45) / GRAVITY;
@@ -1145,7 +1379,9 @@
         items.push({
           id: Math.random(),
           fruit,
-          special: specialKind || null, // null | 'bomb' | 'freeze' | 'frenzy' | 'double' | 'pomegranate' | 'lightning' | 'heal'
+          special: specialKind || null, // null | 'bomb' | 'freeze' | 'frenzy' | 'double' | 'pomegranate' | 'lightning' | 'heal' | 'splitter' | 'magnet' | 'shield' | 'clock'
+          isMini,
+          isBonus,
           r,
           x,
           y,
@@ -1161,39 +1397,60 @@
         });
       }
 
+      const SPECIAL_FRUIT_MAP = {
+        freeze: FRUITS[7],
+        double: FRUITS[4],
+        frenzy: FRUITS[5],
+        lightning: FRUITS[8],
+        splitter: FRUITS[0],
+        magnet: FRUITS[10],
+        shield: FRUITS[12],
+        clock: FRUITS[3],
+        heal: FRUITS[4],
+        pomegranate: FRUITS[0],
+      };
+
+      function scheduleBomb() {
+        pendingBombs.push({
+          launchX: 80 + Math.random() * (W - 160),
+          targetX: 120 + Math.random() * (W - 240),
+          peakH: 65 + Math.random() * 120,
+          r: 28,
+          delay: 0.45,
+          maxDelay: 0.45,
+        });
+      }
+
       function spawnWave() {
         const difficulty = Math.min(1, elapsed / 55);
         const count = 1 + Math.floor(Math.random() * (2.2 + difficulty * 2.5));
-        const bombChance = mode === 'classic'
-          ? 0.1 + difficulty * 0.14
-          : 0.12 + difficulty * 0.08;
+        const bombChance = feverActiveTimer > 0
+          ? 0
+          : (mode === 'classic' ? 0.1 + difficulty * 0.14 : 0.12 + difficulty * 0.08);
 
         let specialSpawned = false;
         let bombSpawned = false;
         for (let i = 0; i < count; i += 1) {
           const roll = Math.random();
-          if (roll < bombChance && items.length < 10) {
-            spawnFruitObject(null, 'bomb');
+          if (roll < bombChance && items.length + pendingBombs.length < 10) {
+            scheduleBomb();
             if (!bombSpawned) {
               bombSpawned = true;
               playBombFuse();
             }
-          } else if (!specialSpawned && !pomegranateTarget && Math.random() < (mode === 'arcade' ? 0.16 : 0.09)) {
+          } else if (!specialSpawned && !pomegranateTarget && Math.random() < (mode === 'arcade' ? 0.18 : 0.12)) {
             specialSpawned = true;
             if (mode === 'arcade') {
-              const pool = ['freeze', 'frenzy', 'double', 'pomegranate', 'lightning'];
+              const pool = ['freeze', 'frenzy', 'double', 'pomegranate', 'lightning', 'splitter', 'magnet', 'shield'];
+              const clockOnBoard = items.some((it) => !it.sliced && it.special === 'clock');
+              if (clockSpawnCount < 2 && timeLeft <= 48 && !clockOnBoard) pool.push('clock', 'clock');
               const sp = pool[Math.floor(Math.random() * pool.length)];
-              const f = sp === 'freeze' ? FRUITS[7]
-                : sp === 'double' ? FRUITS[4]
-                : sp === 'frenzy' ? FRUITS[5]
-                : sp === 'lightning' ? FRUITS[8]
-                : FRUITS[0];
-              spawnFruitObject(f, sp);
+              spawnFruitObject(SPECIAL_FRUIT_MAP[sp], sp);
             } else {
-              const pool = lives < 3 ? ['freeze', 'heal', 'pomegranate'] : ['freeze', 'pomegranate'];
+              const pool = ['freeze', 'pomegranate', 'lightning', 'splitter', 'magnet', 'shield', 'heal'];
+              if (lives < 3) pool.push('heal', 'shield');
               const sp = pool[Math.floor(Math.random() * pool.length)];
-              const f = sp === 'freeze' ? FRUITS[7] : sp === 'heal' ? FRUITS[4] : FRUITS[0];
-              spawnFruitObject(f, sp);
+              spawnFruitObject(SPECIAL_FRUIT_MAP[sp], sp);
             }
           } else {
             spawnFruitObject();
@@ -1329,7 +1586,7 @@
       }
 
       function addPoints(pts) {
-        const mult = doubleTimer > 0 ? 2 : 1;
+        const mult = (doubleTimer > 0 ? 2 : 1) * (feverActiveTimer > 0 ? 2 : 1);
         const gained = pts * mult;
         score += gained;
         if (mode === 'classic' && score >= nextHealScore) {
@@ -1382,6 +1639,9 @@
 
         const splashColor = item.special === 'freeze' ? '#38bdf8'
           : item.special === 'lightning' ? '#fde047'
+          : item.special === 'magnet' ? '#c084fc'
+          : item.special === 'shield' ? '#2dd4bf'
+          : item.special === 'clock' ? '#fb923c'
           : item.fruit.juice;
         spawnJuiceSplash(item.x, item.y, splashColor, 14);
 
@@ -1399,6 +1659,38 @@
           doubleTimer = 6.0;
           playSpecial('double');
           addFloatText(item.x, item.y - 10, t('双倍得分 ×2!'), '#fde047', 1.25);
+        } else if (item.special === 'magnet') {
+          magnetTimer = 4.5;
+          playSpecial('magnet');
+          addFloatText(item.x, item.y - 10, t('磁力聚拢!'), '#d8b4fe', 1.25);
+        } else if (item.special === 'shield') {
+          playSpecial('shield');
+          if (!hasShield) {
+            hasShield = true;
+            addFloatText(item.x, item.y - 10, t('防爆护盾!'), '#5eead4', 1.25);
+          } else {
+            const g = addPoints(15);
+            addFloatText(item.x, item.y - 10, '+' + g, '#5eead4', 1.25);
+          }
+        } else if (item.special === 'clock') {
+          clockSpawnCount += 1;
+          timeLeft = Math.min(ARCADE_SECONDS + 6, timeLeft + 3);
+          playSpecial('clock');
+          addFloatText(item.x, item.y - 10, '+3s!', '#fdba74', 1.35);
+        } else if (item.special === 'splitter') {
+          playSpecial('splitter');
+          addFloatText(item.x, item.y - 10, t('分裂连爆!'), '#fde047', 1.25);
+          const miniPool = [FRUITS[3], FRUITS[6], FRUITS[9], FRUITS[11]];
+          for (let m = 0; m < miniPool.length; m += 1) {
+            spawnFruitObject(miniPool[m], null, null, {
+              isMini: true,
+              r: 18,
+              x: item.x,
+              y: item.y,
+              vx: (m - 1.5) * 115 + (Math.random() - 0.5) * 36,
+              vy: -300 - Math.random() * 140,
+            });
+          }
         } else if (item.special === 'heal') {
           playSpecial('double');
           if (lives < 3) {
@@ -1432,7 +1724,7 @@
 
         // 常规计分与暴击
         const isCrit = !item.special && Math.random() < 0.07;
-        const basePts = isCrit ? 10 : item.fruit.pts;
+        const basePts = isCrit ? 10 : (item.isMini ? 3 : item.fruit.pts);
         const gained = addPoints(basePts);
         shockwaves.push({
           x: item.x,
@@ -1463,7 +1755,21 @@
         comboTimer = 0.2;
         comboX = item.x;
         comboY = item.y;
+        addFeverEnergy(item.special ? 5 : 3);
         playSlice(comboCount);
+      }
+
+      function addFeverEnergy(amount) {
+        if (feverActiveTimer > 0) return;
+        feverMeter += amount;
+        if (feverMeter >= 100) {
+          feverMeter = 0;
+          feverActiveTimer = 4.5;
+          feverSpawnCd = 0.05;
+          playSpecial('fever');
+          addFloatText(W * 0.5, H * 0.34, t('超级暴走 ×2！'), '#fde047', 1.45);
+          triggerShake(6, 0.22);
+        }
       }
 
       function flushCombo() {
@@ -1471,6 +1777,8 @@
           const bonus = addPoints(comboCount);
           addFloatText(comboX, comboY - 28, t('{c} 连击 +{n}', { c: comboCount, n: bonus }), '#fde047', 1.4);
           triggerShake(Math.min(7, 2 + comboCount), 0.16);
+          const comboEnergy = comboCount >= 5 ? 25 : (comboCount === 4 ? 18 : 12);
+          addFeverEnergy(comboEnergy);
           playCombo(comboCount);
         }
         comboCount = 0;
@@ -1487,10 +1795,30 @@
         for (let i = items.length - 1; i >= 0; i -= 1) {
           const item = items[i];
           if (item.sliced) continue;
-          if (!segCircleHit(ax, ay, bx, by, item.x, item.y, item.r * 1.1)) continue;
+          const isBomb = item.special === 'bomb';
+          if (isBomb && item.vy < 0 && item.y > H - item.r * 0.45) continue;
+          const hitRadius = isBomb ? item.r * 0.9 : item.r * 1.1;
+          if (!segCircleHit(ax, ay, bx, by, item.x, item.y, hitRadius)) continue;
 
-          if (item.special === 'bomb') {
+          if (isBomb) {
             item.sliced = true;
+            if (hasShield) {
+              hasShield = false;
+              playShieldBlock();
+              triggerShake(8, 0.28);
+              spawnJuiceSplash(item.x, item.y, '#2dd4bf', 18);
+              shockwaves.push({
+                x: item.x,
+                y: item.y,
+                r: 16,
+                maxR: 135,
+                color: '#5eead4',
+                life: 0.28,
+                maxLife: 0.28,
+              });
+              addFloatText(item.x, item.y - 12, t('护盾抵消!'), '#5eead4', 1.35);
+              continue;
+            }
             playBomb();
             triggerShake(14, 0.55);
             spawnJuiceSplash(item.x, item.y, '#f97316', 28);
@@ -1508,6 +1836,7 @@
               activePointerId = null;
               prevPt = null;
               pomegranateTarget = null;
+              pendingBombs = [];
               bombBlast = { x: item.x, y: item.y, timer: 0, duration: 0.85 };
               flashColor = '#ffffff';
               flashAlpha = 0.05;
@@ -1516,6 +1845,9 @@
             }
             flashColor = '#ffffff';
             flashAlpha = 0.55;
+            feverMeter = 0;
+            comboCount = 0;
+            comboTimer = 0;
             score = Math.max(0, score - 10);
             addFloatText(item.x, item.y - 12, '-10', '#ef4444', 1.45);
             continue;
@@ -1666,7 +1998,7 @@
         if (state !== 'playing') return;
 
         elapsed += dt;
-        if (mode === 'arcade') {
+        if (mode === 'arcade' && freezeTimer <= 0 && !pomegranateTarget) {
           timeLeft -= dt;
           if (timeLeft <= 0) {
             timeLeft = 0;
@@ -1677,12 +2009,22 @@
 
         if (freezeTimer > 0) freezeTimer = Math.max(0, freezeTimer - dt);
         if (doubleTimer > 0) doubleTimer = Math.max(0, doubleTimer - dt);
-        if (frenzyTimer > 0) {
+        if (magnetTimer > 0) magnetTimer = Math.max(0, magnetTimer - dt);
+        if (frenzyTimer > 0 && !pomegranateTarget) {
           frenzyTimer = Math.max(0, frenzyTimer - dt);
           frenzySpawnCd -= dt;
           if (frenzySpawnCd <= 0) {
             frenzySpawnCd = 0.22;
-            spawnFruitObject(null, null, Math.random() < 0.5 ? 'left' : 'right');
+            spawnFruitObject(null, null, Math.random() < 0.5 ? 'left' : 'right', { isBonus: true });
+          }
+        }
+        if (feverActiveTimer > 0 && !pomegranateTarget) {
+          feverActiveTimer = Math.max(0, feverActiveTimer - dt);
+          feverSpawnCd -= dt;
+          if (feverSpawnCd <= 0) {
+            feverSpawnCd = 0.16;
+            const sideRoll = Math.random();
+            spawnFruitObject(null, null, sideRoll < 0.35 ? 'left' : (sideRoll < 0.7 ? 'right' : null), { isBonus: true });
           }
         }
 
@@ -1691,16 +2033,35 @@
           if (comboTimer <= 0) flushCombo();
         }
 
+        // 炸弹发射前先兆倒计时
+        if (!pomegranateTarget) {
+          for (let i = pendingBombs.length - 1; i >= 0; i -= 1) {
+            const pb = pendingBombs[i];
+            pb.delay -= dt * (freezeTimer > 0 ? 0.55 : 1);
+            if (pb.delay <= 0) {
+              pendingBombs.splice(i, 1);
+              spawnFruitObject(null, 'bomb', null, {
+                launchX: pb.launchX,
+                targetX: pb.targetX,
+                peakH: pb.peakH,
+                r: pb.r,
+              });
+            }
+          }
+        }
+
         // 刷波次
         waveTimer -= dt;
         if (waveTimer <= 0 && !pomegranateTarget) {
           spawnWave();
           const pace = Math.max(0.95, 1.85 - Math.min(0.75, elapsed * 0.012));
-          waveTimer = frenzyTimer > 0 ? pace * 0.85 : pace;
+          waveTimer = (frenzyTimer > 0 || feverActiveTimer > 0) ? pace * 0.85 : pace;
         }
 
         const timeScale = pomegranateTarget ? 0.22 : (freezeTimer > 0 ? 0.45 : 1);
         const sdt = dt * timeScale;
+        const magX = prevPt ? prevPt.x : W * 0.5;
+        const magY = prevPt ? prevPt.y : H * 0.42;
 
         // 更新水果
         for (let i = items.length - 1; i >= 0; i -= 1) {
@@ -1720,6 +2081,21 @@
             continue;
           }
 
+          if (magnetTimer > 0) {
+            if (item.special === 'bomb') {
+              const pushDir = item.x >= magX ? 1 : -1;
+              item.vx += pushDir * 140 * sdt;
+            } else {
+              const dx = magX - item.x;
+              const dy = magY - item.y;
+              const dist = Math.hypot(dx, dy) || 1;
+              if (dist < 260) {
+                item.vx += (dx / dist) * 260 * sdt;
+                item.vy += (dy / dist) * 190 * sdt;
+              }
+            }
+          }
+
           item.x += item.vx * sdt;
           item.y += item.vy * sdt;
           item.vy += GRAVITY * sdt;
@@ -1731,9 +2107,12 @@
           }
 
           if (item.y > H + item.r + 40 && item.vy > 0) {
-            const missedRegular = !item.special && mode === 'classic' && item.life > 0.45;
+            const missedFruit = !item.special && !item.isMini && !item.isBonus && item.life > 0.45;
             items.splice(i, 1);
-            if (missedRegular) {
+            if (missedFruit && feverActiveTimer <= 0) {
+              feverMeter = Math.max(0, feverMeter - 10);
+            }
+            if (missedFruit && mode === 'classic') {
               lives -= 1;
               playMiss();
               addFloatText(Math.max(40, Math.min(W - 40, item.x)), H - 46, '✕', '#ef4444', 1.6);
@@ -2464,14 +2843,27 @@
       }
 
       function drawBomb(r, tNow) {
+        // 红色危险外圈脉冲，确保暗色木纹背景下也清晰可见
+        const dangerPulse = 0.48 + Math.sin(tNow * 0.018) * 0.28;
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(0, 0, r + 4.5, 0, Math.PI * 2);
+        ctx.strokeStyle = `rgba(239, 68, 68, ${dangerPulse.toFixed(2)})`;
+        ctx.lineWidth = 2.6;
+        ctx.stroke();
+        ctx.restore();
+
         const g = ctx.createRadialGradient(-r * 0.3, -r * 0.3, r * 0.1, 0, 0, r);
-        g.addColorStop(0, '#475569');
-        g.addColorStop(0.55, '#1e293b');
+        g.addColorStop(0, '#64748b');
+        g.addColorStop(0.5, '#1e293b');
         g.addColorStop(1, '#020617');
         ctx.beginPath();
         ctx.arc(0, 0, r, 0, Math.PI * 2);
         ctx.fillStyle = g;
         ctx.fill();
+        ctx.strokeStyle = 'rgba(248, 113, 113, 0.55)';
+        ctx.lineWidth = 1.4;
+        ctx.stroke();
 
         // 危险红环与叉号
         ctx.strokeStyle = 'rgba(239, 68, 68, 0.85)';
@@ -2557,6 +2949,10 @@
           pomegranate: { ring: 'rgba(244, 63, 94, 0.72)', fill: 'rgba(254, 205, 211, 0.15)', badge: '#be123c', glyph: '✦' },
           lightning: { ring: 'rgba(253, 224, 71, 0.75)', fill: 'rgba(254, 249, 195, 0.18)', badge: '#ca8a04', glyph: '⚡' },
           heal: { ring: 'rgba(74, 222, 128, 0.68)', fill: 'rgba(187, 247, 208, 0.16)', badge: '#16a34a', glyph: '+♥' },
+          splitter: { ring: 'rgba(251, 146, 60, 0.74)', fill: 'rgba(254, 215, 170, 0.16)', badge: '#ea580c', glyph: '❖' },
+          magnet: { ring: 'rgba(168, 85, 247, 0.74)', fill: 'rgba(233, 213, 255, 0.16)', badge: '#7c3aed', glyph: '◎' },
+          shield: { ring: 'rgba(34, 211, 238, 0.8)', fill: 'rgba(165, 243, 252, 0.16)', badge: '#0891b2', glyph: '◈' },
+          clock: { ring: 'rgba(245, 158, 11, 0.76)', fill: 'rgba(254, 243, 199, 0.18)', badge: '#d97706', glyph: '+3s' },
         };
         const th = themes[special];
         if (!th) return;
@@ -2575,13 +2971,15 @@
         const by = -r * 0.76;
         ctx.fillStyle = th.badge;
         ctx.beginPath();
-        ctx.arc(bx, by, 10.5, 0, Math.PI * 2);
+        ctx.arc(bx, by, 11.5, 0, Math.PI * 2);
         ctx.fill();
         ctx.strokeStyle = '#ffffff';
         ctx.lineWidth = 1.5;
         ctx.stroke();
         ctx.fillStyle = '#ffffff';
-        ctx.font = '800 10.5px ui-sans-serif, system-ui, sans-serif';
+        ctx.font = th.glyph.length >= 3
+          ? '800 9.5px ui-sans-serif, system-ui, sans-serif'
+          : '800 10.5px ui-sans-serif, system-ui, sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(th.glyph, bx, by + 0.5);
@@ -2663,13 +3061,31 @@
           ctx.restore();
         }
 
-        // 冰冻全屏霜晕
+        // 冰冻全屏霜晕 / 超级暴走暖金晕 / 护盾边缘柔光
         if (freezeTimer > 0) {
           ctx.save();
           const fg = ctx.createRadialGradient(W * 0.5, H * 0.5, W * 0.25, W * 0.5, H * 0.5, W * 0.6);
           fg.addColorStop(0, 'rgba(56, 189, 248, 0)');
           fg.addColorStop(1, 'rgba(56, 189, 248, 0.26)');
           ctx.fillStyle = fg;
+          ctx.fillRect(0, 0, W, H);
+          ctx.restore();
+        }
+        if (feverActiveTimer > 0) {
+          ctx.save();
+          const vg = ctx.createRadialGradient(W * 0.5, H * 0.5, W * 0.28, W * 0.5, H * 0.5, W * 0.62);
+          vg.addColorStop(0, 'rgba(251, 191, 36, 0)');
+          vg.addColorStop(1, 'rgba(249, 115, 22, 0.22)');
+          ctx.fillStyle = vg;
+          ctx.fillRect(0, 0, W, H);
+          ctx.restore();
+        }
+        if (hasShield) {
+          ctx.save();
+          const sg = ctx.createRadialGradient(W * 0.5, H * 0.5, W * 0.34, W * 0.5, H * 0.5, W * 0.64);
+          sg.addColorStop(0, 'rgba(34, 211, 238, 0)');
+          sg.addColorStop(1, `rgba(34, 211, 238, ${(0.18 + Math.sin(tNow * 0.008) * 0.06).toFixed(2)})`);
+          ctx.fillStyle = sg;
           ctx.fillRect(0, 0, W, H);
           ctx.restore();
         }
@@ -2699,6 +3115,14 @@
 
           if (item.special && item.special !== 'bomb') {
             drawSpecialAura(item.special, item.r, tNow);
+          } else if (item.isMini) {
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(0, 0, item.r + 3, 0, Math.PI * 2);
+            ctx.strokeStyle = 'rgba(253, 224, 71, 0.75)';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            ctx.restore();
           }
 
           ctx.rotate(item.rot);
@@ -2716,10 +3140,10 @@
           ctx.restore();
 
           // 底部炸弹刚冒头时的边缘微预警标
-          if (item.special === 'bomb' && item.vy < 0 && item.y > H - 62) {
+          if (item.special === 'bomb' && item.vy < 0 && item.y > H - 46) {
             ctx.save();
             const bx = Math.max(24, Math.min(W - 24, item.x));
-            ctx.fillStyle = '#ef4444';
+            ctx.fillStyle = 'rgba(239, 68, 68, 0.85)';
             ctx.beginPath();
             ctx.moveTo(bx, H - 22);
             ctx.lineTo(bx - 8, H - 8);
@@ -2728,6 +3152,48 @@
             ctx.fill();
             ctx.restore();
           }
+        }
+
+        // 炸弹发射前底部强先兆（0.45s 提前警示）
+        for (const pb of pendingBombs) {
+          const progress = 1 - Math.max(0, pb.delay / pb.maxDelay);
+          const bx = Math.max(28, Math.min(W - 28, pb.launchX));
+          const by = H - 24;
+          const blink = 0.65 + Math.sin(tNow * 0.032) * 0.35;
+          ctx.save();
+          // 脉冲外环
+          ctx.beginPath();
+          ctx.arc(bx, by, 18 + (1 - progress) * 8, 0, Math.PI * 2);
+          ctx.strokeStyle = `rgba(239, 68, 68, ${(0.55 * blink).toFixed(2)})`;
+          ctx.lineWidth = 2.2;
+          ctx.stroke();
+
+          // 发射点红底圆 + 进度弧
+          ctx.beginPath();
+          ctx.arc(bx, by, 13, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(185, 28, 28, 0.9)';
+          ctx.fill();
+          ctx.beginPath();
+          ctx.arc(bx, by, 15, -Math.PI * 0.5, -Math.PI * 0.5 + Math.PI * 2 * progress);
+          ctx.strokeStyle = '#fde047';
+          ctx.lineWidth = 2.6;
+          ctx.stroke();
+
+          // 上指箭头 + !
+          ctx.fillStyle = '#fef08a';
+          ctx.beginPath();
+          ctx.moveTo(bx, by - 22);
+          ctx.lineTo(bx - 6, by - 14);
+          ctx.lineTo(bx + 6, by - 14);
+          ctx.closePath();
+          ctx.fill();
+
+          ctx.fillStyle = '#ffffff';
+          ctx.font = '900 15px ui-sans-serif, system-ui, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText('!', bx, by + 1);
+          ctx.restore();
         }
 
         // 闪电链
@@ -2962,12 +3428,12 @@
             {
               icon: 'art-explosion',
               title: t('小心炸弹'),
-              text: t('经典模式下切到炸弹会直接结束，漏掉完整水果扣 1 命；60 秒狂热模式切到炸弹扣 10 分。'),
+              text: t('炸弹发射前会在底部亮起红色 ! 预警并响起警示音。经典模式切到炸弹立即结束，60 秒狂热扣 10 分（有护盾可抵消一次）。'),
             },
             {
               icon: 'art-zap',
-              title: t('善用特殊水果'),
-              text: t('冰冻减速、水果狂热、双倍得分、连续狂切石榴与全屏闪电果，帮你轻松冲刺新高！'),
+              title: t('善用特殊水果与暴走'),
+              text: t('新增分裂果、磁力聚拢、防爆护盾、回血果与 +3s 时钟果；冰冻/石榴期间会暂停 60 秒倒计时，连击攒满能量槽还会触发无炸弹双倍暴走！'),
             },
           ],
         });
