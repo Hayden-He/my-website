@@ -132,6 +132,26 @@
       box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08);
     }
 
+    .skin-pill.locked {
+      opacity: 0.72;
+    }
+
+    .skin-lock {
+      font-size: 0.68rem;
+      line-height: 1;
+    }
+
+    .overlay-stats {
+      margin: -4px 0 2px;
+      font-size: 0.84rem !important;
+      font-weight: 700;
+      color: #fde68a !important;
+    }
+
+    .overlay-stats[hidden] {
+      display: none;
+    }
+
     .skin-swatch {
       width: 9px;
       height: 9px;
@@ -628,6 +648,7 @@
       <div id="overlay" class="overlay show" role="status" aria-live="polite">
         <h2 id="overlay-title" data-i18n="极速切水果">极速切水果</h2>
         <p id="overlay-desc" data-i18n="移动鼠标或手指划屏切开水果，连续一刀多切触发连击，小心炸弹！"></p>
+        <p id="overlay-stats" class="overlay-stats" hidden></p>
         <div class="overlay-actions">
           <button id="overlay-btn" class="overlay-btn" type="button" data-i18n="开始游戏">开始游戏</button>
         </div>
@@ -641,6 +662,7 @@
         <button class="skin-pill" type="button" data-skin="ice"><span class="skin-swatch" style="background:#38bdf8"></span><span data-i18n="寒冰之刃">寒冰之刃</span></button>
         <button class="skin-pill" type="button" data-skin="neon"><span class="skin-swatch" style="background:#d946ef"></span><span data-i18n="霓虹电刃">霓虹电刃</span></button>
         <button class="skin-pill" type="button" data-skin="sakura"><span class="skin-swatch" style="background:#fb7185"></span><span data-i18n="落樱之刃">落樱之刃</span></button>
+        <button class="skin-pill" type="button" data-skin="aurora"><span class="skin-swatch" style="background:linear-gradient(135deg,#2dd4bf,#a855f7)"></span><span data-i18n="极光星刃">极光星刃</span><span class="skin-lock" aria-hidden="true">🔒</span></button>
       </div>
     </div>
 
@@ -671,6 +693,7 @@
       const t = (key, params) => I18N.t(key, params);
       const MODE_KEY = 'game_mode_fruit';
       const SKIN_KEY = 'game_skin_fruit';
+      const AURORA_KEY = 'game_skin_fruit_aurora';
       const BEST_KEYS = {
         classic: 'game_best_fruit_classic',
         arcade: 'game_best_fruit_arcade',
@@ -699,6 +722,7 @@
       const overlay = document.getElementById('overlay');
       const overlayTitle = document.getElementById('overlay-title');
       const overlayDesc = document.getElementById('overlay-desc');
+      const overlayStats = document.getElementById('overlay-stats');
       const overlayBtn = document.getElementById('overlay-btn');
       const pauseBtn = document.getElementById('pause-btn');
       const soundBtn = document.getElementById('sound-btn');
@@ -731,6 +755,7 @@
         ice: { core: '#ecfeff', glow: '#0ea5e9', accent: '#67e8f9', width: 10 },
         neon: { core: '#fdf4ff', glow: '#d946ef', accent: '#38bdf8', width: 10 },
         sakura: { core: '#fff1f2', glow: '#fb7185', accent: '#fda4af', width: 10 },
+        aurora: { core: '#ecfeff', glow: '#2dd4bf', accent: '#a855f7', width: 11 },
       };
       if (!SKINS[skin]) skin = 'silver';
 
@@ -803,8 +828,15 @@
       let nextHealScore = 100;
       let bestClassic = GameKit.readBest(BEST_KEYS.classic);
       let bestArcade = GameKit.readBest(BEST_KEYS.arcade);
+      let auroraUnlocked = readStored(AURORA_KEY, '') === '1' || bestClassic >= 500 || bestArcade >= 500;
+      if (auroraUnlocked) writeStored(AURORA_KEY, '1');
+      if (skin === 'aurora' && !auroraUnlocked) skin = 'silver';
       let newBest = false;
       let lastEndReason = '';
+      let slicedCount = 0;
+      let maxCombo = 0;
+      let feverCount = 0;
+      let lastTickSec = 6;
 
       // 特殊状态计时
       let freezeTimer = 0;
@@ -1096,6 +1128,23 @@
         });
       }
 
+      function playCountdownTick(sec) {
+        withAudio((ac) => {
+          const t0 = ac.currentTime;
+          const osc = ac.createOscillator();
+          const gain = ac.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(sec === 1 ? 988 : 740, t0);
+          osc.frequency.exponentialRampToValueAtTime(sec === 1 ? 660 : 520, t0 + 0.065);
+          gain.gain.setValueAtTime(0.09, t0);
+          gain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.075);
+          osc.connect(gain);
+          gain.connect(ac.destination);
+          osc.start(t0);
+          osc.stop(t0 + 0.08);
+        });
+      }
+
       function playSpecial(kind) {
         withAudio((ac) => {
           const t0 = ac.currentTime;
@@ -1227,10 +1276,14 @@
           overlayDesc.textContent = t(mode === 'classic'
             ? '经典 3 命：漏掉常规水果扣 1 命，善用回血/护盾/分裂/磁力/冰冻/闪电果，切到炸弹立即结束！'
             : '60 秒狂热：冰冻与石榴期间暂停倒计时，连击攒满触发无炸弹暴走，还有+3s时钟/护盾/分裂果！');
+          overlayStats.textContent = '';
+          overlayStats.hidden = true;
           overlayBtn.textContent = t('开始游戏');
         } else if (state === 'paused') {
           overlayTitle.textContent = t('已暂停');
           overlayDesc.textContent = t('当前得分：{score}', { score });
+          overlayStats.textContent = '';
+          overlayStats.hidden = true;
           overlayBtn.textContent = t('继续游戏');
         } else if (state === 'over') {
           overlayTitle.textContent = lastEndReason === 'bomb'
@@ -1241,6 +1294,12 @@
             score,
             best: currentBest(),
           }) + suffix;
+          overlayStats.textContent = t('切中 {fruits} 颗 · 最高 {combo} 连击 · 暴走 {fever} 次', {
+            fruits: slicedCount,
+            combo: maxCombo,
+            fever: feverCount,
+          });
+          overlayStats.hidden = false;
           overlayBtn.textContent = t('再来一局');
         }
       }
@@ -1249,8 +1308,23 @@
         modeClassicBtn.classList.toggle('active', mode === 'classic');
         modeArcadeBtn.classList.toggle('active', mode === 'arcade');
         skinBtns.forEach((btn) => {
-          btn.classList.toggle('active', btn.dataset.skin === skin);
+          const id = btn.dataset.skin;
+          const locked = id === 'aurora' && !auroraUnlocked;
+          btn.classList.toggle('active', id === skin);
+          btn.classList.toggle('locked', locked);
+          const lockIcon = btn.querySelector('.skin-lock');
+          if (lockIcon) lockIcon.hidden = !locked;
         });
+      }
+
+      function unlockAurora() {
+        if (auroraUnlocked) return;
+        auroraUnlocked = true;
+        writeStored(AURORA_KEY, '1');
+        syncModeButtons();
+        playSpecial('fever');
+        addFloatText(W * 0.5, H * 0.24, t('解锁极光星刃！'), '#5eead4', 1.35);
+        if (window.SiteData) SiteData.toast(t('解锁限定刀锋：极光星刃！'), { duration: 3000 });
       }
 
       function resetState(nextState) {
@@ -1262,6 +1336,10 @@
         nextHealScore = 100;
         newBest = false;
         lastEndReason = '';
+        slicedCount = 0;
+        maxCombo = 0;
+        feverCount = 0;
+        lastTickSec = 6;
         freezeTimer = 0;
         frenzyTimer = 0;
         frenzySpawnCd = 0;
@@ -1569,6 +1647,21 @@
             maxLife: 0.65,
             gravity: 30,
           });
+        } else if (skin === 'aurora') {
+          if (Math.random() > 0.55) return;
+          pushParticle({
+            kind: 'crystal',
+            x: x + (Math.random() - 0.5) * 14,
+            y: y + (Math.random() - 0.5) * 14,
+            vx: (Math.random() - 0.5) * 85,
+            vy: (Math.random() - 0.5) * 85,
+            r: 2.8 + Math.random() * 2.4,
+            color: Math.random() < 0.5 ? '#5eead4' : '#c084fc',
+            rot: Math.random() * Math.PI,
+            life: 0.38,
+            maxLife: 0.38,
+            gravity: 0,
+          });
         }
       }
 
@@ -1593,6 +1686,7 @@
         const mult = (doubleTimer > 0 ? 2 : 1) * (feverActiveTimer > 0 ? 2 : 1);
         const gained = pts * mult;
         score += gained;
+        if (score >= 500) unlockAurora();
         if (mode === 'classic' && score >= nextHealScore) {
           nextHealScore += 100;
           if (lives < 3) {
@@ -1756,6 +1850,7 @@
         }
 
         comboCount += 1;
+        slicedCount += 1;
         comboTimer = 0.2;
         comboX = item.x;
         comboY = item.y;
@@ -1772,6 +1867,7 @@
         if (feverMeter >= 100) {
           feverMeter = 0;
           comboEnergyCount = 0;
+          feverCount += 1;
           feverActiveTimer = 4.5;
           feverSpawnCd = 0.05;
           playSpecial('fever');
@@ -1781,6 +1877,8 @@
       }
 
       function flushCombo() {
+        if (comboCount > maxCombo) maxCombo = comboCount;
+        if (comboCount >= 6) unlockAurora();
         if (comboCount >= 3) {
           const bonus = addPoints(comboCount);
           addFloatText(comboX, comboY - 28, t('{c} 连击 +{n}', { c: comboCount, n: bonus }), '#fde047', 1.4);
@@ -2017,6 +2115,12 @@
             endGame('time');
             return;
           }
+          const curSec = Math.ceil(timeLeft);
+          if (curSec > lastTickSec) lastTickSec = Math.min(6, curSec);
+          else if (curSec >= 1 && curSec <= 5 && curSec < lastTickSec) {
+            lastTickSec = curSec;
+            playCountdownTick(curSec);
+          }
         }
 
         if (freezeTimer > 0) freezeTimer = Math.max(0, freezeTimer - dt);
@@ -2067,7 +2171,8 @@
         if (waveTimer <= 0 && !pomegranateTarget) {
           spawnWave();
           const pace = Math.max(0.95, 1.85 - Math.min(0.75, elapsed * 0.012));
-          waveTimer = (frenzyTimer > 0 || feverActiveTimer > 0) ? pace * 0.85 : pace;
+          const sprintScale = (mode === 'arcade' && timeLeft <= 10) ? 0.85 : 1;
+          waveTimer = ((frenzyTimer > 0 || feverActiveTimer > 0) ? pace * 0.85 : pace) * sprintScale;
         }
 
         const timeScale = pomegranateTarget ? 0.22 : (freezeTimer > 0 ? 0.45 : 1);
@@ -3001,6 +3106,15 @@
       function drawBladeTrail() {
         if (trail.length < 2) return;
         const st = SKINS[skin];
+        let auroraGrad = null;
+        if (skin === 'aurora') {
+          const pStart = trail[0];
+          const pEnd = trail[trail.length - 1];
+          auroraGrad = ctx.createLinearGradient(pStart.x, pStart.y, pEnd.x, pEnd.y);
+          auroraGrad.addColorStop(0, '#a855f7');
+          auroraGrad.addColorStop(0.5, '#38bdf8');
+          auroraGrad.addColorStop(1, '#2dd4bf');
+        }
         ctx.save();
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
@@ -3013,12 +3127,12 @@
           ctx.beginPath();
           ctx.moveTo(p0.x, p0.y);
           ctx.lineTo(p1.x, p1.y);
-          ctx.strokeStyle = st.glow;
+          ctx.strokeStyle = auroraGrad || st.glow;
           ctx.lineWidth = st.width * 1.9 * ratio;
           ctx.globalAlpha = 0.24 * ratio;
           ctx.stroke();
 
-          ctx.strokeStyle = st.glow;
+          ctx.strokeStyle = auroraGrad || st.glow;
           ctx.lineWidth = st.width * ratio;
           ctx.globalAlpha = 0.58 * ratio;
           ctx.stroke();
@@ -3420,6 +3534,12 @@
         btn.addEventListener('click', () => {
           const next = btn.dataset.skin;
           if (!SKINS[next]) return;
+          if (next === 'aurora' && !auroraUnlocked) {
+            if (window.SiteData) {
+              SiteData.toast(t('单局达 500 分或打出 6 连击解锁极光星刃'), { duration: 2800 });
+            }
+            return;
+          }
           skin = next;
           writeStored(SKIN_KEY, skin);
           syncModeButtons();

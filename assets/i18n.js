@@ -387,6 +387,11 @@
     '寒冰之刃': 'Frost Blade',
     '霓虹电刃': 'Neon Volt',
     '落樱之刃': 'Sakura Blade',
+    '极光星刃': 'Aurora Star',
+    '解锁极光星刃！': 'Aurora Star Unlocked!',
+    '解锁限定刀锋：极光星刃！': 'Unlocked blade: Aurora Star!',
+    '单局达 500 分或打出 6 连击解锁极光星刃': 'Reach 500 pts or a 6x combo in one run to unlock Aurora Star',
+    '切中 {fruits} 颗 · 最高 {combo} 连击 · 暴走 {fever} 次': '{fruits} sliced · Max {combo}x combo · {fever}x Fever',
     '极速切水果画布': 'Fruit Slicer canvas',
     '移动鼠标或手指划屏切开水果，连续一刀多切触发连击，小心炸弹！':
       'Move your mouse or swipe to slice fruit. Chain multi-fruit cuts for combos and watch out for bombs!',
