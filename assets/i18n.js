@@ -368,6 +368,60 @@
     '椰子': 'Coconut',
     '记忆翻牌牌桌': 'Memory board',
 
+    // ---- 极速切水果 ----
+    '极速切水果': 'Fruit Slicer',
+    '极速切水果 - 小游乐场': 'Fruit Slicer - Little Playground',
+    '剩余时间': 'Time',
+    '继续游戏': 'Resume',
+    '划屏或拖拽切开飞起的水果，连击爆汁、躲避炸弹，支持经典与 60 秒狂热双模式。':
+      'Swipe or drag to slice flying fruit, chain combos, dodge bombs, and play Classic or 60s Frenzy.',
+    '划屏/鼠标': 'Swipe / Mouse',
+    '剩余生命': 'Lives',
+    '{n} 条命': '{n} lives',
+    '游戏模式': 'Game mode',
+    '经典 3 命': 'Classic 3 Lives',
+    '60秒狂热': '60s Frenzy',
+    '刀锋外观': 'Blade skin',
+    '经典银刃': 'Silver Blade',
+    '烈焰之刃': 'Flame Blade',
+    '寒冰之刃': 'Frost Blade',
+    '霓虹电刃': 'Neon Volt',
+    '落樱之刃': 'Sakura Blade',
+    '极速切水果画布': 'Fruit Slicer canvas',
+    '按住鼠标拖拽或手指划屏切开水果，连续一刀多切触发连击，小心炸弹！':
+      'Drag with mouse or swipe to slice fruit. Chain multi-fruit cuts for combos and watch out for bombs!',
+    '划屏或按住鼠标左键拖拽挥砍 · 空格/回车开始或暂停 · 14 种水果与 5 款特效刀锋':
+      'Swipe or hold left mouse button to slice · Space/Enter to start or pause · 14 fruits & 5 FX blades',
+    '经典 3 命：漏掉完整水果扣 1 命，每满 100 分回 1 命，切到炸弹立即结束！':
+      'Classic 3 Lives: Missing a whole fruit costs 1 life (+1 life every 100 pts). Slicing a bomb ends the run!',
+    '60 秒狂热：尽情连击拿高分，切到炸弹扣 10 分，善用冰冻/狂热/双倍/石榴/闪电果！':
+      '60s Frenzy: Chain combos for high scores. Bombs cost 10 pts. Use Freeze, Frenzy, Double, Pomegranate & Bolt!',
+    '已暂停': 'Paused',
+    '当前得分：{score}': 'Current score: {score}',
+    '切到炸弹！': 'Sliced a Bomb!',
+    '生命耗尽！': 'Out of Lives!',
+    '（新纪录！）': ' (New Record!)',
+    '冰冻减速 {s}s': 'Freeze {s}s',
+    '水果狂热 {s}s': 'Frenzy {s}s',
+    '双倍得分 {s}s': 'Double ×2 {s}s',
+    '狂切石榴！': 'Multi-Slice!',
+    '冰冻减速!': 'Freeze!',
+    '水果狂热!': 'Frenzy!',
+    '双倍得分 ×2!': 'Double ×2!',
+    '闪电连劈 +{n}': 'Bolt Chain +{n}',
+    '暴击 +{n}!': 'Critical +{n}!',
+    '{c} 连击 +{n}': '{c}x Combo +{n}',
+    '连切 ×{h} +{n}': 'Multi ×{h} +{n}',
+    '划屏挥砍水果': 'Swipe to Slice',
+    '手指划屏或按住鼠标左键拖拽切开飞起的水果，一次切中 3 个以上触发连击加分！':
+      'Swipe or drag with the mouse to slice flying fruit. Slice 3+ in one stroke for a combo bonus!',
+    '小心炸弹': 'Watch for Bombs',
+    '经典模式下切到炸弹会直接结束，漏掉完整水果扣 1 命；60 秒狂热模式切到炸弹扣 10 分。':
+      'In Classic mode, bombs end the game and missed fruits cost 1 life. In 60s Frenzy, bombs deduct 10 points.',
+    '善用特殊水果': 'Special Fruits',
+    '冰冻减速、水果狂热、双倍得分、连续狂切石榴与全屏闪电果，帮你轻松冲刺新高！':
+      'Use Freeze, Frenzy, Double Score, Multi-Slice Pomegranate, and Lightning fruits to boost your score!',
+
     // ---- 清数据 / 弹窗 ----
     '将清除本站保存在此浏览器中的最高纪录、游戏存档、球色、音效设置与教学提示，且无法恢复。':
       'This will remove the best scores, saved games, ball skins, sound settings and tutorial flags stored in this browser. This cannot be undone.',
