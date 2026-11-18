@@ -241,68 +241,23 @@ textarea {
 }
 
 .game-preview {
-  position: relative;
   display: grid;
   place-items: center;
-  height: 100px;
+  aspect-ratio: 18 / 7;
   margin-bottom: 14px;
   overflow: hidden;
   border-radius: 12px;
   background: #eef2ff;
 }
 
-.preview-lead { width: 58px; height: 58px; z-index: 1; }
-.preview-icon { width: 16px; height: 16px; }
-.game-preview[data-game="basketball"] {
-  background: linear-gradient(#312e81 0%, #c2515c 66%, #5f3648 67%, #5f3648);
+.game-preview-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
-.game-preview[data-game="basketball"] .preview-lead { transform: translate(-24px, -8px); }
-.game-preview[data-game="basketball"]::after {
-  content: '';
-  position: absolute;
-  left: 60%;
-  top: 29px;
-  width: 37px;
-  height: 21px;
-  border: 3px solid #fef3c7;
-  border-bottom: 4px solid #fb923c;
-  border-radius: 3px;
-}
-.game-preview[data-game="snake"] {
-  background: repeating-conic-gradient(#dcfce7 0 25%, #ecfdf5 0 50%) 0 / 24px 24px;
-}
-.game-preview[data-game="snake"] .preview-lead { width: 88px; height: 88px; }
-.game-preview[data-game="2048"] { background: #eee4da; }
-.game-preview[data-game="minesweeper"] { background: #e2e8f0; }
-.game-preview[data-game="memory"] { background: #dbeafe; }
 
-.preview-board {
-  display: grid;
-  grid-template-columns: repeat(4, 34px);
-  gap: 3px;
-  padding: 4px;
-  border-radius: 8px;
-  background: #94a3b8;
-}
-.preview-cell {
-  display: grid;
-  place-items: center;
-  min-height: 22px;
-  border-radius: 4px;
-  background: #fff;
-  color: #1e293b;
-  font-size: 0.72rem;
-  font-weight: 800;
-}
-.preview-cell:empty { background: #cbd5e1; }
-.game-preview[data-game="2048"] .preview-board { background: #bbada0; }
-.game-preview[data-game="2048"] .preview-cell { background: #edcf72; }
-.game-preview[data-game="2048"] .preview-cell:empty { background: #cec2b2; }
-.game-preview[data-game="minesweeper"] .preview-icon { color: #dc2626; }
-.game-preview[data-game="slide"] .preview-board { grid-template-columns: repeat(3, 30px); }
-.game-preview[data-game="memory"] .preview-board { background: #93c5fd; }
-.game-preview[data-game="memory"] .preview-cell { background: #2563eb; color: #fff; }
-.game-preview[data-game="memory"] .preview-cell.has-icon { background: #fff; }
+.preview-lead { width: 58px; height: 58px; }
 
 .game-category-pill {
   font-size: 0.78rem;

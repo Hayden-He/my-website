@@ -186,31 +186,19 @@
     return card;
   }
 
-  const boardPreviews = {
-    '2048': ['2', '', '4', '', '8', '16', '', '', '32', '64', '128', '2048'],
-    minesweeper: ['', '1', '2', '#icon-flag', '', '1', '', '', '', '1', '1', '#icon-flag'],
-    slide: ['1', '4', '2', '7', '5', '3', '', '8', '6'],
-    memory: ['?', '#mem-apple', '?', '?', '#mem-strawberry', '?', '#mem-apple', '?'],
-  };
-
   function renderGamePreview(game) {
     const preview = createEl('div', 'game-preview');
-    preview.dataset.game = game.id;
     preview.setAttribute('aria-hidden', 'true');
-    const cells = boardPreviews[game.id];
-    if (Array.isArray(cells)) {
-      const board = createEl('div', 'preview-board');
-      cells.forEach((content) => {
-        const cell = createEl('span', 'preview-cell');
-        if (content.startsWith('#')) {
-          cell.classList.add('has-icon');
-          cell.appendChild(createIcon(content.slice(1), 'preview-icon', '0 0 32 32'));
-        } else {
-          cell.textContent = content;
-        }
-        board.appendChild(cell);
-      });
-      preview.appendChild(board);
+    if (game.preview) {
+      const image = createEl('img', 'game-preview-image');
+      image.src = game.preview;
+      image.width = 720;
+      image.height = 280;
+      image.alt = '';
+      image.decoding = 'async';
+      image.loading = 'lazy';
+      image.draggable = false;
+      preview.appendChild(image);
     } else {
       preview.appendChild(createIcon('game-' + game.icon, 'preview-lead', '0 0 32 32'));
     }

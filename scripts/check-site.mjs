@@ -166,6 +166,13 @@ for (const game of games) {
 
   if (!game.title) fail(`游戏 ${label} 缺少 title`);
   if (!game.icon) fail(`游戏 ${label} 缺少 icon`);
+  if (game.preview !== undefined) {
+    if (typeof game.preview !== 'string' || !/^\/assets\/previews\/[a-z0-9-]+\.webp$/.test(game.preview)) {
+      fail(`游戏 ${label} 的预览图应位于 /assets/previews/，格式为 WebP`);
+    } else {
+      checkFile(game.preview.slice(1), `游戏 ${label} 的预览图`);
+    }
+  }
   if (!game.description || game.description.length < 8) fail(`游戏 ${label} 的 description 太短`);
   if (!Array.isArray(game.tags) || game.tags.length === 0) fail(`游戏 ${label} 缺少 tags`);
 
