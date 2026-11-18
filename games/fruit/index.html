@@ -518,7 +518,7 @@
       </div>
     </div>
 
-    <p class="hint" data-i18n="划屏或按住鼠标左键拖拽挥砍 · 空格/回车开始或暂停 · 14 种水果与 5 款特效刀锋">划屏或按住鼠标左键拖拽挥砍 · 空格/回车开始或暂停 · 14 种水果与 5 款特效刀锋</p>
+    <p class="hint" data-i18n="划屏或移动鼠标挥砍 · 空格/回车开始或暂停 · 14 种水果与 5 款特效刀锋">划屏或移动鼠标挥砍 · 空格/回车开始或暂停 · 14 种水果与 5 款特效刀锋</p>
 
     <div id="more-games" class="more-games"></div>
   </main>
@@ -675,8 +675,10 @@
       let floatTexts = [];
       let bolts = [];
       let shockwaves = [];
+      let slashes = [];
       let trail = [];
       let bombBlast = null;
+      let showcaseTimer = 0.2;
 
       // 镜头反馈
       let shakeTimer = 0;
@@ -716,72 +718,135 @@
 
       function playSwoosh() {
         const now = performance.now();
-        if (now - lastSwooshAt < 110) return;
+        if (now - lastSwooshAt < 220) return;
         lastSwooshAt = now;
         withAudio((ac) => {
-          const osc = ac.createOscillator();
+          const t0 = ac.currentTime;
+          const src = ac.createBufferSource();
+          src.buffer = getNoiseBuffer(ac);
+          const bp = ac.createBiquadFilter();
+          bp.type = 'bandpass';
+          bp.frequency.setValueAtTime(1450, t0);
+          bp.frequency.exponentialRampToValueAtTime(360, t0 + 0.075);
+          bp.Q.setValueAtTime(2.2, t0);
           const gain = ac.createGain();
-          osc.type = 'triangle';
-          osc.frequency.setValueAtTime(520, ac.currentTime);
-          osc.frequency.exponentialRampToValueAtTime(170, ac.currentTime + 0.08);
-          gain.gain.setValueAtTime(0.04, ac.currentTime);
-          gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.085);
-          osc.connect(gain);
+          gain.gain.setValueAtTime(0.001, t0);
+          gain.gain.linearRampToValueAtTime(0.11, t0 + 0.015);
+          gain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.08);
+          src.connect(bp);
+          bp.connect(gain);
           gain.connect(ac.destination);
-          osc.start();
-          osc.stop(ac.currentTime + 0.09);
+          src.start(t0);
+          src.stop(t0 + 0.085);
         });
       }
 
       function playSlice(pitchBoost) {
         withAudio((ac) => {
           const t0 = ac.currentTime;
-          // 高频清脆切开噪声
+          const boost = Math.min(pitchBoost || 0, 8);
+
+          // 1. 刀锋破皮声（高频滤波噪声快速下扫）
           const src = ac.createBufferSource();
           src.buffer = getNoiseBuffer(ac);
-          const hp = ac.createBiquadFilter();
-          hp.type = 'bandpass';
-          hp.frequency.setValueAtTime(2200, t0);
-          hp.Q.setValueAtTime(1.4, t0);
+          const bp = ac.createBiquadFilter();
+          bp.type = 'bandpass';
+          bp.frequency.setValueAtTime(3100, t0);
+          bp.frequency.exponentialRampToValueAtTime(920, t0 + 0.045);
+          bp.Q.setValueAtTime(1.5, t0);
           const nGain = ac.createGain();
-          nGain.gain.setValueAtTime(0.08, t0);
-          nGain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.055);
-          src.connect(hp);
-          hp.connect(nGain);
+          nGain.gain.setValueAtTime(0.15, t0);
+          nGain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.05);
+          src.connect(bp);
+          bp.connect(nGain);
           nGain.connect(ac.destination);
           src.start(t0);
-          src.stop(t0 + 0.06);
+          src.stop(t0 + 0.055);
 
-          // 音调递增果肉爆汁音
+          // 2. 果肉厚实打击低音（适配手机喇叭 260->115Hz）
+          const thud = ac.createOscillator();
+          const tGain = ac.createGain();
+          thud.type = 'triangle';
+          thud.frequency.setValueAtTime(250 + boost * 12, t0);
+          thud.frequency.exponentialRampToValueAtTime(115, t0 + 0.055);
+          tGain.gain.setValueAtTime(0.13, t0);
+          tGain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.06);
+          thud.connect(tGain);
+          tGain.connect(ac.destination);
+          thud.start(t0);
+          thud.stop(t0 + 0.065);
+
+          // 3. 双层错位水滴爆汁音（噗嗤颗粒感）
+          const base = 390 + boost * 48;
+          for (let i = 0; i < 2; i += 1) {
+            const delay = i * 0.018;
+            const pop = ac.createOscillator();
+            const pGain = ac.createGain();
+            const fStart = i === 0 ? base : base * 1.18;
+            pop.type = 'sine';
+            pop.frequency.setValueAtTime(fStart * 0.78, t0 + delay);
+            pop.frequency.exponentialRampToValueAtTime(fStart * 1.48, t0 + delay + 0.058);
+            pGain.gain.setValueAtTime(i === 0 ? 0.14 : 0.1, t0 + delay);
+            pGain.gain.exponentialRampToValueAtTime(0.001, t0 + delay + 0.068);
+            pop.connect(pGain);
+            pGain.connect(ac.destination);
+            pop.start(t0 + delay);
+            pop.stop(t0 + delay + 0.072);
+          }
+        });
+      }
+
+      function playBombFuse() {
+        withAudio((ac) => {
+          const t0 = ac.currentTime;
+          // 引线火花滋滋声 + 低沉金属预警
+          const src = ac.createBufferSource();
+          src.buffer = getNoiseBuffer(ac);
+          const bp = ac.createBiquadFilter();
+          bp.type = 'bandpass';
+          bp.frequency.setValueAtTime(3600, t0);
+          bp.Q.setValueAtTime(3.0, t0);
+          const nGain = ac.createGain();
+          nGain.gain.setValueAtTime(0.075, t0);
+          nGain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.13);
+          src.connect(bp);
+          bp.connect(nGain);
+          nGain.connect(ac.destination);
+          src.start(t0);
+          src.stop(t0 + 0.14);
+
           const osc = ac.createOscillator();
           const gain = ac.createGain();
-          const base = 440 + Math.min(pitchBoost || 0, 8) * 55;
-          osc.type = 'sine';
-          osc.frequency.setValueAtTime(base, t0);
-          osc.frequency.exponentialRampToValueAtTime(base * 1.65, t0 + 0.07);
-          gain.gain.setValueAtTime(0.065, t0);
-          gain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.09);
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(310, t0);
+          osc.frequency.exponentialRampToValueAtTime(210, t0 + 0.11);
+          gain.gain.setValueAtTime(0.09, t0);
+          gain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.12);
           osc.connect(gain);
           gain.connect(ac.destination);
           osc.start(t0);
-          osc.stop(t0 + 0.095);
+          osc.stop(t0 + 0.125);
         });
       }
 
       function playMiss() {
         withAudio((ac) => {
           const t0 = ac.currentTime;
-          const osc = ac.createOscillator();
-          const gain = ac.createGain();
-          osc.type = 'triangle';
-          osc.frequency.setValueAtTime(230, t0);
-          osc.frequency.exponentialRampToValueAtTime(135, t0 + 0.14);
-          gain.gain.setValueAtTime(0.085, t0);
-          gain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.15);
-          osc.connect(gain);
-          gain.connect(ac.destination);
-          osc.start(t0);
-          osc.stop(t0 + 0.16);
+          // 双音木鱼式下行提示，手机外放清晰可辨
+          const freqs = [[340, 230, 0], [240, 155, 0.075]];
+          for (const [f1, f2, d] of freqs) {
+            const osc = ac.createOscillator();
+            const gain = ac.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(f1, t0 + d);
+            osc.frequency.exponentialRampToValueAtTime(f2, t0 + d + 0.085);
+            gain.gain.setValueAtTime(0.14, t0 + d);
+            gain.gain.exponentialRampToValueAtTime(0.001, t0 + d + 0.095);
+            osc.connect(gain);
+            gain.connect(ac.destination);
+            osc.start(t0 + d);
+            osc.stop(t0 + d + 0.1);
+          }
         });
       }
 
@@ -792,15 +857,15 @@
           for (let i = 0; i < count; i += 1) {
             const osc = ac.createOscillator();
             const gain = ac.createGain();
-            const start = ac.currentTime + i * 0.045;
+            const start = ac.currentTime + i * 0.048;
             osc.type = 'triangle';
             osc.frequency.setValueAtTime(notes[i], start);
-            gain.gain.setValueAtTime(0.07, start);
-            gain.gain.exponentialRampToValueAtTime(0.001, start + 0.14);
+            gain.gain.setValueAtTime(0.13, start);
+            gain.gain.exponentialRampToValueAtTime(0.001, start + 0.16);
             osc.connect(gain);
             gain.connect(ac.destination);
             osc.start(start);
-            osc.stop(start + 0.15);
+            osc.stop(start + 0.17);
           }
         });
       }
@@ -808,52 +873,53 @@
       function playBomb() {
         withAudio((ac) => {
           const t0 = ac.currentTime;
-          // 爆破白噪声冲击
+          // 1. 中低频爆破白噪声冲击
           const src = ac.createBufferSource();
           src.buffer = getNoiseBuffer(ac);
           const lp = ac.createBiquadFilter();
           lp.type = 'lowpass';
-          lp.frequency.setValueAtTime(1100, t0);
-          lp.frequency.exponentialRampToValueAtTime(140, t0 + 0.44);
+          lp.frequency.setValueAtTime(1400, t0);
+          lp.frequency.exponentialRampToValueAtTime(180, t0 + 0.45);
           const nGain = ac.createGain();
-          nGain.gain.setValueAtTime(0.24, t0);
-          nGain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.46);
+          nGain.gain.setValueAtTime(0.28, t0);
+          nGain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.48);
           src.connect(lp);
           lp.connect(nGain);
           nGain.connect(ac.destination);
           src.start(t0);
-          src.stop(t0 + 0.48);
+          src.stop(t0 + 0.5);
 
-          // 低频轰鸣
+          // 2. 适配手机喇叭的中低频共振轰鸣（260 -> 60Hz）
           const osc = ac.createOscillator();
           const gain = ac.createGain();
           osc.type = 'sawtooth';
-          osc.frequency.setValueAtTime(135, t0);
-          osc.frequency.exponentialRampToValueAtTime(30, t0 + 0.42);
-          gain.gain.setValueAtTime(0.15, t0);
-          gain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.44);
+          osc.frequency.setValueAtTime(260, t0);
+          osc.frequency.exponentialRampToValueAtTime(60, t0 + 0.42);
+          gain.gain.setValueAtTime(0.22, t0);
+          gain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.45);
           osc.connect(gain);
           gain.connect(ac.destination);
           osc.start(t0);
-          osc.stop(t0 + 0.45);
+          osc.stop(t0 + 0.46);
         });
       }
 
       function playSpecial(kind) {
         withAudio((ac) => {
+          const t0 = ac.currentTime;
           const osc = ac.createOscillator();
           const gain = ac.createGain();
-          osc.type = kind === 'lightning' ? 'square' : 'sine';
-          const f1 = kind === 'freeze' ? 880 : kind === 'lightning' ? 980 : 587;
-          const f2 = kind === 'freeze' ? 440 : kind === 'lightning' ? 320 : 1174;
-          osc.frequency.setValueAtTime(f1, ac.currentTime);
-          osc.frequency.exponentialRampToValueAtTime(f2, ac.currentTime + 0.22);
-          gain.gain.setValueAtTime(0.07, ac.currentTime);
-          gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.24);
+          osc.type = kind === 'lightning' ? 'sawtooth' : 'triangle';
+          const f1 = kind === 'freeze' ? 920 : kind === 'lightning' ? 1100 : 587;
+          const f2 = kind === 'freeze' ? 460 : kind === 'lightning' ? 280 : 1174;
+          osc.frequency.setValueAtTime(f1, t0);
+          osc.frequency.exponentialRampToValueAtTime(f2, t0 + 0.22);
+          gain.gain.setValueAtTime(0.13, t0);
+          gain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.24);
           osc.connect(gain);
           gain.connect(ac.destination);
-          osc.start();
-          osc.stop(ac.currentTime + 0.25);
+          osc.start(t0);
+          osc.stop(t0 + 0.25);
         });
       }
 
@@ -989,8 +1055,10 @@
         floatTexts = [];
         bolts = [];
         shockwaves = [];
+        slashes = [];
         trail = [];
         bombBlast = null;
+        showcaseTimer = 0.15;
         shakeTimer = 0;
         flashAlpha = 0;
         comboCount = 0;
@@ -1101,10 +1169,15 @@
           : 0.12 + difficulty * 0.08;
 
         let specialSpawned = false;
+        let bombSpawned = false;
         for (let i = 0; i < count; i += 1) {
           const roll = Math.random();
           if (roll < bombChance && items.length < 10) {
             spawnFruitObject(null, 'bomb');
+            if (!bombSpawned) {
+              bombSpawned = true;
+              playBombFuse();
+            }
           } else if (!specialSpawned && !pomegranateTarget && Math.random() < (mode === 'arcade' ? 0.16 : 0.09)) {
             specialSpawned = true;
             if (mode === 'arcade') {
@@ -1370,6 +1443,15 @@
           life: 0.18,
           maxLife: 0.18,
         });
+        slashes.push({
+          x: item.x,
+          y: item.y,
+          angle,
+          len: item.r * (isCrit ? 3.2 : 2.65),
+          color: isCrit ? '#fef08a' : '#ffffff',
+          life: 0.15,
+          maxLife: 0.15,
+        });
         if (isCrit) {
           addFloatText(item.x, item.y - 16, t('暴击 +{n}!', { n: gained }), '#fde047', 1.35);
           triggerShake(4, 0.14);
@@ -1400,7 +1482,7 @@
         const dist = Math.hypot(bx - ax, by - ay);
         if (dist < 3) return;
         const angle = Math.atan2(by - ay, bx - ax);
-        if (dist > 14) playSwoosh();
+        if (dist > 26) playSwoosh();
 
         for (let i = items.length - 1; i >= 0; i -= 1) {
           const item = items[i];
@@ -1443,6 +1525,7 @@
             if (item.hitCd <= 0) {
               item.hitCd = 0.075;
               item.hits += 1;
+              item.hitBounce = 0.22;
               if (!pomegranateTarget) {
                 pomegranateTarget = item;
                 item.multiTimer = 1.75;
@@ -1450,6 +1533,15 @@
                 item.vy *= 0.15;
               }
               const gained = addPoints(2);
+              slashes.push({
+                x: item.x + (Math.random() - 0.5) * 14,
+                y: item.y + (Math.random() - 0.5) * 14,
+                angle,
+                len: item.r * 2.9,
+                color: '#fecdd3',
+                life: 0.14,
+                maxLife: 0.14,
+              });
               spawnJuiceSplash(item.x, item.y, '#e11d48', 8);
               playSlice(item.hits);
               triggerShake(3.5, 0.08);
@@ -1511,6 +1603,10 @@
           shockwaves[i].life -= dt;
           if (shockwaves[i].life <= 0) shockwaves.splice(i, 1);
         }
+        for (let i = slashes.length - 1; i >= 0; i -= 1) {
+          slashes[i].life -= dt;
+          if (slashes[i].life <= 0) slashes.splice(i, 1);
+        }
         for (let i = floatTexts.length - 1; i >= 0; i -= 1) {
           const ft = floatTexts[i];
           ft.life -= dt;
@@ -1526,6 +1622,24 @@
       }
 
       function update(dt) {
+        if (state === 'ready') {
+          // 待机界面背景慢速抛起展示水果，打开页面即有活力
+          showcaseTimer -= dt;
+          if (showcaseTimer <= 0 && items.length < 3) {
+            showcaseTimer = 1.15 + Math.random() * 0.5;
+            spawnFruitObject();
+          }
+          for (let i = items.length - 1; i >= 0; i -= 1) {
+            const it = items[i];
+            it.x += it.vx * dt * 0.72;
+            it.y += it.vy * dt * 0.72;
+            it.vy += GRAVITY * dt * 0.72;
+            it.rot += it.vRot * dt * 0.72;
+            if (it.y > H + it.r + 40 && it.vy > 0) items.splice(i, 1);
+          }
+          return;
+        }
+
         if (state === 'dying' && bombBlast) {
           bombBlast.timer += dt;
           const p = bombBlast.timer / bombBlast.duration;
@@ -1593,6 +1707,7 @@
           const item = items[i];
           item.life += dt;
           if (item.hitCd > 0) item.hitCd = Math.max(0, item.hitCd - dt);
+          if (item.hitBounce > 0) item.hitBounce = Math.max(0, item.hitBounce - dt * 2.2);
 
           if (item === pomegranateTarget) {
             item.multiTimer -= dt;
@@ -2391,41 +2506,85 @@
         ctx.fill();
       }
 
+      function drawPomegranate(r, hits) {
+        // 顶部石榴皇冠花萼
+        ctx.fillStyle = '#9f1239';
+        ctx.beginPath();
+        ctx.moveTo(-10, -r * 0.82);
+        ctx.lineTo(-13, -r * 1.18);
+        ctx.lineTo(-5, -r * 0.98);
+        ctx.lineTo(0, -r * 1.24);
+        ctx.lineTo(5, -r * 0.98);
+        ctx.lineTo(13, -r * 1.18);
+        ctx.lineTo(10, -r * 0.82);
+        ctx.closePath();
+        ctx.fill();
+
+        // 饱满石榴果身
+        const pg = ctx.createRadialGradient(-r * 0.28, -r * 0.26, r * 0.1, 0, 0, r);
+        pg.addColorStop(0, '#fb7185');
+        pg.addColorStop(0.58, '#e11d48');
+        pg.addColorStop(1, '#881337');
+        ctx.beginPath();
+        ctx.arc(0, 0, r, 0, Math.PI * 2);
+        ctx.fillStyle = pg;
+        ctx.fill();
+
+        // 表面微棱与红宝石裂纹籽粒（随连切次数显现）
+        ctx.shadowColor = 'transparent';
+        ctx.strokeStyle = 'rgba(254, 205, 211, 0.55)';
+        ctx.lineWidth = 1.8;
+        ctx.stroke();
+        if (hits > 0) {
+          ctx.fillStyle = '#fef2f2';
+          const count = Math.min(8, hits + 2);
+          for (let i = 0; i < count; i += 1) {
+            const a = i * 1.9;
+            const d = (i % 2 ? 0.32 : 0.54) * r;
+            ctx.beginPath();
+            ctx.arc(Math.cos(a) * d, Math.sin(a) * d, 2.2, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+        addSpecular(-r * 0.3, -r * 0.32, r * 0.22, r * 0.12, -0.55);
+      }
+
       function drawSpecialAura(special, r, tNow) {
-        const colors = {
-          freeze: 'rgba(56, 189, 248, 0.55)',
-          frenzy: 'rgba(236, 72, 153, 0.58)',
-          double: 'rgba(250, 204, 21, 0.6)',
-          pomegranate: 'rgba(225, 29, 72, 0.65)',
-          lightning: 'rgba(253, 224, 71, 0.65)',
-          heal: 'rgba(74, 222, 128, 0.58)',
+        const themes = {
+          freeze: { ring: 'rgba(56, 189, 248, 0.65)', fill: 'rgba(186, 230, 253, 0.16)', badge: '#0284c7', glyph: '❄' },
+          frenzy: { ring: 'rgba(236, 72, 153, 0.68)', fill: 'rgba(244, 114, 182, 0.15)', badge: '#db2777', glyph: '★' },
+          double: { ring: 'rgba(250, 204, 21, 0.72)', fill: 'rgba(254, 240, 138, 0.18)', badge: '#d97706', glyph: '×2' },
+          pomegranate: { ring: 'rgba(244, 63, 94, 0.72)', fill: 'rgba(254, 205, 211, 0.15)', badge: '#be123c', glyph: '✦' },
+          lightning: { ring: 'rgba(253, 224, 71, 0.75)', fill: 'rgba(254, 249, 195, 0.18)', badge: '#ca8a04', glyph: '⚡' },
+          heal: { ring: 'rgba(74, 222, 128, 0.68)', fill: 'rgba(187, 247, 208, 0.16)', badge: '#16a34a', glyph: '+♥' },
         };
-        const c = colors[special];
-        if (!c) return;
-        const pulse = r + 7 + Math.sin(tNow * 0.01) * 3;
+        const th = themes[special];
+        if (!th) return;
+        const pulse = r + 6 + Math.sin(tNow * 0.01) * 2.5;
         ctx.save();
         ctx.beginPath();
         ctx.arc(0, 0, pulse, 0, Math.PI * 2);
-        ctx.strokeStyle = c;
-        ctx.lineWidth = 3.5;
+        ctx.fillStyle = th.fill;
+        ctx.fill();
+        ctx.strokeStyle = th.ring;
+        ctx.lineWidth = 3;
         ctx.stroke();
 
-        // 角标提示
-        ctx.fillStyle = '#0f172a';
+        // 醒目主题色徽章
+        const bx = r * 0.76;
+        const by = -r * 0.76;
+        ctx.fillStyle = th.badge;
         ctx.beginPath();
-        ctx.arc(r * 0.72, -r * 0.72, 10, 0, Math.PI * 2);
+        ctx.arc(bx, by, 10.5, 0, Math.PI * 2);
         ctx.fill();
-        ctx.fillStyle = '#fff';
-        ctx.font = 'bold 11px ui-sans-serif, system-ui, sans-serif';
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '800 10.5px ui-sans-serif, system-ui, sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        const glyph = special === 'freeze' ? '❄'
-          : special === 'frenzy' ? '★'
-          : special === 'double' ? '×2'
-          : special === 'lightning' ? '⚡'
-          : special === 'heal' ? '+♥'
-          : '✦';
-        ctx.fillText(glyph, r * 0.72, -r * 0.71);
+        ctx.fillText(th.glyph, bx, by + 0.5);
         ctx.restore();
       }
 
@@ -2533,6 +2692,10 @@
         for (const item of items) {
           ctx.save();
           ctx.translate(item.x, item.y);
+          if (item.hitBounce > 0) {
+            const s = 1 + item.hitBounce;
+            ctx.scale(s, s);
+          }
 
           if (item.special && item.special !== 'bomb') {
             drawSpecialAura(item.special, item.r, tNow);
@@ -2546,22 +2709,25 @@
           if (item.special === 'bomb') {
             drawBomb(item.r, tNow);
           } else if (item.special === 'pomegranate') {
-            const pg = ctx.createRadialGradient(-8, -8, 4, 0, 0, item.r);
-            pg.addColorStop(0, '#fb7185');
-            pg.addColorStop(0.65, '#be123c');
-            pg.addColorStop(1, '#881337');
-            ctx.beginPath();
-            ctx.arc(0, 0, item.r, 0, Math.PI * 2);
-            ctx.fillStyle = pg;
-            ctx.fill();
-            ctx.shadowColor = 'transparent';
-            ctx.strokeStyle = '#fda4af';
-            ctx.lineWidth = 2;
-            ctx.stroke();
+            drawPomegranate(item.r, item.hits);
           } else {
             drawFruitGraphic(item.fruit.id, item.r, false);
           }
           ctx.restore();
+
+          // 底部炸弹刚冒头时的边缘微预警标
+          if (item.special === 'bomb' && item.vy < 0 && item.y > H - 62) {
+            ctx.save();
+            const bx = Math.max(24, Math.min(W - 24, item.x));
+            ctx.fillStyle = '#ef4444';
+            ctx.beginPath();
+            ctx.moveTo(bx, H - 22);
+            ctx.lineTo(bx - 8, H - 8);
+            ctx.lineTo(bx + 8, H - 8);
+            ctx.closePath();
+            ctx.fill();
+            ctx.restore();
+          }
         }
 
         // 闪电链
@@ -2630,6 +2796,23 @@
           ctx.restore();
         }
 
+        // 命中瞬间贯穿斩击白芒
+        for (const sl of slashes) {
+          const ratio = sl.life / sl.maxLife;
+          ctx.save();
+          ctx.translate(sl.x, sl.y);
+          ctx.rotate(sl.angle);
+          ctx.globalAlpha = ratio;
+          ctx.fillStyle = sl.color;
+          ctx.beginPath();
+          ctx.moveTo(-sl.len * 0.5, 0);
+          ctx.quadraticCurveTo(0, -4.2 * ratio, sl.len * 0.5, 0);
+          ctx.quadraticCurveTo(0, 4.2 * ratio, -sl.len * 0.5, 0);
+          ctx.closePath();
+          ctx.fill();
+          ctx.restore();
+        }
+
         // 刀光
         drawBladeTrail();
 
@@ -2695,14 +2878,18 @@
         if (state !== 'playing') return;
         if (!event.isPrimary || (event.pointerType === 'mouse' && event.button !== 0)) return;
         activePointerId = event.pointerId;
-        canvas.setPointerCapture(event.pointerId);
+        if (event.pointerType !== 'mouse') {
+          try { canvas.setPointerCapture(event.pointerId); } catch {}
+        }
         const pt = toCanvasPoint(event);
         prevPt = pt;
         trail.push({ x: pt.x, y: pt.y, t: performance.now() });
       });
 
       canvas.addEventListener('pointermove', (event) => {
-        if (state !== 'playing' || activePointerId !== event.pointerId) return;
+        if (state !== 'playing') return;
+        // 电脑端鼠标免按住即可挥砍；触屏则需按下划动
+        if (event.pointerType !== 'mouse' && activePointerId !== event.pointerId) return;
         const pt = toCanvasPoint(event);
         trail.push({ x: pt.x, y: pt.y, t: performance.now() });
         if (trail.length > 16) trail.shift();
@@ -2714,7 +2901,8 @@
       });
 
       function endPointer(event) {
-        if (activePointerId !== event.pointerId) return;
+        if (event.pointerType === 'mouse' && event.type !== 'pointerleave') return;
+        if (event.pointerType !== 'mouse' && activePointerId !== event.pointerId) return;
         activePointerId = null;
         prevPt = null;
         flushCombo();
@@ -2722,6 +2910,7 @@
       canvas.addEventListener('pointerup', endPointer);
       canvas.addEventListener('pointercancel', endPointer);
       canvas.addEventListener('lostpointercapture', endPointer);
+      canvas.addEventListener('pointerleave', endPointer);
 
       overlayBtn.addEventListener('click', () => {
         if (state === 'paused') resumeGame();

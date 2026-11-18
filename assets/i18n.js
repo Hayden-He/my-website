@@ -390,8 +390,8 @@
     '极速切水果画布': 'Fruit Slicer canvas',
     '按住鼠标拖拽或手指划屏切开水果，连续一刀多切触发连击，小心炸弹！':
       'Drag with mouse or swipe to slice fruit. Chain multi-fruit cuts for combos and watch out for bombs!',
-    '划屏或按住鼠标左键拖拽挥砍 · 空格/回车开始或暂停 · 14 种水果与 5 款特效刀锋':
-      'Swipe or hold left mouse button to slice · Space/Enter to start or pause · 14 fruits & 5 FX blades',
+    '划屏或移动鼠标挥砍 · 空格/回车开始或暂停 · 14 种水果与 5 款特效刀锋':
+      'Swipe or move mouse to slice · Space/Enter to start or pause · 14 fruits & 5 FX blades',
     '经典 3 命：漏掉完整水果扣 1 命，每满 100 分回 1 命，切到炸弹立即结束！':
       'Classic 3 Lives: Missing a whole fruit costs 1 life (+1 life every 100 pts). Slicing a bomb ends the run!',
     '60 秒狂热：尽情连击拿高分，切到炸弹扣 10 分，善用冰冻/狂热/双倍/石榴/闪电果！':
