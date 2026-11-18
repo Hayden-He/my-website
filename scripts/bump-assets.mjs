@@ -6,21 +6,9 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { root, readSiteConfig, sitePages } from './site-config.mjs';
 
-const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const pages = [
-  'index.html',
-  'categories/arcade.html',
-  'categories/puzzle.html',
-  '404.html',
-  'games/basketball/index.html',
-  'games/snake/index.html',
-  'games/2048/index.html',
-  'games/minesweeper/index.html',
-  'games/memory/index.html',
-  'games/slide/index.html',
-];
+const pages = sitePages(readSiteConfig()).map(({ file }) => file);
 
 const versions = new Set();
 for (const relative of pages) {

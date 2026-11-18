@@ -66,9 +66,9 @@
     '来一局投篮': 'Play some hoops',
 
     // ---- 首页 ----
-    '随时随地，轻松开局': 'Pick up and play, anytime',
-    '零下载、打开即玩，键盘鼠标与手机触屏都能上手；每款游戏的最高纪录会自动保存在本机，2048 棋局还能随时续玩。':
-      'No downloads, instant play with keyboard, mouse or touch. Your best scores are saved on this device, and your 2048 game can be resumed anytime.',
+    '选个小游戏，打开就玩': 'Pick a game and play',
+    '{game}：{action}': '{game}: {action}',
+    '纪录保存在当前浏览器，2048 支持续玩。': 'Records are saved in this browser. You can resume your 2048 game.',
 
     // ---- 分类页 ----
     '动作街机 🏀': 'Arcade 🏀',
@@ -101,21 +101,23 @@
     '数字华容道 - 小游乐场': 'Sliding Puzzle - Little Playground',
     '数字华容道：滑动数字方块，把 1–8 / 1–15 按顺序排好；支持 3×3 与 4×4 棋盘，步数越少越好。':
       'Sliding Puzzle: slide the numbered tiles back into order (1–8 or 1–15); 3×3 and 4×4 boards, fewer moves is better.',
-    '连点升空，把握落点让球空心入网；打板、火焰连击与金球加倍，挑战高分极限。':
-      'Tap to rise and time your drop for a swish; bank shots, fire combos and gold balls double the score.',
+    '连点让球升空，停手让球落入篮筐。连续空心有加分。':
+      'Tap to lift the ball, then let it drop through the hoop. Chain swishes for bonus points.',
     '吃掉果子与限时金星不断成长，还有冰果减速；支持经典撞墙与自由穿墙双模式。':
       'Eat fruit and timed stars to grow; ice fruit slows you down. Play with walls or wrap-around.',
     '滑动合并相同数字，支持 4×4 与 5×5 棋盘、自动存档与单步撤回。':
       'Slide and merge matching numbers on 4×4 or 5×5 boards, with autosave and one-step undo.',
-    '首击必安全、点击数字即可快捷排雷，三档难度，用最稳的推理清空雷区。':
-      'Your first click is always safe; click a number to chord. Three difficulties—clear the field with solid deduction.',
-    '翻开两张相同图案配对，记住位置，用更少步数清空牌桌。':
-      'Flip two matching tiles and remember their spots; clear the board in as few moves as possible.',
+    '首击安全。根据数字找出地雷，翻开所有安全格。':
+      'Your first move is safe. Use the numbers to spot mines and reveal every safe tile.',
+    '翻开两张牌找相同图案。试试用更少次数配完全部。':
+      'Flip two cards to find a match. Try to clear the board in fewer attempts.',
     '滑动数字方块，把 1–8 / 1–15 按顺序排好；支持 3×3 与 4×4 棋盘，步数越少越好。':
       'Slide the numbered tiles back into order (1–8 or 1–15); 3×3 and 4×4 boards, fewer moves is better.',
     '连击挑战': 'Combo challenge',
     '键盘/划屏': 'Keys / swipe',
     '双模式': 'Two modes',
+    '9×9 最快: ': '9×9 fastest: ',
+    '4×4 最少尝试: ': '4×4 fewest attempts: ',
     '滑动/方向键': 'Swipe / arrows',
     '可撤回': 'Undo',
     '推理排雷': 'Deduction',
@@ -161,14 +163,19 @@
     // ---- 2048 ----
     '玩法：': 'How to play: ',
     '相同数字相撞合并翻倍，目标合成': 'Merge matching tiles to reach',
+    '合并相同数字，目标 2048。': 'Merge matching tiles to reach 2048.',
+    '发现新版本': 'Update available',
+    '刷新将加载新版本，未保存的进度会丢失。': 'Reload to update. Any unsaved progress will be lost.',
+    '立即刷新': 'Reload now',
+    '稍后': 'Later',
     '当前得分': 'Score',
     '最大方块': 'Max',
     '模式最高': 'Best',
     '4×4 经典': '4×4 Classic',
     '5×5 轻松': '5×5 Relaxed',
     '没有可移动的方块了': 'No moves left',
-    '电脑按 ↑ ↓ ← → 或 WASD 移动，手机在棋盘上滑动；新手推荐先试 5×5':
-      'Use the arrow keys or WASD; swipe on mobile. New here? Try 5×5 first.',
+    '滑动或拖动棋盘，键盘可用方向键或 WASD。初次玩可试 5×5。':
+      'Swipe or drag the board, or use arrows or WASD. Try 5×5 if you are new.',
     '恭喜合成 2048！🎉': 'You made 2048! 🎉',
     '当前得分：{score}，你可以继续挑战更高数字！': 'Score: {score}. Keep going for higher tiles!',
     '🎉 新纪录！': '🎉 New record! ',
@@ -191,6 +198,10 @@
     '按方向键 / WASD 或点击画面开始 🐍': 'Press an arrow key / WASD or tap to start 🐍',
     '已暂停（点击或按空格继续）': 'Paused (tap or press Space to resume)',
     '减速中': 'Slowed',
+    '向上': 'Up',
+    '向下': 'Down',
+    '向左': 'Left',
+    '向右': 'Right',
     '+15 减速': '+15 Slow',
     '本局得分：{score}（本模式最高：{best}）': 'Score: {score} (mode best: {best})',
     '通关！🎉': 'Cleared! 🎉',
@@ -210,11 +221,11 @@
     '模式: 翻开': 'Mode: Reveal',
     '模式: 插旗': 'Mode: Flag',
     '模式: 🚩插旗': 'Mode: 🚩Flag',
-    '12×12 / 16×16 建议在平板或桌面挑战': '12×12 / 16×16: play on a tablet or desktop',
+    '窄屏新局 9×9，当前棋局保留。': 'New games use 9×9 here. Keep playing your current board.',
     '排雷成功！🎉': 'Cleared! 🎉',
     '用时：0s': 'Time: 0s',
-    '电脑左键翻开、右键插旗；手机长按或切换「插旗模式」标记；点击已翻开数字可快捷排雷':
-      'Left-click/tap to reveal; right-click or long-press to flag; click a revealed number to chord.',
+    '点格子翻开。长按、右键或切换到插旗模式可标记。':
+      'Tap a tile to reveal it. Long-press, right-click, or switch to Flag mode to mark it.',
     '9×9 轻松': '9×9 Easy',
     '12×12 标准': '12×12 Standard',
     '16×16 挑战': '16×16 Hard',
@@ -231,8 +242,8 @@
     '点击或左键翻开；右键或手机长按插旗。第一下一定安全，会先翻出一片空白。':
       'Click/tap or left-click to reveal; right-click or long-press to flag. The first click is always safe and opens a blank area.',
     '快捷排雷': 'Quick clear',
-    '当一个数字周围的旗子数等于它时，点击这个数字可一次翻开其余相邻格。':
-      'When a number has exactly that many flags around it, click the number to open all remaining neighbors at once.',
+    '周围旗数等于数字时，再点数字可翻开其余邻格。插错旗可能踩雷。':
+      'When the number matches the adjacent flag count, tap it again to uncover the remaining neighbors. A misplaced flag can reveal a mine.',
     '第 {row} 行第 {col} 列，{state}': 'Row {row}, column {col}, {state}',
     '踩中的地雷': 'the mine you hit',
     '地雷': 'mine',
@@ -263,6 +274,15 @@
     '按空格或回车也可重开': 'Space or Enter to restart',
     '操作：连续点击球场 / 连按空格升空，停手后下落；': 'Tap the court / press Space to rise; stop to drop. ',
     'P 暂停': 'P pause',
+    '连点球场让球升空，停手让球落入篮筐。': 'Tap repeatedly to lift the ball. Stop tapping to let it drop through the hoop.',
+    '键盘：空格升空 · P 暂停': 'Keyboard: Space to rise · P to pause',
+    '挑战': 'Challenge',
+    '练习': 'Practice',
+    '切换到练习': 'Switch to practice',
+    '当前挑战进度将清除。': 'Your current challenge progress will be lost.',
+    '金球 ×2': 'Gold ball ×2',
+    '再进 {n} 球出金球': 'Gold ball in {n}',
+    '固定篮筐 · 不计纪录': 'Fixed hoop · Unranked',
     '机制：进球重置倒计时 · 连续空心触发火焰连击 · 每 5 球金球 ×2 · 25/50/80 分护盾进阶':
       'Goals reset the clock · back-to-back swishes ignite fire · every 5th goal is a gold ×2 ball · shields at 25/50/80',
     '用球: {name}': 'Ball: {name}',
@@ -302,24 +322,36 @@
     '最少步数': 'Best',
     '4×4 轻松': '4×4 Easy',
     '5×4 标准': '5×4 Standard',
-    '3×3 轻松': '3×3 Easy',
+    '3×3 入门': '3×3 Intro',
+    '3×3 经典': '3×3 Classic',
     '4×4 标准': '4×4 Standard',
     '完成！': 'Solved!',
     '步数：0 · 用时：0s': 'Moves: 0 · Time: 0s',
-    '点击或轻触空格旁的方块滑动；方向键也可操作；3×3 先热身。':
-      'Tap a tile next to the blank to slide it; arrow keys work too. Start with 3×3.',
+    '同盘重试': 'Retry board',
+    '点空位旁的方块，按顺序排好数字。空位留在右下角。':
+      'Tap a tile beside the gap. Order the numbers, leaving the gap at bottom right.',
+    '键盘也可用方向键移动。初次玩可选 3×3 入门。': 'Arrow keys also work. New to the game? Try 3×3 Intro.',
     '重开本局': 'Restart this game',
+    '切换模式': 'Switch mode',
+    '切换模式会清除当前棋局进度。': 'Switching modes will reset the current board.',
+    '切换': 'Switch',
+    '重试': 'Retry',
     '当前进度将被清除，确定重开吗？': 'Current progress will be lost. Restart?',
     '空格': 'Blank',
     '第 {row} 行第 {col} 列，数字 {n}': 'Row {row}, column {col}, number {n}',
     '步数：{moves} · 用时：{elapsed}s · 最少 {best} 步': 'Moves: {moves} · Time: {elapsed}s · Best: {best} moves',
     '数字华容道棋盘': 'Sliding puzzle board',
     '全部配对！🎉': 'All matched! 🎉',
-    '步数：0 · 用时：0s': 'Moves: 0 · Time: 0s',
-    '翻开两张相同图案配对；全部配对即通关，步数越少越好':
-      'Flip two matching tiles; clear the board in as few moves as possible',
-    '步数 {moves} · 用时 {elapsed}s · 新纪录！': 'Moves {moves} · Time {elapsed}s · New record!',
-    '步数 {moves} · 用时 {elapsed}s · 最少 {best} 步': 'Moves {moves} · Time {elapsed}s · Best {best} moves',
+    '尝试次数': 'Attempts',
+    '最少尝试': 'Fewest attempts',
+    '预览牌面': 'Preview cards',
+    '翻两张算一次尝试。找齐所有相同图案即可通关。': 'Each pair you flip counts as one attempt. Match every card to win.',
+    ' 次': ' attempts',
+    '记住牌面，预览即将结束。': 'Memorize the cards before they turn over.',
+    '这两张牌不同。': 'These cards do not match.',
+    '本局使用了预览，纪录单独计算。': 'Rounds with a preview have their own record.',
+    '尝试 {moves} 次 · 用时 {elapsed}s · 新纪录！': '{moves} attempts · {elapsed}s · New record!',
+    '尝试 {moves} 次 · 用时 {elapsed}s · 最少 {best} 次': '{moves} attempts · {elapsed}s · Best: {best}',
     '未翻开的牌': 'Hidden card',
     '已翻开，{icon}': 'Revealed, {icon}',
     '已配对，{icon}': 'Matched, {icon}',

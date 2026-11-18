@@ -17,6 +17,10 @@
   gap: 12px;
 }
 
+@media (max-width: 600px) {
+  .game-wrap { margin-top: 8px; gap: 8px; }
+}
+
 /* HUD */
 .hud {
   width: 100%;

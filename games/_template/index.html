@@ -3,27 +3,19 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <!--
-    新增游戏清单（复制本目录为 games/<id>/ 后逐项替换）：
-    1. 在 assets/games.js 增加一条：id / title / icon / category / categoryName / description / url / storageKey / bestPrefix / tags
-    2. 修改本页 title、meta description、h1、返回分类链接
-    3. 最高分统一用 game_best_<id>；有模式时用 game_best_<id>_<mode>
-    4. 接 GameKit.bindSoundButton / readBest / saveBestIfHigher；暂停、切后台、重开按需接
-    5. 保留 <div id="more-games"> 并调用 GameKit.mountMoreGames('<id>', ...)
-    6. 320px 手机回归：HUD、按钮、棋盘都不能横向溢出
-    7. 键盘与触屏都试一遍；遮罩出现时不能继续操作棋盘
-    8. 运行 node scripts/check-site.mjs
-  -->
   <title>示例小游戏 - 小游乐场</title>
   <meta name="description" content="新增游戏模板：包含公共游戏外壳、HUD、音效、最高分、更多游戏与自定义确认弹窗。" />
   <meta name="author" content="Hayden-He" />
   <meta name="theme-color" content="#2563eb" />
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E%F0%9F%8E%AE%3C/text%3E%3C/svg%3E" />
-  <link rel="stylesheet" href="/assets/style.css" />
-  <link rel="stylesheet" href="/assets/game-shell.css" />
-  <script src="/assets/site-data.js"></script>
-  <script src="/assets/games.js"></script>
-  <script src="/assets/game-kit.js"></script>
+  <link rel="icon" type="image/svg+xml" href="/assets/icon.svg?v=20261118001" />
+  <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png" />
+  <link rel="manifest" href="/site.webmanifest" />
+  <link rel="stylesheet" href="/assets/style.css?v=20261118001" />
+  <link rel="stylesheet" href="/assets/game-shell.css?v=20261118001" />
+  <script src="/assets/site-data.js?v=20261118001"></script>
+  <script src="/assets/i18n.js?v=20261118001"></script>
+  <script src="/assets/games.js?v=20261118001"></script>
+  <script src="/assets/game-kit.js?v=20261118001"></script>
   <style>
     /* 只放这个游戏自己的棋盘/场地样式；HUD、按钮、遮罩等见 game-shell.css */
     .game-wrap { --game-width: 520px; }
@@ -65,56 +57,58 @@
   </style>
 </head>
 <body>
-  <!-- 新增游戏：复制后按 games/README.md 第 6 步做国际化（加载 /assets/i18n.js、data-i18n / I18N.t、顶栏语言按钮）。 -->
+  <!-- inline-icons:start -->
+  <!-- inline-icons:end -->
   <header class="game-topbar">
     <div class="container game-topbar-inner">
-      <a class="back-link" href="/">← 返回大厅</a>
-      <!-- 新游戏：按 games/README.md 第 3 步，h1 改为自绘图标 + data-i18n span；见 assets/icons.svg。 -->
-      <h1 class="game-topbar-title">示例小游戏</h1>
-      <a class="game-topbar-cat" href="/categories/puzzle.html">益智休闲</a>
+      <a class="back-link" href="/" data-i18n="← 返回大厅">← 返回大厅</a>
+      <h1 class="game-topbar-title">
+        <svg class="title-icon" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><use href="#game-template"></use></svg>
+        <span data-i18n="示例小游戏">示例小游戏</span>
+      </h1>
+      <div class="game-topbar-actions">
+        <a class="game-topbar-cat" href="/categories/puzzle" data-i18n="益智休闲">益智休闲</a>
+        <button class="lang-btn" type="button" data-lang-toggle>EN</button>
+      </div>
     </div>
   </header>
 
   <main class="game-wrap">
     <div class="hud">
       <div class="hud-box">
-        <div class="hud-label">当前得分</div>
+        <div class="hud-label" data-i18n="当前得分">当前得分</div>
         <div id="score-el" class="hud-value">0</div>
       </div>
       <div class="hud-box">
-        <div class="hud-label">模式最高</div>
+        <div class="hud-label" data-i18n="模式最高">模式最高</div>
         <div id="best-el" class="hud-value" style="color: var(--accent-text);">0</div>
       </div>
     </div>
 
     <div class="toolbar">
-      <div class="mode-pills" role="group" aria-label="示例模式">
-        <button class="mode-pill active">示例模式</button>
-      </div>
       <div class="btn-group">
         <button id="sound-btn" class="btn-small secondary">音效: 开</button>
-        <button id="restart-btn" class="btn-small">重开</button>
+        <button id="restart-btn" class="btn-small" data-i18n="重开">重开</button>
       </div>
     </div>
 
     <div class="template-stage">
-      <button id="target" class="template-target" type="button">点我得分</button>
-      <div id="overlay" class="overlay">
-        <h2 id="overlay-title">示例结算</h2>
-        <p id="overlay-desc">本局得分：0</p>
+      <button id="target" class="template-target" type="button" data-i18n="开始游戏">开始游戏</button>
+      <div id="overlay" class="overlay" role="status" aria-live="polite">
+        <h2 data-i18n="完成！">完成！</h2>
+        <p id="overlay-desc"></p>
         <div class="overlay-actions">
-          <button id="overlay-btn" class="overlay-btn">再来一局</button>
+          <button id="overlay-btn" class="overlay-btn" data-i18n="再来一局">再来一局</button>
         </div>
       </div>
     </div>
-
-    <p class="hint-text">点击圆形目标得分 · 音效、最高分、确认弹窗与更多游戏都已接入公共外壳</p>
 
     <div id="more-games" class="more-games"></div>
   </main>
 
   <script>
     (function () {
+      const t = (key, params) => I18N.t(key, params);
       const STORAGE_KEY = 'game_best_template';
       const target = document.getElementById('target');
       const soundBtn = document.getElementById('sound-btn');
@@ -134,6 +128,9 @@
       function render() {
         scoreEl.textContent = score;
         bestEl.textContent = best;
+        if (overlay.classList.contains('show')) {
+          overlayDesc.textContent = t('本局得分：{score}（本模式最高：{best}）', { score, best });
+        }
       }
 
       function playTone(freq, duration) {
@@ -163,18 +160,18 @@
         playTone(520, 0.06);
         render();
         if (score >= 10) {
-          overlayDesc.textContent = '本局得分：' + score + '（模式最高：' + best + '）';
           overlay.classList.add('show');
+          render();
         }
       });
 
       async function restart() {
         if (score > 0) {
           const ok = await window.SiteData.confirmDialog({
-            title: '重开示例',
-            message: '当前得分将被清除，确定重开吗？',
-            confirmText: '重开',
-            cancelText: '继续',
+            title: t('重开本局'),
+            message: t('当前进度将被清除，确定重开吗？'),
+            confirmText: t('重开'),
+            cancelText: t('继续本局'),
             danger: true,
           });
           if (!ok) return;
@@ -192,6 +189,7 @@
       });
 
       render();
+      document.addEventListener('i18n:change', render);
       GameKit.mountMoreGames('template', document.getElementById('more-games'));
     })();
   </script>

@@ -8,7 +8,7 @@
   }
 
   const SOUND_KEY = 'site_sound';
-  const PREFIXES = ['game_best_', 'game_skin_', 'game_save_2048_', 'game_mode_', 'game_tutorial_'];
+  const PREFIXES = ['game_best_', 'game_skin_', 'game_save_', 'game_mode_', 'game_tutorial_'];
   const EXACT_KEYS = [SOUND_KEY];
 
   function getSound() {
@@ -268,18 +268,30 @@
     btn.textContent = t('检查更新');
     btn.addEventListener('click', async () => {
       if (btn.disabled) return;
-      const original = t('检查更新');
       btn.disabled = true;
       btn.textContent = t('检查中…');
       try {
-        const link = document.querySelector('link[href*="/assets/style.css?v="]');
-        const current = link ? link.href.match(/[?&]v=(\d{11})/) : null;
-        const response = await fetch(location.pathname + '?check=' + Date.now(), { cache: 'no-store' });
+        const url = new URL(location.href);
+        url.searchParams.set('check', Date.now());
+        const response = await fetch(url, { cache: 'no-store' });
+        const isNotFoundPage = document.querySelector('meta[name="robots"][content="noindex"]');
+        if (!response.ok && (response.status !== 404 || !isNotFoundPage)) throw new Error('Update check failed');
         const html = await response.text();
-        const next = html.match(/assets\/style\.css\?v=(\d{11})/);
-        if (current && next && current[1] !== next[1]) {
-          toast(t('发现新版本，正在刷新…'));
-          setTimeout(() => location.replace(location.pathname + '?fresh=' + Date.now()), 450);
+        const nextPage = new DOMParser().parseFromString(html, 'text/html');
+        const current = readBuildVersion(document);
+        const next = readBuildVersion(nextPage);
+        if (current && next && current !== next) {
+          const confirmed = await confirmDialog({
+            title: t('发现新版本'),
+            message: t('刷新将加载新版本，未保存的进度会丢失。'),
+            confirmText: t('立即刷新'),
+            cancelText: t('稍后'),
+          });
+          if (confirmed) {
+            url.searchParams.delete('check');
+            url.searchParams.set('fresh', Date.now());
+            location.replace(url);
+          }
         } else if (current && next) {
           toast(t('已是最新版本'));
         } else {
@@ -289,10 +301,15 @@
         toast(t('检查失败，请稍后重试'));
       } finally {
         btn.disabled = false;
-        btn.textContent = original;
+        btn.textContent = t('检查更新');
       }
     });
     return btn;
+  }
+
+  function readBuildVersion(page) {
+    return page.querySelector('meta[name="site-build"]')?.content ||
+      page.querySelector('link[href*="/assets/style.css?v="]')?.getAttribute('href')?.match(/[?&]v=(\d{11})/)?.[1];
   }
 
   // 作者标识：© 年份 站点名 · by Hayden-He（链接至作者仓库）

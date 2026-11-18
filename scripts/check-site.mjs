@@ -13,10 +13,8 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import vm from 'node:vm';
-import { fileURLToPath } from 'node:url';
+import { root, siteUrl as SITE_URL, readSiteConfig, sitePages, escapeHtml } from './site-config.mjs';
 
-const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const errors = [];
 const warnings = [];
 const checked = [];
@@ -58,11 +56,9 @@ function checkContains(content, needle, label) {
   if (!content || !content.includes(needle)) fail(`${label} 缺少 ${needle}`);
 }
 
-const SITE_URL = 'https://my-website-all.pages.dev';
 const assetVersionPattern = /\?v=\d{11}/;
 const assetVersions = new Set();
 const OG_IMAGE = SITE_URL + '/assets/og-image.jpg';
-const OG_ALT = '小游乐场 · Little Playground：6 款即开即玩的小游戏';
 
 // 每个可索引页面：canonical + OG/Twitter 必须齐全，且 og:title 为“页面名 · Little Playground”
 function checkSeoPage(page, { label, urlPath, ogTitle }) {
@@ -77,35 +73,28 @@ function checkSeoPage(page, { label, urlPath, ogTitle }) {
 
   checkContains(page, `<link rel="canonical" href="${url}"`, label);
   checkContains(page, '<meta property="og:type" content="website"', label);
-  checkContains(page, `<meta property="og:site_name" content="${config.siteTitle}"`, label);
+  checkContains(page, '<meta property="og:site_name" content="' + escapeHtml(config.siteTitle) + '"', label);
   checkContains(page, '<meta property="og:locale" content="zh_CN"', label);
-  checkContains(page, `<meta property="og:title" content="${ogTitle}"`, label);
+  checkContains(page, '<meta property="og:title" content="' + escapeHtml(ogTitle) + '"', label);
   checkContains(page, `<meta property="og:description" content="${description}"`, label);
   checkContains(page, `<meta property="og:url" content="${url}"`, label);
   checkContains(page, `<meta property="og:image" content="${OG_IMAGE}"`, label);
   checkContains(page, '<meta property="og:image:type" content="image/jpeg"', label);
   checkContains(page, '<meta property="og:image:width" content="1200"', label);
   checkContains(page, '<meta property="og:image:height" content="630"', label);
-  checkContains(page, `<meta property="og:image:alt" content="${OG_ALT}"`, label);
+  const ogAlt = '小游乐场 · Little Playground：' + config.games.length + ' 款即开即玩的小游戏';
+  checkContains(page, '<meta property="og:image:alt" content="' + ogAlt + '"', label);
   checkContains(page, '<meta name="twitter:card" content="summary_large_image"', label);
-  checkContains(page, `<meta name="twitter:title" content="${ogTitle}"`, label);
+  checkContains(page, '<meta name="twitter:title" content="' + escapeHtml(ogTitle) + '"', label);
   checkContains(page, `<meta name="twitter:description" content="${description}"`, label);
   checkContains(page, `<meta name="twitter:image" content="${OG_IMAGE}"`, label);
-  checkContains(page, `<meta name="twitter:image:alt" content="${OG_ALT}"`, label);
+  checkContains(page, '<meta name="twitter:image:alt" content="' + ogAlt + '"', label);
 }
 
 // ---------- 站点配置 ----------
-const configSource = read('assets/games.js');
-if (!configSource) {
-  console.error('✗ assets/games.js 不存在');
-  process.exit(1);
-}
-
 let config;
 try {
-  const sandbox = { window: {} };
-  vm.runInNewContext(configSource, sandbox, { filename: 'assets/games.js' });
-  config = sandbox.window.SITE_CONFIG;
+  config = readSiteConfig();
 } catch (error) {
   console.error('✗ assets/games.js 无法解析：' + error.message);
   process.exit(1);
@@ -130,14 +119,20 @@ for (const category of categories) {
     fail('categories 中存在空项');
     continue;
   }
-  if (!category.id) fail('分类缺少 id');
+  if (!/^[a-z0-9-]+$/.test(category.id || '')) {
+    fail('分类 id 不合法：' + (category.id || '(缺少 id)'));
+    continue;
+  }
   if (categoryIds.has(category.id)) fail(`分类 id 重复：${category.id}`);
   categoryIds.add(category.id);
   categoryById.set(category.id, category);
   if (!category.name) fail(`分类 ${category.id} 缺少 name`);
-  if (!category.url) fail(`分类 ${category.id} 缺少 url`);
-  if (category.url) checkFile(category.url.replace(/^\//, ''), `分类页 ${category.url}`);
-  const categoryPage = category.url ? read(category.url.replace(/^\//, '')) : null;
+  const categoryPath = `categories/${category.id}`;
+  if (category.url !== '/' + categoryPath) {
+    fail(`分类 ${category.id} 的 url 应为 /${categoryPath}`);
+  }
+  checkFile(categoryPath + '.html', `分类页 ${category.url}`);
+  const categoryPage = read(categoryPath + '.html');
   if (categoryPage) {
     checkContains(categoryPage, "initSitePage('" + category.id + "')", `分类页 ${category.url}`);
     checkContains(categoryPage, 'id="games-grid"', `分类页 ${category.url}`);
@@ -228,13 +223,14 @@ for (const game of games) {
   checkContains(page, 'assets/icon.svg', pagePath);
   checkContains(page, 'apple-touch-icon.png', pagePath);
   checkContains(page, 'data-lang-toggle', pagePath);
+  if (category) checkContains(page, `href="${category.url}"`, pagePath);
   checkContains(page, 'role="status"', pagePath);
   checkContains(page, 'aria-live="polite"', pagePath);
   checkContains(page, 'assets/games.js', pagePath);
   checkContains(page, 'assets/game-kit.js', pagePath);
   checkContains(page, 'id="more-games"', pagePath);
   checkContains(page, 'GameKit.mountMoreGames(', pagePath);
-  checkContains(page, game.title, pagePath);
+  if (game.title) checkContains(page, escapeHtml(game.title), pagePath);
   if (page.includes('user-scalable=no') || page.includes('maximum-scale=1')) {
     fail(`${pagePath} 重新引入了禁止缩放的 viewport 设置`);
   }
@@ -283,7 +279,7 @@ if (notFoundPage && notFoundPage.includes('property="og:url"')) {
 checkFile('assets/og-image.jpg', 'assets/og-image.jpg');
 checkFile('sitemap.xml', 'sitemap.xml');
 checkFile('robots.txt', 'robots.txt');
-checkContains(read('_headers'), '/assets/*', '_headers');
+checkContains(read('_headers'), '/assets/v/*', '_headers');
 checkContains(read('_headers'), 'max-age=31536000, immutable', '_headers');
 const sitemap = read('sitemap.xml') || '';
 const robots = read('robots.txt') || '';
@@ -329,13 +325,7 @@ for (const asset of [
 }
 
 // ---------- 资源版本号一致性 ----------
-for (const relative of [
-  'index.html',
-  'categories/arcade.html',
-  'categories/puzzle.html',
-  '404.html',
-  ...games.map((game) => 'games/' + game.id + '/index.html'),
-]) {
+for (const { file: relative } of sitePages({ ...config, games, categories })) {
   const html = read(relative) || '';
   if (!assetVersionPattern.test(html)) {
     fail(`${relative} 缺少 ?v=YYYYMMDDNNN 资源版本号`);

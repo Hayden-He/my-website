@@ -24,20 +24,21 @@
   <meta name="twitter:image:alt" content="小游乐场 · Little Playground：6 款即开即玩的小游戏" />
   <meta name="author" content="Hayden-He" />
   <meta name="theme-color" content="#1e1b4b" />
-  <link rel="icon" type="image/svg+xml" href="/assets/icon.svg?v=20261117003" />
+  <link rel="icon" type="image/svg+xml" href="/assets/icon.svg?v=20261118001" />
   <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png" />
   <link rel="manifest" href="/site.webmanifest" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="小游乐场" />
   <script src="/assets/canvas-polyfill.js"></script>
-  <link rel="stylesheet" href="/assets/style.css?v=20261117003" />
-  <link rel="stylesheet" href="/assets/game-shell.css?v=20261117003" />
-  <script src="/assets/site-data.js?v=20261117003"></script>
-  <script src="/assets/i18n.js?v=20261117003"></script>
-  <script src="/assets/games.js?v=20261117003"></script>
-  <script src="/assets/game-kit.js?v=20261117003"></script>
-  <script src="/assets/game-art.js?v=20261117003"></script>
+  <link rel="stylesheet" href="/assets/style.css?v=20261118001" />
+  <link rel="stylesheet" href="/assets/game-shell.css?v=20261118001" />
+  <script src="/assets/site-data.js?v=20261118001"></script>
+  <script src="/assets/i18n.js?v=20261118001"></script>
+  <script src="/assets/games.js?v=20261118001"></script>
+  <script src="/assets/game-kit.js?v=20261118001"></script>
+  <script src="/assets/game-rules.js?v=20261118001"></script>
+  <script src="/assets/game-art.js?v=20261118001"></script>
   <style>
 
 
@@ -105,6 +106,17 @@
       flex-wrap: wrap;
     }
 
+    .court-controls {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      width: 100%;
+      gap: 8px;
+    }
+
+    .timer-bar-wrap.practice { visibility: hidden; }
+
     @media (max-width: 560px) {
       .game-wrap {
         margin: 10px auto 24px;
@@ -134,8 +146,7 @@
         font-size: 0.78rem;
       }
 
-      /* 窄屏下把 4 个操作按钮排成 2×2，避免文字被挤成竖排 */
-      .btn-group {
+      .controls-row .btn-group {
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 8px;
@@ -395,7 +406,7 @@
         <span data-i18n="街头投篮">街头投篮</span>
       </h1>
       <div class="game-topbar-actions">
-        <a class="game-topbar-cat" href="/categories/arcade.html" data-i18n="动作街机">动作街机</a>
+        <a class="game-topbar-cat" href="/categories/arcade" data-i18n="动作街机">动作街机</a>
         <button class="lang-btn" type="button" data-lang-toggle>EN</button>
       </div>
     </div>
@@ -427,7 +438,7 @@
       </div>
     </div>
 
-    <div class="timer-bar-wrap">
+    <div id="shot-clock" class="timer-bar-wrap">
       <div id="timer-bar" class="timer-bar"></div>
     </div>
 
@@ -436,6 +447,14 @@
       <span id="scene-next">下一场景 15 分</span>
     </div>
 
+    <div class="court-controls">
+      <div class="mode-pills" role="group" aria-label="游戏模式" data-i18n-attr="aria-label:游戏模式">
+        <button type="button" id="challenge-btn" class="mode-pill active" aria-pressed="true" data-i18n="挑战">挑战</button>
+        <button type="button" id="practice-btn" class="mode-pill" aria-pressed="false" data-i18n="练习">练习</button>
+      </div>
+      <button id="pause-btn" class="btn-small secondary">暂停</button>
+    </div>
+    <p class="hint-text" data-i18n="连点球场让球升空，停手让球落入篮筐。">连点球场让球升空，停手让球落入篮筐。</p>
     <div class="stage-box">
       <canvas id="court" width="640" height="420" role="img" aria-label="街头投篮球场" data-i18n-attr="aria-label:街头投篮球场"></canvas>
       <div id="game-overlay" class="overlay" role="status" aria-live="polite">
@@ -449,13 +468,12 @@
 
     <div class="controls-row">
       <div class="hint-block">
-        <span class="hint-text"><span data-i18n="操作：连续点击球场 / 连按空格升空，停手后下落；">操作：连续点击球场 / 连按空格升空，停手后下落；</span><span class="nowrap" data-i18n="P 暂停">P 暂停</span></span>
+        <span class="hint-text" data-i18n="键盘：空格升空 · P 暂停">键盘：空格升空 · P 暂停</span>
         <span class="hint-text" data-i18n="机制：进球重置倒计时 · 连续空心触发火焰连击 · 每 5 球金球 ×2 · 25/50/80 分护盾进阶">机制：进球重置倒计时 · 连续空心触发火焰连击 · 每 5 球金球 ×2 · 25/50/80 分护盾进阶</span>
       </div>
       <div class="btn-group">
         <button id="skin-btn" class="btn-small secondary">用球: 经典篮球</button>
         <button id="sound-btn" class="btn-small secondary">音效: 开</button>
-        <button id="pause-btn" class="btn-small secondary">暂停</button>
         <button id="restart-btn" class="btn-small" data-i18n="重开">重开</button>
       </div>
     </div>
@@ -477,8 +495,12 @@
       const bankEl = document.getElementById('bank-el');
       const bestEl = document.getElementById('best-el');
       const timerBar = document.getElementById('timer-bar');
+      const shotClock = document.getElementById('shot-clock');
       const skinBtn = document.getElementById('skin-btn');
       const pauseBtn = document.getElementById('pause-btn');
+      const challengeBtn = document.getElementById('challenge-btn');
+      const practiceBtn = document.getElementById('practice-btn');
+      const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
       const soundBtn = document.getElementById('sound-btn');
       const overlay = document.getElementById('game-overlay');
       const finalSummary = document.getElementById('final-summary');
@@ -646,6 +668,7 @@
       }
 
       let state = {};
+      let practice = false;
       let lastTime = 0;
       let lastTickSec = -1;
 
@@ -677,6 +700,7 @@
 
       function initGame() {
         clearSoundTimers();
+        lastTime = 0;
         const limit = getShotTimeLimit(0);
         lastTickSec = -1;
         state = {
@@ -724,11 +748,32 @@
         spawnBall();
         overlay.classList.remove('show');
         pauseBtn.textContent = t('暂停');
+        challengeBtn.classList.toggle('active', !practice);
+        practiceBtn.classList.toggle('active', practice);
+        challengeBtn.setAttribute('aria-pressed', String(!practice));
+        practiceBtn.setAttribute('aria-pressed', String(practice));
+        shotClock.classList.toggle('practice', practice);
         updateHud();
       }
 
+      async function resetRound(nextPractice = practice) {
+        if (!practice && state.started && !state.ended) {
+          const changingMode = nextPractice !== practice;
+          const confirmed = await SiteData.confirmDialog({
+            title: changingMode ? t('切换到练习') : t('重开本局'),
+            message: t('当前挑战进度将清除。'),
+            confirmText: changingMode ? t('切换') : t('重开'),
+            cancelText: t('继续本局'),
+            danger: true,
+          });
+          if (!confirmed) return;
+        }
+        practice = nextPractice;
+        initGame();
+      }
+
       function getBlockers() {
-        if (state.score < 25) return [];
+        if (practice || state.score < 25) return [];
         if (state.score >= 80) {
           return [
             { x: 225, y: state.blockerY, h: 38, flash: state.blockerFlash },
@@ -741,6 +786,7 @@
       }
 
       function saveBest() {
+        if (practice) return;
         if (state.score > bestScore) {
           bestScore = state.score;
           GameKit.saveBestIfHigher(STORAGE_KEY, bestScore);
@@ -769,15 +815,18 @@
 
       function updateHud() {
         setText(scoreEl, state.score);
-        setText(timeEl, state.timeLeft.toFixed(1) + 's');
-        setClass(timeEl, 'hud-value' + (state.timeLeft <= 2.5 ? ' danger' : ''));
+        setText(timeEl, practice ? '—' : state.timeLeft.toFixed(1) + 's');
+        setClass(timeEl, 'hud-value' + (!practice && state.timeLeft <= 2.5 ? ' danger' : ''));
         setText(swishEl, state.swishCount);
         setText(bankEl, state.bankCount);
         setText(bestEl, bestScore);
 
-        const scene = getSceneInfo(state.score);
-        setText(sceneNameEl, scene.name);
-        setText(sceneNextEl, scene.next);
+        const scene = getSceneInfo(practice ? 0 : state.score);
+        setText(sceneNameEl, practice ? t('练习') : scene.name);
+        const gold = state.ball.isGold || state.goldPending
+          ? t('金球 ×2')
+          : t('再进 {n} 球出金球', { n: 5 - state.goalCount % 5 });
+        setText(sceneNextEl, practice ? t('固定篮筐 · 不计纪录') : scene.next + ' · ' + gold);
 
         const pct = Math.max(0, Math.min(100, (state.timeLeft / state.timeLimit) * 100));
         const pctStr = pct.toFixed(1) + '%';
@@ -790,6 +839,7 @@
       }
 
       function spawnBurst(x, y, color, count) {
+        if (reducedMotion.matches) return;
         for (let i = 0; i < count; i++) {
           const ang = Math.random() * Math.PI * 2;
           const spd = 60 + Math.random() * 140;
@@ -806,6 +856,7 @@
       }
 
       function addRing(x, y, color, maxR) {
+        if (reducedMotion.matches) return;
         state.rings.push({ x, y, r: 8, maxR: maxR || 42, color, life: 1.0 });
       }
 
@@ -824,7 +875,7 @@
         b.squash = -0.1;
         if (b.vx > -120) b.vx = BASE_VX;
         // 普通球起跳时产生轻巧的主题气流微粒，增强起跳反馈但不抢火焰球与金球风头
-        if (state.combo < 2 && !b.isGold) {
+        if (!reducedMotion.matches && state.combo < 2 && !b.isGold) {
           const skinId = BALL_SKINS[skinIndex].id;
           const puffColor = skinId === 'planet'
             ? '#bae6fd'
@@ -850,9 +901,8 @@
         playSound('jump');
       }
 
-      const gameWrap = document.querySelector('.game-wrap');
-      gameWrap.addEventListener('pointerdown', (e) => {
-        if (e.target.closest('button, a, .overlay, .hud, .hint-text, .controls-row, .data-clear-wrap')) return;
+      canvas.addEventListener('pointerdown', (e) => {
+        if (!e.isPrimary || e.button !== 0) return;
         e.preventDefault();
         if (state.paused) { setPaused(false); return; }
         jumpBall();
@@ -901,34 +951,19 @@
         updateHud();
       });
       pauseBtn.addEventListener('click', () => setPaused(!state.paused));
+      challengeBtn.addEventListener('click', () => { if (practice) resetRound(false); });
+      practiceBtn.addEventListener('click', () => { if (!practice) resetRound(true); });
 
-      function collidePoint(b, px, py, radius) {
-        const dx = b.x - px;
-        const dy = b.y - py;
-        const dist = Math.hypot(dx, dy);
-        const minDist = BALL_R + radius;
-        if (dist < minDist && dist > 0.001) {
-          const nx = dx / dist;
-          const ny = dy / dist;
-          b.x = px + nx * minDist;
-          b.y = py + ny * minDist;
-          const dot = b.vx * nx + b.vy * ny;
-          if (dot < 0) {
-            const restitution = 0.68;
-            b.vx -= (1 + restitution) * dot * nx;
-            b.vy -= (1 + restitution) * dot * ny;
-            if (b.vx > 65) b.vx = 65;
-          }
-          return true;
-        }
-        return false;
+      function collidePoint(ball, x, y, radius) {
+        const bounce = GameRules.hoopBounce(ball, x, y, BALL_R + radius);
+        if (!bounce) return false;
+        Object.assign(ball, bounce);
+        return true;
       }
 
-      function update(dt) {
-        if (state.paused) return;
-        // 进球后的冷却期内暂停倒计时，下一球出现后再继续
-        if (state.started && !state.ended && !state.ball.scored) {
-          state.timeLeft -= dt;
+      function updateClock(elapsed) {
+        if (!practice && !state.paused && state.started && !state.ended && !state.ball.scored) {
+          state.timeLeft -= elapsed;
           if (state.timeLeft <= 3.0 && state.timeLeft > 0) {
             const sec = Math.ceil(state.timeLeft);
             if (sec !== lastTickSec) {
@@ -945,16 +980,18 @@
             updateHud();
             renderFinal();
             overlay.classList.add('show');
-            return;
           }
         }
+      }
 
-        state.skyTime += dt;
+      function update(dt) {
+        if (state.paused) return;
+        if (!reducedMotion.matches) state.skyTime += dt;
 
         // 平滑过渡篮筐高度变化（15 分后改为随机方向与速率的平滑漂移）
         state.prevRimY = state.rimY;
         state.baseRimY += (state.targetRimY - state.baseRimY) * Math.min(1, dt * 6);
-        if (state.score >= 15 && state.started && !state.ended) {
+        if (!practice && state.score >= 15 && state.started && !state.ended) {
           if (state.rimFloatPause > 0) {
             state.rimFloatPause = Math.max(0, state.rimFloatPause - dt);
           } else {
@@ -980,7 +1017,7 @@
 
         // 护盾随分数三阶段演进：25+ 垂直守卫 -> 50+ 斜向巡逻提速 -> 80+ 双子联动护盾
         // 行程扩大至 [64, 270] 封死贴顶走廊，并采用两端缓动 + 趟次微随机速率
-        if (state.score >= 25 && state.started && !state.ended) {
+        if (!practice && state.score >= 25 && state.started && !state.ended) {
           const baseSpd = state.score >= 80 ? 105 : state.score >= 50 ? 95 : 78;
           if (state.blockerPause > 0) {
             state.blockerPause = Math.max(0, state.blockerPause - dt);
@@ -1040,7 +1077,7 @@
         const onFire = state.combo >= 2;
 
         if (state.started && !state.ended) {
-          if (onFire || b.isGold) {
+          if (!reducedMotion.matches && (onFire || b.isGold)) {
             state.trail.push({
               x: b.x,
               y: b.y,
@@ -1190,15 +1227,13 @@
               state.netExpand = 1.0;
               state.rimSpring = 0.7;
 
-              let base = 2;
+              const { kind, combo, gained } = GameRules.scoreHoop(b, state.combo);
+              state.combo = combo;
               let label = t('命中');
               let color = '#4ade80';
 
-              if (!b.hitBoard && !b.hitRim) {
-                base = 4;
+              if (kind === 'swish') {
                 state.swishCount += 1;
-                state.combo += 1;
-                if (state.combo >= 2) base += 1;
                 label = state.combo >= 2
                   ? t('火焰空心×{combo}', { combo: state.combo })
                   : t('空心入网');
@@ -1207,10 +1242,8 @@
                 addRing(RIM_CENTER_X, state.rimY + 8, '#fbbf24', 52);
                 playSound('swish', state.combo);
                 spawnBurst(RIM_CENTER_X, state.rimY + 12, '#fbbf24', 16);
-              } else if (b.hitBoard) {
-                base = 3;
+              } else if (kind === 'bank') {
                 state.bankCount += 1;
-                state.combo = 0;
                 label = t('打板进球');
                 color = '#38bdf8';
                 addRing(RIM_CENTER_X, state.rimY + 8, '#38bdf8', 38);
@@ -1218,7 +1251,6 @@
                 spawnBurst(RIM_CENTER_X, state.rimY + 12, '#38bdf8', 11);
               } else {
                 state.normalCount += 1;
-                state.combo = 0;
                 playSound('score');
                 spawnBurst(RIM_CENTER_X, state.rimY + 12, '#4ade80', 8);
               }
@@ -1229,10 +1261,9 @@
                 playSound('gold');
               }
 
-              const gained = b.isGold ? base * 2 : base;
               state.score += gained;
               state.goalCount += 1;
-              if (state.goalCount % 5 === 0) state.goldPending = true;
+              if (!practice && state.goalCount % 5 === 0) state.goldPending = true;
               saveBest();
 
               state.timeLimit = getShotTimeLimit(state.score);
@@ -1240,7 +1271,7 @@
               lastTickSec = -1;
 
               // 4 分后每次进球随机小幅改变篮筐高度
-              if (state.score >= 4) {
+              if (!practice && state.score >= 4) {
                 state.targetRimY = 140 + Math.random() * 88;
               }
 
@@ -2115,16 +2146,16 @@
         ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
         ctx.save();
         // 5 阶段场景：0-14 黄昏 -> 15-29 暮色 -> 30-59 夜场 -> 60-99 极光 -> 100+ 星河
-        if (state.score >= 100) {
+        if (!practice && state.score >= 100) {
           drawStarryCourt();
-        } else if (state.score >= 60) {
+        } else if (!practice && state.score >= 60) {
           drawAuroraCourt();
-        } else if (state.score >= 30) {
+        } else if (!practice && state.score >= 30) {
           drawNightCourt();
         } else {
           drawSunsetCourt();
         }
-        if (state.shake > 0.2) {
+        if (!reducedMotion.matches && state.shake > 0.2) {
           const sx = (Math.random() - 0.5) * state.shake * 2;
           const sy = (Math.random() - 0.5) * state.shake * 2;
           ctx.translate(sx, sy);
@@ -2229,8 +2260,10 @@
 
       function loop(ts) {
         if (!lastTime) lastTime = ts;
-        const dt = Math.min((ts - lastTime) / 1000, 0.04);
+        const elapsed = (ts - lastTime) / 1000;
+        const dt = Math.min(elapsed, 0.2);
         lastTime = ts;
+        updateClock(elapsed);
         // 物理子步进：单步不超过 1/90 秒，降低低帧率下穿模风险
         const steps = Math.max(1, Math.ceil(dt / (1 / 90)));
         for (let i = 0; i < steps; i++) update(dt / steps);
@@ -2245,10 +2278,7 @@
           localStorage.setItem(SKIN_STORAGE_KEY, String(skinIndex));
         } catch {}
       });
-      document.querySelectorAll('button').forEach((btn) => {
-        btn.addEventListener('click', () => btn.blur());
-      });
-      document.getElementById('restart-btn').addEventListener('click', initGame);
+      document.getElementById('restart-btn').addEventListener('click', () => resetRound());
       document.getElementById('overlay-restart').addEventListener('click', initGame);
 
       initGame();

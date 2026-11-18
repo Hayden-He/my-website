@@ -30,20 +30,24 @@
       if (!Number.isFinite(score) || score < 0) return null;
 
       const board = save.board;
-      let hasTile = false;
+      let tileCount = 0;
       let canMove = false;
       for (let r = 0; r < mode; r++) {
         if (!Array.isArray(board[r]) || board[r].length !== mode) return null;
         for (let c = 0; c < mode; c++) {
           const v = board[r][c];
           if (!Number.isSafeInteger(v) || v < 0) return null;
-          if (v > 0) hasTile = true;
+          if (v > 0) tileCount += 1;
           if (v === 0) canMove = true;
           if (c + 1 < mode && v !== 0 && v === board[r][c + 1]) canMove = true;
           if (r + 1 < mode && v !== 0 && v === board[r + 1][c]) canMove = true;
         }
       }
-      if (!hasTile || !canMove) return null;
+      // 旧存档没有 played，用得分、撤回快照与方块数识别已有进度。
+      const played = typeof save.played === 'boolean'
+        ? save.played
+        : score > 0 || Boolean(save.prevState) || tileCount > 2;
+      if (tileCount === 0 || !canMove || !played) return null;
       return { size: mode, score };
     } catch {
       return null;
@@ -88,6 +92,7 @@
 
     const allLink = createEl('a', 'nav-link' + (activeKey === 'all' ? ' active' : ''), t('全部游戏'));
     allLink.href = '/';
+    if (activeKey === 'all') allLink.setAttribute('aria-current', 'page');
     nav.appendChild(allLink);
 
     categories.forEach((cat) => {
@@ -97,6 +102,7 @@
         t(cat.name)
       );
       link.href = cat.url;
+      if (activeKey === cat.id) link.setAttribute('aria-current', 'page');
       nav.appendChild(link);
     });
 
@@ -138,33 +144,25 @@
 
   function renderGameCard(game) {
     const card = createEl('article', 'game-card ' + game.category);
+    card.appendChild(renderGamePreview(game));
 
     const top = createEl('div', 'game-card-top');
-    const gameIcon = createEl('div', 'game-icon ' + game.category);
-    gameIcon.appendChild(createIcon('game-' + game.icon, 'game-icon-svg', '0 0 32 32'));
-    top.appendChild(gameIcon);
+    top.appendChild(createEl('h3', 'game-title', t(game.title)));
     top.appendChild(
       createEl('span', 'game-category-pill ' + game.category, t(game.categoryName))
     );
     card.appendChild(top);
 
-    card.appendChild(createEl('h3', 'game-title', t(game.title)));
     card.appendChild(createEl('p', 'game-desc', t(game.description)));
-
-    const meta = createEl('div', 'game-meta');
-    const tagsWrap = createEl('div', 'game-tags');
-    (game.tags || []).forEach((tag) => {
-      tagsWrap.appendChild(createEl('span', 'game-tag', t(tag)));
-    });
-    meta.appendChild(tagsWrap);
 
     const best = getBestScore(game.storageKey);
     if (best !== null) {
       const prefix = t(game.bestPrefix !== undefined ? game.bestPrefix : '最高分: ');
       const suffix = game.bestSuffix ? t(game.bestSuffix) : '';
+      const meta = createEl('div', 'game-meta');
       meta.appendChild(createEl('span', 'best-score', prefix + best + suffix));
+      card.appendChild(meta);
     }
-    card.appendChild(meta);
 
     const resume = game.id === '2048' ? get2048Resume() : null;
     let btnLabel = t('开始游戏 →');
@@ -176,6 +174,7 @@
     }
     const btn = createEl('a', 'play-btn', btnLabel);
     btn.href = game.url;
+    btn.setAttribute('aria-label', t('{game}：{action}', { game: t(game.title), action: btnLabel }));
     if (resume) btn.title = t('继续上次未完成的棋局');
     card.appendChild(btn);
 
@@ -185,6 +184,37 @@
     });
 
     return card;
+  }
+
+  const boardPreviews = {
+    '2048': ['2', '', '4', '', '8', '16', '', '', '32', '64', '128', '2048'],
+    minesweeper: ['', '1', '2', '#icon-flag', '', '1', '', '', '', '1', '1', '#icon-flag'],
+    slide: ['1', '4', '2', '7', '5', '3', '', '8', '6'],
+    memory: ['?', '#mem-apple', '?', '?', '#mem-strawberry', '?', '#mem-apple', '?'],
+  };
+
+  function renderGamePreview(game) {
+    const preview = createEl('div', 'game-preview');
+    preview.dataset.game = game.id;
+    preview.setAttribute('aria-hidden', 'true');
+    const cells = boardPreviews[game.id];
+    if (Array.isArray(cells)) {
+      const board = createEl('div', 'preview-board');
+      cells.forEach((content) => {
+        const cell = createEl('span', 'preview-cell');
+        if (content.startsWith('#')) {
+          cell.classList.add('has-icon');
+          cell.appendChild(createIcon(content.slice(1), 'preview-icon', '0 0 32 32'));
+        } else {
+          cell.textContent = content;
+        }
+        board.appendChild(cell);
+      });
+      preview.appendChild(board);
+    } else {
+      preview.appendChild(createIcon('game-' + game.icon, 'preview-lead', '0 0 32 32'));
+    }
+    return preview;
   }
 
   function renderGamesGrid(filterCategory) {
@@ -242,9 +272,13 @@
     if (!i18nBound) {
       i18nBound = true;
       document.addEventListener('i18n:change', () => {
+        const languageButtonFocused = document.activeElement?.matches('#site-header [data-lang-toggle]');
         renderHeader(activeKey);
         renderGamesGrid(activeKey);
         renderFooter();
+        if (languageButtonFocused) {
+          document.querySelector('#site-header [data-lang-toggle]')?.focus({ preventScroll: true });
+        }
       });
     }
 

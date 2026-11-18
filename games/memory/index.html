@@ -24,18 +24,18 @@
   <meta name="twitter:image:alt" content="小游乐场 · Little Playground：6 款即开即玩的小游戏" />
   <meta name="author" content="Hayden-He" />
   <meta name="theme-color" content="#2563eb" />
-  <link rel="icon" type="image/svg+xml" href="/assets/icon.svg?v=20261117003" />
+  <link rel="icon" type="image/svg+xml" href="/assets/icon.svg?v=20261118001" />
   <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png" />
   <link rel="manifest" href="/site.webmanifest" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="小游乐场" />
-  <link rel="stylesheet" href="/assets/style.css?v=20261117003" />
-  <link rel="stylesheet" href="/assets/game-shell.css?v=20261117003" />
-  <script src="/assets/site-data.js?v=20261117003"></script>
-  <script src="/assets/i18n.js?v=20261117003"></script>
-  <script src="/assets/games.js?v=20261117003"></script>
-  <script src="/assets/game-kit.js?v=20261117003"></script>
+  <link rel="stylesheet" href="/assets/style.css?v=20261118001" />
+  <link rel="stylesheet" href="/assets/game-shell.css?v=20261118001" />
+  <script src="/assets/site-data.js?v=20261118001"></script>
+  <script src="/assets/i18n.js?v=20261118001"></script>
+  <script src="/assets/games.js?v=20261118001"></script>
+  <script src="/assets/game-kit.js?v=20261118001"></script>
   <style>
     .game-wrap { --game-width: 460px; }
 
@@ -89,6 +89,7 @@
     }
 
     .memory-card.flipped .memory-card-inner,
+    .memory-card.peeking .memory-card-inner,
     .memory-card.matched .memory-card-inner {
       transform: rotateY(180deg);
     }
@@ -139,8 +140,10 @@
 
     .memory-card.matched .memory-front {
       background: #f0fdf4;
-      border-color: #86efac;
+      border-color: #4ade80;
     }
+    .memory-card.mismatch .memory-front { background: #fff1f2; border-color: #fb7185; }
+    .memory-status { width: 100%; min-height: 1.4rem; }
 
     .memory-card.matched {
       cursor: default;
@@ -381,7 +384,7 @@
         <span data-i18n="记忆翻牌">记忆翻牌</span>
       </h1>
       <div class="game-topbar-actions">
-        <a class="game-topbar-cat" href="/categories/puzzle.html" data-i18n="益智休闲">益智休闲</a>
+        <a class="game-topbar-cat" href="/categories/puzzle" data-i18n="益智休闲">益智休闲</a>
         <button class="lang-btn" type="button" data-lang-toggle>EN</button>
       </div>
     </div>
@@ -390,7 +393,7 @@
   <main class="game-wrap">
     <div class="hud">
       <div class="hud-box">
-        <div class="hud-label" data-i18n="步数">步数</div>
+        <div class="hud-label" data-i18n="尝试次数">尝试次数</div>
         <div id="moves-el" class="hud-value">0</div>
       </div>
       <div class="hud-box">
@@ -398,7 +401,7 @@
         <div id="time-el" class="hud-value" style="color: var(--primary);">0s</div>
       </div>
       <div class="hud-box">
-        <div class="hud-label" data-i18n="最少步数">最少步数</div>
+        <div class="hud-label" data-i18n="最少尝试">最少尝试</div>
         <div id="best-el" class="hud-value" style="color: var(--accent-text);">--</div>
       </div>
     </div>
@@ -409,23 +412,25 @@
         <button id="mode-5" class="mode-pill" data-i18n="5×4 标准">5×4 标准</button>
       </div>
       <div class="btn-group">
+        <button id="preview-btn" class="btn-small secondary" data-i18n="预览牌面">预览牌面</button>
         <button id="sound-btn" class="btn-small secondary">音效: 开</button>
         <button id="restart-btn" class="btn-small" data-i18n="重开">重开</button>
       </div>
     </div>
 
+    <p id="memory-status" class="hint-text memory-status" role="status"></p>
     <div class="memory-stage">
       <div id="memory-board" class="memory-board" aria-label="记忆翻牌牌桌" data-i18n-attr="aria-label:记忆翻牌牌桌"></div>
       <div id="overlay" class="overlay" role="status" aria-live="polite">
         <h2 id="overlay-title" data-i18n="全部配对！🎉">全部配对！🎉</h2>
-        <p id="overlay-desc">步数：0 · 用时：0s</p>
+        <p id="overlay-desc"></p>
         <div class="overlay-actions">
           <button id="overlay-btn" class="overlay-btn" data-i18n="再来一局">再来一局</button>
         </div>
       </div>
     </div>
 
-    <p class="hint-text" data-i18n="翻开两张相同图案配对；全部配对即通关，步数越少越好">翻开两张相同图案配对；全部配对即通关，步数越少越好</p>
+    <p class="hint-text" data-i18n="翻两张算一次尝试。找齐所有相同图案即可通关。">翻两张算一次尝试。找齐所有相同图案即可通关。</p>
 
     <div id="more-games" class="more-games"></div>
   </main>
@@ -460,6 +465,8 @@
       const overlay = document.getElementById('overlay');
       const overlayTitle = document.getElementById('overlay-title');
       const overlayDesc = document.getElementById('overlay-desc');
+      const previewBtn = document.getElementById('preview-btn');
+      const statusEl = document.getElementById('memory-status');
       const mode4Btn = document.getElementById('mode-4');
       const mode5Btn = document.getElementById('mode-5');
 
@@ -481,6 +488,8 @@
       let started = false;
       let ended = false;
       let lock = false;
+      let previewUsed = false;
+      let previewing = false;
       let elapsed = 0;
       let timerId = null;
       let dialogOpen = false;
@@ -488,7 +497,7 @@
       let gameId = 0;
 
       function bestKey(size) {
-        return BEST_PREFIX + size;
+        return BEST_PREFIX + size + (previewUsed ? '_preview' : '');
       }
 
       function readBest(size) {
@@ -517,7 +526,12 @@
         movesEl.textContent = moves;
         timeEl.textContent = elapsed + 's';
         const best = readBest(mode);
-        bestEl.textContent = best > 0 ? best + t(' 步') : '--';
+        bestEl.textContent = best > 0 ? best + t(' 次') : '--';
+        previewBtn.disabled = started || previewUsed;
+        if (previewing) statusEl.textContent = t('记住牌面，预览即将结束。');
+        else if (lock) statusEl.textContent = t('这两张牌不同。');
+        else if (previewUsed) statusEl.textContent = t('本局使用了预览，纪录单独计算。');
+        else statusEl.textContent = '';
       }
 
       function stopTimer() {
@@ -598,6 +612,8 @@
         stopTimer();
         mode4Btn.classList.toggle('active', mode === 4);
         mode5Btn.classList.toggle('active', mode === 5);
+        mode4Btn.setAttribute('aria-pressed', String(mode === 4));
+        mode5Btn.setAttribute('aria-pressed', String(mode === 5));
         deck = buildDeck(mode);
         first = null;
         second = null;
@@ -606,6 +622,8 @@
         started = false;
         ended = false;
         lock = false;
+        previewUsed = false;
+        previewing = false;
         elapsed = 0;
         newRecord = false;
         overlay.classList.remove('show');
@@ -622,12 +640,30 @@
         boardEl.querySelectorAll('.memory-card').forEach((card) => {
           if (card.classList.contains('matched')) {
             card.setAttribute('aria-label', t('已配对，{icon}', { icon: t(card.dataset.name) }));
-          } else if (card.classList.contains('flipped')) {
+          } else if (card.classList.contains('flipped') || card.classList.contains('peeking')) {
             card.setAttribute('aria-label', t('已翻开，{icon}', { icon: t(card.dataset.name) }));
           } else {
             card.setAttribute('aria-label', t('未翻开的牌'));
           }
         });
+      }
+
+      function previewCards() {
+        if (started || previewUsed) return;
+        previewUsed = true;
+        previewing = true;
+        const currentGame = gameId;
+        const cards = boardEl.querySelectorAll('.memory-card');
+        cards.forEach((card) => card.classList.add('peeking'));
+        refreshCardAria();
+        updateHud();
+        setTimeout(() => {
+          if (currentGame !== gameId) return;
+          previewing = false;
+          cards.forEach((card) => card.classList.remove('peeking'));
+          refreshCardAria();
+          updateHud();
+        }, 2000);
       }
 
       function finishGame() {
@@ -645,8 +681,8 @@
           if (currentGame !== gameId) return;
           overlayTitle.textContent = t('全部配对！🎉');
           overlayDesc.textContent = newRecord
-            ? t('步数 {moves} · 用时 {elapsed}s · 新纪录！', { moves, elapsed })
-            : t('步数 {moves} · 用时 {elapsed}s · 最少 {best} 步', { moves, elapsed, best });
+            ? t('尝试 {moves} 次 · 用时 {elapsed}s · 新纪录！', { moves, elapsed })
+            : t('尝试 {moves} 次 · 用时 {elapsed}s · 最少 {best} 次', { moves, elapsed, best });
           overlay.classList.add('show');
           updateHud();
           playTone(660, 0.12, 880);
@@ -656,12 +692,13 @@
 
       boardEl.addEventListener('click', (event) => {
         const card = event.target.closest('.memory-card');
-        if (!card || lock || ended) return;
+        if (!card || lock || previewing || ended) return;
         if (card.classList.contains('flipped') || card.classList.contains('matched')) return;
 
         if (!started) {
           started = true;
           startTimer();
+          updateHud();
         }
 
         card.classList.add('flipped');
@@ -693,17 +730,21 @@
         }
 
         lock = true;
+        const currentGame = gameId;
         const a = first;
         const b = second;
         first = null;
         second = null;
         a.classList.add('mismatch');
         b.classList.add('mismatch');
+        updateHud();
         playTone(300, 0.06, 220);
         setTimeout(() => {
+          if (currentGame !== gameId) return;
           setCardBack(a);
           setCardBack(b);
           lock = false;
+          updateHud();
         }, 720);
       });
 
@@ -718,6 +759,7 @@
 
       mode4Btn.addEventListener('click', () => switchMode(4));
       mode5Btn.addEventListener('click', () => switchMode(5));
+      previewBtn.addEventListener('click', previewCards);
       document.getElementById('restart-btn').addEventListener('click', initGame);
       document.getElementById('overlay-btn').addEventListener('click', initGame);
 
@@ -726,8 +768,8 @@
         refreshCardAria();
         if (overlay.classList.contains('show')) {
           overlayDesc.textContent = newRecord
-            ? t('步数 {moves} · 用时 {elapsed}s · 新纪录！', { moves, elapsed })
-            : t('步数 {moves} · 用时 {elapsed}s · 最少 {best} 步', { moves, elapsed, best: readBest(mode) });
+            ? t('尝试 {moves} 次 · 用时 {elapsed}s · 新纪录！', { moves, elapsed })
+            : t('尝试 {moves} 次 · 用时 {elapsed}s · 最少 {best} 次', { moves, elapsed, best: readBest(mode) });
         }
       });
 

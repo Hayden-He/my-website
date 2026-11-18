@@ -5,5 +5,8 @@
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: geolocation=(), microphone=(), camera=()
 
-/assets/*
+/assets/v/*
   Cache-Control: public, max-age=31536000, immutable
+
+/assets/og-image.jpg
+  Cache-Control: public, max-age=0, must-revalidate

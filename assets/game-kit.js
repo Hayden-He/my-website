@@ -104,9 +104,58 @@
     });
   }
 
+  function bindSwipe(element, { onDirection, onTap }) {
+    let gesture = null;
+
+    element.addEventListener('pointerdown', (event) => {
+      if (!event.isPrimary) {
+        gesture = null;
+        return;
+      }
+      if (event.button !== 0 || event.target.closest('button, a')) return;
+      gesture = {
+        id: event.pointerId,
+        x: event.clientX,
+        y: event.clientY,
+        threshold: Math.max(10, Math.min(18, element.clientWidth * 0.04)),
+        committed: false,
+      };
+      element.setPointerCapture(event.pointerId);
+    });
+
+    function update(event) {
+      if (!gesture || gesture.id !== event.pointerId || gesture.committed) return;
+      const dx = event.clientX - gesture.x;
+      const dy = event.clientY - gesture.y;
+      const x = Math.abs(dx);
+      const y = Math.abs(dy);
+      if (Math.max(x, y) < gesture.threshold || Math.max(x, y) < 1.25 * Math.min(x, y)) return;
+      gesture.committed = true;
+      onDirection(x > y ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up'));
+    }
+
+    element.addEventListener('pointermove', update);
+    element.addEventListener('pointerup', (event) => {
+      if (!gesture || gesture.id !== event.pointerId) return;
+      update(event);
+      const isTap = !gesture.committed && Math.hypot(event.clientX - gesture.x, event.clientY - gesture.y) < 8;
+      gesture = null;
+      if (isTap && onTap) onTap();
+    });
+
+    function cancel(event) {
+      if (gesture?.id === event.pointerId) gesture = null;
+    }
+
+    element.addEventListener('pointercancel', cancel);
+    element.addEventListener('lostpointercapture', cancel);
+  }
+
   function mountMoreGames(currentId, container) {
     if (!container || !window.SITE_CONFIG || !Array.isArray(window.SITE_CONFIG.games)) return;
-    const games = window.SITE_CONFIG.games.filter((game) => game.id !== currentId).slice(0, 4);
+    const catalog = window.SITE_CONFIG.games;
+    const current = catalog.findIndex((game) => game.id === currentId);
+    const games = catalog.slice(current + 1).concat(catalog.slice(0, Math.max(0, current))).slice(0, 4);
     if (games.length === 0) return;
 
     function render() {
@@ -297,6 +346,7 @@
     bindSoundButton,
     shouldIgnoreGameKey,
     onHidden,
+    bindSwipe,
     mountMoreGames,
     showTutorial,
     isTutorialOpen: () => tutorialOpen,

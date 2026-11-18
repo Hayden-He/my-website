@@ -24,18 +24,19 @@
   <meta name="twitter:image:alt" content="小游乐场 · Little Playground：6 款即开即玩的小游戏" />
   <meta name="author" content="Hayden-He" />
   <meta name="theme-color" content="#2563eb" />
-  <link rel="icon" type="image/svg+xml" href="/assets/icon.svg?v=20261117003" />
+  <link rel="icon" type="image/svg+xml" href="/assets/icon.svg?v=20261118001" />
   <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png" />
   <link rel="manifest" href="/site.webmanifest" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="小游乐场" />
-  <link rel="stylesheet" href="/assets/style.css?v=20261117003" />
-  <link rel="stylesheet" href="/assets/game-shell.css?v=20261117003" />
-  <script src="/assets/site-data.js?v=20261117003"></script>
-  <script src="/assets/i18n.js?v=20261117003"></script>
-  <script src="/assets/games.js?v=20261117003"></script>
-  <script src="/assets/game-kit.js?v=20261117003"></script>
+  <link rel="stylesheet" href="/assets/style.css?v=20261118001" />
+  <link rel="stylesheet" href="/assets/game-shell.css?v=20261118001" />
+  <script src="/assets/site-data.js?v=20261118001"></script>
+  <script src="/assets/i18n.js?v=20261118001"></script>
+  <script src="/assets/games.js?v=20261118001"></script>
+  <script src="/assets/game-kit.js?v=20261118001"></script>
+  <script src="/assets/game-rules.js?v=20261118001"></script>
   <style>
     :root { --game-width: 520px; }
 
@@ -46,7 +47,6 @@
     .slide-stage {
       position: relative;
       width: 100%;
-      margin-top: 12px;
     }
 
     .slide-board {
@@ -85,6 +85,39 @@
       transform: scale(0.96);
     }
 
+    .slide-tile.movable {
+      background: #eff6ff;
+      border-color: #93c5fd;
+    }
+
+    .slide-goal {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      gap: 12px;
+    }
+
+    .slide-goal .hint-text { text-align: start; }
+    .slide-goal-grid {
+      display: grid;
+      flex: none;
+      grid-template-columns: repeat(var(--size, 3), 1fr);
+      gap: 2px;
+    }
+    .slide-goal-grid span {
+      display: grid;
+      place-items: center;
+      width: 1.15rem;
+      height: 1.15rem;
+      background: #e2e8f0;
+      border-radius: 3px;
+      font-size: 0.65rem;
+      font-weight: 700;
+    }
+    .slide-goal-grid span:empty { background: transparent; border: 1px dashed #94a3b8; }
+    .slide-stage .overlay-actions { flex-wrap: wrap; justify-content: center; }
+
     .slide-tile:focus-visible {
       outline: 2px solid var(--primary);
       outline-offset: 3px;
@@ -103,6 +136,13 @@
     }
 
     @media (max-width: 380px) {
+      .toolbar .mode-pill {
+        padding-inline: 7px;
+        font-size: 0.74rem;
+        white-space: nowrap;
+      }
+      .toolbar .btn-small { padding-inline: 6px; }
+      .slide-goal .hint-text { font-size: 0.76rem; line-height: 1.35; }
       .slide-board {
         gap: 6px;
         padding: 8px;
@@ -334,7 +374,7 @@
         <span data-i18n="数字华容道">数字华容道</span>
       </h1>
       <div class="game-topbar-actions">
-        <a class="game-topbar-cat" href="/categories/puzzle.html" data-i18n="益智休闲">益智休闲</a>
+        <a class="game-topbar-cat" href="/categories/puzzle" data-i18n="益智休闲">益智休闲</a>
         <button class="lang-btn" type="button" data-lang-toggle>EN</button>
       </div>
     </div>
@@ -358,15 +398,21 @@
 
     <div class="toolbar">
       <div class="mode-pills" role="group" aria-label="棋盘尺寸" data-i18n-attr="aria-label:棋盘尺寸">
-        <button id="mode-3" class="mode-pill active" data-i18n="3×3 轻松">3×3 轻松</button>
-        <button id="mode-4" class="mode-pill" data-i18n="4×4 标准">4×4 标准</button>
+        <button id="mode-beginner" class="mode-pill" data-slide-mode="beginner" data-i18n="3×3 入门">3×3 入门</button>
+        <button id="mode-3" class="mode-pill active" data-slide-mode="3" data-i18n="3×3 经典">3×3 经典</button>
+        <button id="mode-4" class="mode-pill" data-slide-mode="4" data-i18n="4×4 标准">4×4 标准</button>
       </div>
       <div class="btn-group">
         <button id="sound-btn" class="btn-small secondary">音效: 开</button>
         <button id="restart-btn" class="btn-small" data-i18n="重开">重开</button>
+        <button id="retry-btn" class="btn-small secondary" data-i18n="同盘重试">同盘重试</button>
       </div>
     </div>
 
+    <div class="slide-goal">
+      <p class="hint-text" data-i18n="点空位旁的方块，按顺序排好数字。空位留在右下角。">点空位旁的方块，按顺序排好数字。空位留在右下角。</p>
+      <div id="slide-goal-grid" class="slide-goal-grid" aria-hidden="true"></div>
+    </div>
     <div class="slide-stage">
       <div id="slide-board" class="slide-board" role="grid" aria-label="数字华容道棋盘" data-i18n-attr="aria-label:数字华容道棋盘"></div>
       <div id="overlay" class="overlay" role="status" aria-live="polite">
@@ -374,11 +420,12 @@
         <p id="overlay-desc">步数：0 · 用时：0s</p>
         <div class="overlay-actions">
           <button id="overlay-btn" class="overlay-btn" data-i18n="再来一局">再来一局</button>
+          <button id="overlay-retry-btn" class="overlay-btn secondary" data-i18n="同盘重试">同盘重试</button>
         </div>
       </div>
     </div>
 
-    <p class="hint-text" data-i18n="点击或轻触空格旁的方块滑动；方向键也可操作；3×3 先热身。">点击或轻触空格旁的方块滑动；方向键也可操作；3×3 先热身。</p>
+    <p class="hint-text" data-i18n="键盘也可用方向键移动。初次玩可选 3×3 入门。">键盘也可用方向键移动。初次玩可选 3×3 入门。</p>
 
     <div id="more-games" class="more-games"></div>
   </main>
@@ -386,30 +433,34 @@
   <script>
     (function () {
       const t = (key, params) => (window.I18N ? I18N.t(key, params) : key);
-      const MODES = { 3: { size: 3, label: '3×3 轻松' }, 4: { size: 4, label: '4×4 标准' } };
+      const MODES = { beginner: 3, 3: 3, 4: 4 };
       const BEST_PREFIX = 'game_best_slide_';
       const MODE_KEY = 'game_mode_slide';
 
       const boardEl = document.getElementById('slide-board');
+      const goalGrid = document.getElementById('slide-goal-grid');
       const movesEl = document.getElementById('moves-el');
       const timeEl = document.getElementById('time-el');
       const bestEl = document.getElementById('best-el');
       const soundBtn = document.getElementById('sound-btn');
       const restartBtn = document.getElementById('restart-btn');
-      const mode3Btn = document.getElementById('mode-3');
-      const mode4Btn = document.getElementById('mode-4');
+      const retryBtn = document.getElementById('retry-btn');
+      const modeButtons = document.querySelectorAll('[data-slide-mode]');
       const overlay = document.getElementById('overlay');
       const overlayTitle = document.getElementById('overlay-title');
       const overlayDesc = document.getElementById('overlay-desc');
       const overlayBtn = document.getElementById('overlay-btn');
+      const overlayRetryBtn = document.getElementById('overlay-retry-btn');
 
-      let mode = 3;
+      let mode = '3';
       try {
-        if (Number(localStorage.getItem(MODE_KEY)) === 4) mode = 4;
+        const savedMode = localStorage.getItem(MODE_KEY);
+        if (typeof MODES[savedMode] === 'number') mode = savedMode;
       } catch {}
 
-      let size = mode;
+      let size = MODES[mode];
       let board = [];
+      let initialBoard = [];
       let moves = 0;
       let elapsed = 0;
       let timerId = null;
@@ -442,7 +493,7 @@
       }
 
       function bestKey() {
-        return BEST_PREFIX + size;
+        return BEST_PREFIX + mode;
       }
 
       function readBest() {
@@ -472,50 +523,22 @@
         bestEl.textContent = best > 0 ? best + t(' 步') : '--';
       }
 
-      function solvedBoard() {
-        const values = [];
-        for (let i = 1; i < size * size; i += 1) values.push(i);
-        values.push(0);
-        return values;
-      }
-
-      function isSolved() {
-        for (let i = 0; i < board.length - 1; i += 1) {
-          if (board[i] !== i + 1) return false;
-        }
-        return board[board.length - 1] === 0;
-      }
-
-      function neighbors(index) {
-        const row = Math.floor(index / size);
-        const col = index % size;
-        const result = [];
-        if (row > 0) result.push(index - size);
-        if (row < size - 1) result.push(index + size);
-        if (col > 0) result.push(index - 1);
-        if (col < size - 1) result.push(index + 1);
-        return result;
-      }
-
-      function makeBoard() {
-        board = solvedBoard();
-        let blank = board.length - 1;
-        let last = -1;
-        const steps = size === 3 ? 180 : 360;
-        for (let i = 0; i < steps; i += 1) {
-          const options = neighbors(blank).filter((index) => index !== last);
-          const pick = options[Math.floor(Math.random() * options.length)];
-          [board[blank], board[pick]] = [board[pick], board[blank]];
-          last = blank;
-          blank = pick;
-        }
-        if (isSolved()) makeBoard();
+      function renderGoal() {
+        goalGrid.style.setProperty('--size', String(size));
+        goalGrid.replaceChildren(...GameRules.solvedSlideBoard(size).map((value) => {
+          const tile = document.createElement('span');
+          if (value) tile.textContent = String(value);
+          return tile;
+        }));
       }
 
       function render() {
+        const activeTile = document.activeElement;
+        const focusedValue = boardEl.contains(activeTile) ? Number(activeTile.textContent) : null;
         boardEl.style.setProperty('--size', String(size));
         boardEl.dataset.size = String(size);
         boardEl.innerHTML = '';
+        const movable = GameRules.slideNeighbors(size, board.indexOf(0));
         board.forEach((value, index) => {
           const btn = document.createElement('button');
           btn.type = 'button';
@@ -526,6 +549,7 @@
             btn.setAttribute('aria-hidden', 'true');
             btn.setAttribute('aria-label', t('空格'));
           } else {
+            btn.classList.toggle('movable', !ended && movable.includes(index));
             const row = Math.floor(index / size) + 1;
             const col = (index % size) + 1;
             btn.textContent = String(value);
@@ -533,6 +557,7 @@
             btn.addEventListener('click', () => moveTile(index));
           }
           boardEl.appendChild(btn);
+          if (value !== 0 && value === focusedValue) btn.focus({ preventScroll: true });
         });
       }
 
@@ -546,14 +571,23 @@
       function moveTile(index) {
         if (ended) return;
         const blank = board.indexOf(0);
-        if (!neighbors(blank).includes(index)) return;
+        if (!GameRules.slideNeighbors(size, blank).includes(index)) return;
+        const from = boardEl.children[index].getBoundingClientRect();
         [board[blank], board[index]] = [board[index], board[blank]];
         moves += 1;
         startIfNeeded();
         playTone(520, 0.04);
         render();
+        if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+          const tile = boardEl.children[blank];
+          const to = tile.getBoundingClientRect();
+          tile.animate?.([
+            { transform: `translate(${from.x - to.x}px, ${from.y - to.y}px)` },
+            { transform: 'translate(0, 0)' },
+          ], { duration: 110, easing: 'ease-out' });
+        }
         updateHud();
-        if (isSolved()) finish();
+        if (board.every((value, i) => value === (i + 1) % board.length)) finish();
       }
 
       function finish() {
@@ -567,52 +601,67 @@
         overlayDesc.textContent = (newRecord ? t('新纪录！') : '') +
           t('步数：{moves} · 用时：{elapsed}s · 最少 {best} 步', { moves, elapsed, best });
         overlay.classList.add('show');
+        if (boardEl.contains(document.activeElement)) overlayBtn.focus({ preventScroll: true });
         updateHud();
         playTone(660, 0.1);
         setTimeout(() => playTone(880, 0.14), 90);
       }
 
-      function initGame(nextSize) {
-        if (nextSize === 3 || nextSize === 4) {
-          size = nextSize;
-          mode = nextSize;
-        }
+      function initGame(nextMode = mode, retry = false) {
+        mode = nextMode;
+        size = MODES[mode];
         stopTimer();
         moves = 0;
         elapsed = 0;
         started = false;
         ended = false;
         newRecord = false;
-        makeBoard();
+        if (retry) board = initialBoard.slice();
+        else {
+          board = GameRules.shuffleSlideBoard(size, mode === 'beginner');
+          initialBoard = board.slice();
+        }
         overlay.classList.remove('show');
-        mode3Btn.classList.toggle('active', size === 3);
-        mode4Btn.classList.toggle('active', size === 4);
+        modeButtons.forEach((button) => {
+          const active = button.dataset.slideMode === mode;
+          button.classList.toggle('active', active);
+          button.setAttribute('aria-pressed', String(active));
+        });
+        renderGoal();
         render();
         updateHud();
         try {
-          localStorage.setItem(MODE_KEY, String(size));
+          localStorage.setItem(MODE_KEY, mode);
         } catch {}
       }
 
-      async function restartWithConfirm() {
+      async function restartWithConfirm(nextMode = mode, retry = false) {
+        const switching = nextMode !== mode;
         if (moves === 0 || ended) {
-          initGame();
+          initGame(nextMode, retry);
           return;
         }
         const ok = await window.SiteData.confirmDialog({
-          title: t('重开本局'),
-          message: t('当前进度将被清除，确定重开吗？'),
-          confirmText: t('重开'),
+          title: switching ? t('切换模式') : retry ? t('同盘重试') : t('重开本局'),
+          message: switching
+            ? t('切换模式会清除当前棋局进度。')
+            : t('当前进度将被清除，确定重开吗？'),
+          confirmText: switching ? t('切换') : retry ? t('重试') : t('重开'),
           cancelText: t('继续本局'),
           danger: true,
         });
-        if (ok) initGame();
+        if (ok) initGame(nextMode, retry);
       }
 
-      mode3Btn.addEventListener('click', () => initGame(3));
-      mode4Btn.addEventListener('click', () => initGame(4));
-      restartBtn.addEventListener('click', restartWithConfirm);
+      modeButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+          if (button.dataset.slideMode !== mode) restartWithConfirm(button.dataset.slideMode);
+        });
+      });
+      restartBtn.addEventListener('click', () => restartWithConfirm());
+      retryBtn.addEventListener('click', () => restartWithConfirm(mode, true));
       overlayBtn.addEventListener('click', () => initGame());
+      overlayRetryBtn.addEventListener('click', () => initGame(mode, true));
 
       document.addEventListener('keydown', (event) => {
         if (GameKit.shouldIgnoreGameKey(event, { ignoreOnControl: true })) return;

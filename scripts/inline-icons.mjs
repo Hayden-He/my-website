@@ -6,9 +6,8 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { root, readSiteConfig, sitePages } from './site-config.mjs';
 
-const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const source = fs.readFileSync(path.join(root, 'assets', 'icons.svg'), 'utf8');
 const inner = source.slice(source.indexOf('>') + 1, source.lastIndexOf('</svg>')).trim();
 const sprite = [
@@ -17,30 +16,19 @@ const sprite = [
   '</svg>',
 ].join('\n');
 
-const pages = [
-  'index.html',
-  'categories/arcade.html',
-  'categories/puzzle.html',
-  '404.html',
-  'games/basketball/index.html',
-  'games/snake/index.html',
-  'games/2048/index.html',
-  'games/minesweeper/index.html',
-  'games/memory/index.html',
-  'games/slide/index.html',
-];
-for (const relative of pages) {
+for (const { file: relative } of sitePages(readSiteConfig())) {
   const file = path.join(root, relative);
   const html = fs.readFileSync(file, 'utf8');
   const next = html.replace(
     /<!-- inline-icons:start -->[\s\S]*?<!-- inline-icons:end -->/,
     '<!-- inline-icons:start -->\n' + sprite + '\n<!-- inline-icons:end -->'
   );
-  if (next === html) {
+  if (!html.includes('<!-- inline-icons:start -->') || !html.includes('<!-- inline-icons:end -->')) {
     console.error('✗ 未找到 inline-icons 标记：' + relative);
     process.exitCode = 1;
     continue;
   }
+  if (next === html) continue;
   fs.writeFileSync(file, next);
   console.log('✓ ' + relative);
 }

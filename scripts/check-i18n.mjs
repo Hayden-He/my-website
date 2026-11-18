@@ -17,9 +17,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
-import { fileURLToPath } from 'node:url';
-
-const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+import { root, readSiteConfig, sitePages } from './site-config.mjs';
 
 function read(relativePath) {
   try {
@@ -62,24 +60,12 @@ function loadEnglishDictionary() {
   return dictionary;
 }
 
-const pageFiles = [
-  'index.html',
-  'categories/arcade.html',
-  'categories/puzzle.html',
-  '404.html',
-  'games/basketball/index.html',
-  'games/snake/index.html',
-  'games/2048/index.html',
-  'games/minesweeper/index.html',
-  'games/memory/index.html',
-  'games/slide/index.html',
-];
+const config = readSiteConfig();
+const pageFiles = sitePages(config).map(({ file }) => file);
 
-const scriptFiles = [
-  'assets/app.js',
-  'assets/site-data.js',
-  'assets/game-kit.js',
-];
+const scriptFiles = fs.readdirSync(path.join(root, 'assets'))
+  .filter((name) => name.endsWith('.js') && name !== 'i18n.js')
+  .map((name) => 'assets/' + name);
 
 const english = loadEnglishDictionary();
 const englishKeys = new Set(Object.keys(english));
@@ -92,43 +78,31 @@ function addKey(key) {
   used.push(key);
 }
 
+function addHtmlKey(key) {
+  addKey(key.replace(/&(amp|quot|lt|gt);/g, (_, entity) =>
+    ({ amp: '&', quot: '"', lt: '<', gt: '>' })[entity]));
+}
+
 for (const file of [...pageFiles, ...scriptFiles]) {
   const source = read(file);
   if (!source) continue;
 
-  for (const match of source.matchAll(/data-i18n="([^"]+)"/g)) addKey(match[1]);
+  for (const match of source.matchAll(/data-i18n="([^"]+)"/g)) addHtmlKey(match[1]);
 
   for (const match of source.matchAll(/data-i18n-attr="([^"]+)"/g)) {
     match[1].split(',').forEach((pair) => {
       const index = pair.indexOf(':');
-      if (index >= 0) addKey(pair.slice(index + 1).trim());
+      if (index >= 0) addHtmlKey(pair.slice(index + 1).trim());
     });
   }
 
-  for (const match of source.matchAll(/<title>([^<]+)<\/title>/g)) addKey(match[1]);
-  for (const match of source.matchAll(/<meta name="description" content="([^"]+)"/g)) addKey(match[1]);
+  for (const match of source.matchAll(/<title>([^<]+)<\/title>/g)) addHtmlKey(match[1]);
+  for (const match of source.matchAll(/<meta name="description" content="([^"]+)"/g)) addHtmlKey(match[1]);
 
   for (const match of source.matchAll(/\bt\(\s*'([^']+)'/g)) addKey(match[1]);
 }
 
 // games.js 会通过 I18N.t(...) 渲染到卡片上的文案
-const gamesSource = read('assets/games.js');
-if (!gamesSource) {
-  console.error('✗ assets/games.js 不存在');
-  process.exit(1);
-}
-const gamesSandbox = { window: {} };
-try {
-  vm.runInNewContext(gamesSource, gamesSandbox, { filename: 'assets/games.js' });
-} catch (error) {
-  console.error('✗ assets/games.js 无法解析：' + error.message);
-  process.exit(1);
-}
-const config = gamesSandbox.window.SITE_CONFIG;
-if (!config) {
-  console.error('✗ assets/games.js 没有导出 SITE_CONFIG');
-  process.exit(1);
-}
 addKey(config.siteTitle);
 for (const category of config.categories || []) {
   addKey(category.name);
