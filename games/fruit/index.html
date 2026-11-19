@@ -332,6 +332,73 @@
       .fever-bar-box { padding: 5px 10px; gap: 8px; }
       .legend-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 8px; }
     }
+
+    .game-wrap { --mobile-stage-ratio: 640 / 460; }
+
+    @media (any-pointer: coarse) and (max-width: 1100px) and (orientation: portrait) {
+      .overlay[data-ready] {
+        overflow: auto;
+        justify-content: safe center;
+        gap: 6px;
+        padding: 8px;
+      }
+
+      .overlay[data-ready] .rotate-guide { display: block; flex: 0 0 auto; }
+      .overlay .rotate-guide summary { color: #bfdbfe; }
+      .overlay .rotate-guide p { margin: 4px 0; font-size: 0.8rem; }
+    }
+
+    .mobile-game-immersive .hint,
+    .mobile-game-immersive .fruit-legend,
+    .mobile-game-immersive .skin-row,
+    .mobile-game-immersive #help-btn,
+    .mobile-game-immersive #restart-btn,
+    .mobile-game-immersive .mobile-game-controls[data-live] .mode-pills {
+      display: none;
+    }
+
+    .mobile-game-immersive .toolbar-row { justify-content: center; gap: 6px; }
+    .mobile-game-immersive .btn-group { justify-content: center; }
+
+    @media (orientation: landscape) {
+      .mobile-game-immersive .mobile-game-controls {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .mobile-game-immersive :is(.hud, .toolbar, .toolbar-row, .btn-group) { display: contents; }
+      .mobile-game-immersive .hud-box { min-width: 0; }
+      .mobile-game-immersive .hud-box:nth-child(-n + 2) { order: -4; }
+      .mobile-game-immersive .timer-bar-wrap { grid-column: 1 / -1; order: -3; }
+
+      .mobile-game-immersive .fever-bar-box {
+        grid-column: 1 / -1;
+        order: -2;
+        padding-inline: 5px;
+        gap: 4px;
+      }
+
+      .mobile-game-immersive :is(#pause-btn, #immersive-btn) {
+        order: -1;
+        white-space: normal;
+      }
+
+      .mobile-game-immersive :is(.mode-pills, .hud-box:last-child, #sound-btn) {
+        grid-column: 1 / -1;
+      }
+
+      .mobile-game-immersive .mode-pills {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .mobile-game-immersive .mode-pills .mode-pill {
+        padding-inline: 4px;
+        font-size: 0.76rem;
+        line-height: 1.25;
+      }
+
+      .mobile-game-immersive :is(.hud-box:last-child, #sound-btn) { order: 1; }
+    }
   </style>
 </head>
 <body>
@@ -613,55 +680,68 @@
   </header>
 
   <main class="game-wrap">
-    <div class="hud">
-      <div class="hud-box">
-        <div class="hud-label" data-i18n="当前得分">当前得分</div>
-        <div id="score-el" class="hud-value">0</div>
-      </div>
-      <div class="hud-box">
-        <div id="third-label" class="hud-label" data-i18n="剩余生命">剩余生命</div>
-        <div id="third-el" class="hud-value lives" aria-live="polite"></div>
-      </div>
-      <div class="hud-box">
-        <div class="hud-label" data-i18n="模式最高">模式最高</div>
-        <div id="best-el" class="hud-value accent">0</div>
-      </div>
-    </div>
-
-    <div id="timer-bar-wrap" class="timer-bar-wrap classic" aria-hidden="true">
-      <div id="timer-bar" class="timer-bar"></div>
-    </div>
-
-    <div class="toolbar">
-      <div class="toolbar-row">
-        <div class="mode-pills" role="group" aria-label="游戏模式" data-i18n-attr="aria-label:游戏模式">
-          <button id="mode-classic" class="mode-pill active" type="button" data-i18n="经典 3 命">经典 3 命</button>
-          <button id="mode-arcade" class="mode-pill" type="button" data-i18n="60秒狂热">60秒狂热</button>
+    <div class="mobile-game-controls">
+      <div class="hud">
+        <div class="hud-box">
+          <div class="hud-label" data-i18n="当前得分">当前得分</div>
+          <div id="score-el" class="hud-value">0</div>
         </div>
-        <div class="btn-group">
-          <button id="pause-btn" class="btn-small secondary" type="button" data-i18n="暂停">暂停</button>
-          <button id="sound-btn" class="btn-small secondary" type="button">音效: 开</button>
-          <button id="help-btn" class="btn-small secondary" type="button" data-i18n="玩法">玩法</button>
-          <button id="restart-btn" class="btn-small" type="button" data-i18n="重开">重开</button>
+        <div class="hud-box">
+          <div id="third-label" class="hud-label">剩余生命</div>
+          <div id="third-el" class="hud-value lives" aria-live="polite"></div>
+        </div>
+        <div class="hud-box">
+          <div class="hud-label" data-i18n="模式最高">模式最高</div>
+          <div id="best-el" class="hud-value accent">0</div>
         </div>
       </div>
+
+      <div id="timer-bar-wrap" class="timer-bar-wrap classic" aria-hidden="true">
+        <div id="timer-bar" class="timer-bar"></div>
+      </div>
+
+      <div class="toolbar">
+        <div class="toolbar-row">
+          <div class="mode-pills" role="group" aria-label="游戏模式" data-i18n-attr="aria-label:游戏模式">
+            <button id="mode-classic" class="mode-pill active" type="button" data-i18n="经典 3 命">经典 3 命</button>
+            <button id="mode-arcade" class="mode-pill" type="button" data-i18n="60秒狂热">60秒狂热</button>
+          </div>
+          <div class="btn-group">
+            <button id="pause-btn" class="btn-small secondary" type="button">暂停</button>
+            <button id="sound-btn" class="btn-small secondary" type="button">音效: 开</button>
+            <button id="help-btn" class="btn-small secondary" type="button" data-i18n="玩法">玩法</button>
+            <button id="restart-btn" class="btn-small" type="button" data-i18n="重开">重开</button>
+            <button id="immersive-btn" class="btn-small secondary" type="button" data-i18n="沉浸模式" hidden>沉浸模式</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="fever-bar-box" class="fever-bar-box">
+        <span id="fever-label" class="fever-label">🔥 暴走能量</span>
+        <div class="fever-track" aria-hidden="true"><div id="fever-fill" class="fever-fill"></div></div>
+        <span id="fever-pct" class="fever-pct">0%</span>
+      </div>
     </div>
 
-    <div id="fever-bar-box" class="fever-bar-box">
-      <span id="fever-label" class="fever-label" data-i18n="🔥 暴走能量">🔥 暴走能量</span>
-      <div class="fever-track" aria-hidden="true"><div id="fever-fill" class="fever-fill"></div></div>
-      <span id="fever-pct" class="fever-pct">0%</span>
-    </div>
-
-    <div class="stage-box">
-      <div id="buff-bar" class="buff-bar" aria-hidden="true"></div>
-      <canvas id="canvas" width="640" height="460" aria-label="极速切水果画布" data-i18n-attr="aria-label:极速切水果画布"></canvas>
-      <div id="overlay" class="overlay show" role="status" aria-live="polite">
-        <h2 id="overlay-title" data-i18n="极速切水果">极速切水果</h2>
-        <p id="overlay-desc" data-i18n="移动鼠标或手指划屏切开水果，连续一刀多切触发连击，小心炸弹！"></p>
-        <p id="overlay-stats" class="overlay-stats" hidden></p>
-        <div class="overlay-actions">
-          <button id="overlay-btn" class="overlay-btn" type="button" data-i18n="开始游戏">开始游戏</button>
+    <div class="mobile-game-stage">
+      <div class="stage-box">
+        <div id="buff-bar" class="buff-bar" aria-hidden="true"></div>
+        <canvas id="canvas" width="640" height="460" aria-label="极速切水果画布" data-i18n-attr="aria-label:极速切水果画布"></canvas>
+        <div id="overlay" class="overlay show" role="status" aria-live="polite">
+          <h2 id="overlay-title">极速切水果</h2>
+          <p id="overlay-desc"></p>
+          <p id="overlay-stats" class="overlay-stats" hidden></p>
+          <div class="overlay-actions">
+            <button id="overlay-btn" class="overlay-btn" type="button">开始游戏</button>
+          </div>
+          <details class="rotate-guide">
+            <summary data-i18n="怎么横屏玩？">怎么横屏玩？</summary>
+            <p data-i18n="iPhone：在控制中心关闭「竖排方向锁定」，再横握手机。全面屏机型从右上角下滑打开控制中心。">iPhone：在控制中心关闭「竖排方向锁定」，再横握手机。全面屏机型从右上角下滑打开控制中心。</p>
+            <p data-i18n="Android：开启自动旋转，再横握手机。">Android：开启自动旋转，再横握手机。</p>
+            <p data-i18n="微信里转不了？点右上角「…」，选「用默认浏览器打开」。">微信里转不了？点右上角「…」，选「用默认浏览器打开」。</p>
+            <p data-i18n="找不到这个选项？复制游戏链接，用常用的手机浏览器打开。也可以用「沉浸模式」竖屏玩。">找不到这个选项？复制游戏链接，用常用的手机浏览器打开。也可以用「沉浸模式」竖屏玩。</p>
+            <button type="button" class="copy-link-btn" data-copy-link="/games/fruit/" data-i18n="复制游戏链接">复制游戏链接</button>
+          </details>
         </div>
       </div>
     </div>
@@ -742,6 +822,7 @@
       const modeClassicBtn = document.getElementById('mode-classic');
       const modeArcadeBtn = document.getElementById('mode-arcade');
       const skinBtns = Array.from(document.querySelectorAll('.skin-pill'));
+      const controls = document.querySelector('.mobile-game-controls');
 
       function readStored(key, fallback) {
         try {
@@ -1235,6 +1316,7 @@
           const isClockFrozen = freezeTimer > 0 || !!pomegranateTarget;
           thirdEl.className = 'hud-value' + (sec <= 10 && !isClockFrozen ? ' danger' : '');
           thirdEl.textContent = sec + 's';
+          thirdEl.removeAttribute('aria-label');
           timerBarWrap.className = 'timer-bar-wrap';
           const pct = Math.max(0, Math.min(100, (timeLeft / ARCADE_SECONDS) * 100));
           timerBar.style.width = pct + '%';
@@ -1277,6 +1359,8 @@
       }
 
       function renderOverlay() {
+        controls.toggleAttribute('data-live', state === 'playing' || state === 'paused' || state === 'dying');
+        overlay.toggleAttribute('data-ready', state === 'ready');
         if (state === 'playing') {
           overlay.classList.remove('show');
           return;
@@ -1384,6 +1468,7 @@
         prevPt = null;
         renderHud();
         renderOverlay();
+        controls.scrollTop = 0;
       }
 
       function startGame() {
@@ -3515,6 +3600,16 @@
       canvas.addEventListener('lostpointercapture', endPointer);
       canvas.addEventListener('pointerleave', endPointer);
 
+      function pauseForLayoutChange() {
+        if (activePointerId !== null && canvas.hasPointerCapture(activePointerId)) {
+          const pointerId = activePointerId;
+          activePointerId = null;
+          canvas.releasePointerCapture(pointerId);
+        }
+        trail = [];
+        pauseGame();
+      }
+
       overlayBtn.addEventListener('click', () => {
         if (state === 'paused') resumeGame();
         else startGame();
@@ -3614,6 +3709,7 @@
 
       syncModeButtons();
       resetState('ready');
+      GameKit.bindMobileLayout('fruit', document.getElementById('immersive-btn'), pauseForLayoutChange);
       GameKit.mountMoreGames('fruit', document.getElementById('more-games'));
       openTutorial(false);
       requestAnimationFrame(frame);

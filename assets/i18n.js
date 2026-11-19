@@ -41,6 +41,10 @@
     '无需下载 · 电脑与手机均可畅玩': 'No downloads · Play on desktop and mobile',
     '清除本地数据': 'Clear local data',
     '检查更新': 'Check for updates',
+    '复制网站链接': 'Copy website link',
+    '复制游戏链接': 'Copy game link',
+    '链接已复制': 'Link copied',
+    '请长按或选中链接复制': 'Touch and hold or select the link to copy it',
     '检查中…': 'Checking…',
     '已是最新版本': 'You are up to date.',
     '检查失败，请稍后重试': "Couldn't check. Try again.",
@@ -370,6 +374,16 @@
     '记忆翻牌牌桌': 'Memory board',
 
     // ---- 极速切水果 ----
+    '沉浸模式': 'Focus mode',
+    '退出沉浸': 'Exit focus mode',
+    '怎么横屏玩？': 'How do I play in landscape?',
+    'iPhone：在控制中心关闭「竖排方向锁定」，再横握手机。全面屏机型从右上角下滑打开控制中心。':
+      'iPhone: Turn off Portrait Orientation Lock in Control Center, then turn your phone sideways. On iPhones with Face ID, swipe down from the top-right corner to open Control Center.',
+    'Android：开启自动旋转，再横握手机。': 'Android: Turn on Auto-rotate, then turn your phone sideways.',
+    '微信里转不了？点右上角「…」，选「用默认浏览器打开」。':
+      'Page stays upright in WeChat? Tap the top-right menu (…) and choose Open in Default Browser.',
+    '找不到这个选项？复制游戏链接，用常用的手机浏览器打开。也可以用「沉浸模式」竖屏玩。':
+      'No browser option? Copy the game link and open it in your usual mobile browser. You can also play in portrait using Focus mode.',
     '极速切水果': 'Fruit Slicer',
     '极速切水果 - 小游乐场': 'Fruit Slicer - Little Playground',
     '剩余时间': 'Time',
@@ -530,8 +544,8 @@
       'A Boss arrives every 5 waves. Dodge laser sightlines; defeating a Boss refills +1 EMP!',
 
     // ---- 清数据 / 弹窗 ----
-    '将清除本站保存在此浏览器中的最高纪录、游戏存档、球色、音效设置与教学提示，且无法恢复。':
-      'This will remove the best scores, saved games, ball skins, sound settings and tutorial flags stored in this browser. This cannot be undone.',
+    '将清除本站在此浏览器保存的游戏纪录、存档、外观、模式偏好、音效设置和教学记录，且无法恢复。语言设置会保留。':
+      'This will permanently clear game records, saves, skins, mode preferences, sound settings and tutorial history in this browser. Your language setting will be kept.',
     '本地数据已清除': 'Local data cleared',
     '清除失败': "Couldn't clear local data",
     '浏览器禁止访问本地存储，请检查浏览器的隐私设置后重试。':
