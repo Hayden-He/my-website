@@ -361,18 +361,43 @@
     .mobile-game-immersive .btn-group { justify-content: center; }
 
     @media (orientation: landscape) {
-      .mobile-game-immersive .hud-box:last-child { grid-column: 1 / -1; }
-      .mobile-game-immersive .fever-bar-box { padding-inline: 5px; gap: 4px; }
-      .mobile-game-immersive #immersive-btn { flex-basis: 100%; }
-    }
+      .mobile-game-immersive .mobile-game-controls {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
 
-    @media (orientation: landscape) and (max-height: 420px) {
-      .mobile-game-immersive .toolbar { order: -1; }
-    }
+      .mobile-game-immersive :is(.hud, .toolbar, .toolbar-row, .btn-group) { display: contents; }
+      .mobile-game-immersive .hud-box { min-width: 0; }
+      .mobile-game-immersive .hud-box:nth-child(-n + 2) { order: -4; }
+      .mobile-game-immersive .timer-bar-wrap { grid-column: 1 / -1; order: -3; }
 
-    @media (orientation: landscape) and (max-height: 300px) {
-      .mobile-game-immersive .mobile-game-controls[data-live] .hud-box:last-child,
-      .mobile-game-immersive .mobile-game-controls[data-live] #sound-btn { display: none; }
+      .mobile-game-immersive .fever-bar-box {
+        grid-column: 1 / -1;
+        order: -2;
+        padding-inline: 5px;
+        gap: 4px;
+      }
+
+      .mobile-game-immersive :is(#pause-btn, #immersive-btn) {
+        order: -1;
+        white-space: normal;
+      }
+
+      .mobile-game-immersive :is(.mode-pills, .hud-box:last-child, #sound-btn) {
+        grid-column: 1 / -1;
+      }
+
+      .mobile-game-immersive .mode-pills {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .mobile-game-immersive .mode-pills .mode-pill {
+        padding-inline: 4px;
+        font-size: 0.76rem;
+        line-height: 1.25;
+      }
+
+      .mobile-game-immersive :is(.hud-box:last-child, #sound-btn) { order: 1; }
     }
   </style>
 </head>
@@ -1443,6 +1468,7 @@
         prevPt = null;
         renderHud();
         renderOverlay();
+        controls.scrollTop = 0;
       }
 
       function startGame() {
@@ -3683,7 +3709,7 @@
 
       syncModeButtons();
       resetState('ready');
-      GameKit.bindMobileLayout(document.getElementById('immersive-btn'), pauseForLayoutChange);
+      GameKit.bindMobileLayout('fruit', document.getElementById('immersive-btn'), pauseForLayoutChange);
       GameKit.mountMoreGames('fruit', document.getElementById('more-games'));
       openTutorial(false);
       requestAnimationFrame(frame);

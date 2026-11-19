@@ -2380,7 +2380,7 @@
       document.getElementById('overlay-restart').addEventListener('click', initGame);
 
       initGame();
-      GameKit.bindMobileLayout(document.getElementById('immersive-btn'), () => setPaused(true));
+      GameKit.bindMobileLayout('basketball', document.getElementById('immersive-btn'), () => setPaused(true));
       GameKit.mountMoreGames('basketball', document.getElementById('more-games'));
       GameKit.showTutorial({
         id: 'basketball',

@@ -104,14 +104,21 @@
     });
   }
 
-  function bindMobileLayout(button, onLayoutChange) {
+  function bindMobileLayout(gameId, button, onLayoutChange) {
     const mobile = matchMedia('(any-pointer: coarse) and (max-width: 1100px)');
     const landscape = matchMedia('(orientation: landscape)');
-    let immersivePortrait = false;
-    let immersiveLandscape = true;
+    const storageKey = 'game_layout_' + gameId;
+    const choices = { portrait: false, landscape: true };
+
+    try {
+      const saved = JSON.parse(sessionStorage.getItem(storageKey));
+      for (const direction of Object.keys(choices)) {
+        if (typeof saved?.[direction] === 'boolean') choices[direction] = saved[direction];
+      }
+    } catch {}
 
     function render() {
-      const immersive = mobile.matches && (landscape.matches ? immersiveLandscape : immersivePortrait);
+      const immersive = mobile.matches && choices[landscape.matches ? 'landscape' : 'portrait'];
       document.body.classList.toggle('mobile-game-immersive', immersive);
       button.hidden = !mobile.matches;
       const label = immersive ? '退出沉浸' : '沉浸模式';
@@ -120,8 +127,11 @@
     }
 
     button.addEventListener('click', () => {
-      if (landscape.matches) immersiveLandscape = !immersiveLandscape;
-      else immersivePortrait = !immersivePortrait;
+      const direction = landscape.matches ? 'landscape' : 'portrait';
+      choices[direction] = !choices[direction];
+      try {
+        sessionStorage.setItem(storageKey, JSON.stringify(choices));
+      } catch {}
       onLayoutChange();
       render();
     });
