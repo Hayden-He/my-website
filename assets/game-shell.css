@@ -182,8 +182,16 @@
   margin-top: 2px;
 }
 
-.more-games-title {
+.more-games-heading {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 6px 12px;
   margin: 10px 0 8px;
+}
+
+.more-games-title {
   text-align: center;
   font-size: 0.84rem;
   font-weight: 700;

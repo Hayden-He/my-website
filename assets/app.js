@@ -229,13 +229,14 @@
     });
   }
 
-  function renderFooter() {
+  function renderFooter(activeKey) {
     const footer = document.getElementById('site-footer');
     if (!footer || !window.SITE_CONFIG) return;
     const container = createEl('div', 'container');
     if (window.SiteData) {
       container.appendChild(window.SiteData.createCredit());
       container.appendChild(createEl('div', 'site-tagline', t('无需下载 · 电脑与手机均可畅玩')));
+      if (activeKey === 'all') container.appendChild(window.SiteData.createCopyLinkButton('/'));
     } else {
       container.textContent =
         '© ' + new Date().getFullYear() + ' ' + t(window.SITE_CONFIG.siteTitle) +
@@ -256,7 +257,7 @@
   window.initSitePage = function (activeKey) {
     renderHeader(activeKey);
     renderGamesGrid(activeKey);
-    renderFooter();
+    renderFooter(activeKey);
 
     if (!i18nBound) {
       i18nBound = true;
@@ -264,7 +265,7 @@
         const languageButtonFocused = document.activeElement?.matches('#site-header [data-lang-toggle]');
         renderHeader(activeKey);
         renderGamesGrid(activeKey);
-        renderFooter();
+        renderFooter(activeKey);
         if (languageButtonFocused) {
           document.querySelector('#site-header [data-lang-toggle]')?.focus({ preventScroll: true });
         }

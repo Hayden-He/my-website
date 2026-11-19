@@ -583,6 +583,27 @@ body:has(#site-footer) > main {
   font-size: 0.8rem;
 }
 
+.copy-link-btn {
+  min-height: 44px;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--primary);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.copy-link-btn:hover {
+  border-color: var(--primary);
+}
+
+.site-footer .copy-link-btn {
+  margin-top: 8px;
+}
+
 .data-clear-wrap .site-credit {
   font-size: 0.8rem;
   color: var(--text-muted);
@@ -623,6 +644,9 @@ body:has(#site-footer) > main {
   font-size: 0.92rem;
   color: var(--text-muted);
   line-height: 1.65;
+  overflow-wrap: anywhere;
+  -webkit-user-select: text;
+  user-select: text;
 }
 
 .site-dialog-actions {

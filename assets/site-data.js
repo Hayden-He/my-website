@@ -1,6 +1,5 @@
 /**
- * 本站本地数据管理：音效开关（全站共用）与“清除本地数据”入口。
- * 处理本站保存的最高分、球色、2048 棋局与音效设置。
+ * 管理本地游戏数据、共用音效、对话框和页面操作。
  */
 (function () {
   function t(key, params) {
@@ -253,6 +252,33 @@
     toastTimer = setTimeout(() => toastEl.classList.remove('show'), (options && options.duration) || 2200);
   }
 
+  function createCopyLinkButton(path) {
+    const button = document.createElement('button');
+    const label = path === '/' ? '复制网站链接' : '复制游戏链接';
+    button.type = 'button';
+    button.className = 'copy-link-btn';
+    button.dataset.copyLink = path;
+    button.dataset.i18n = label;
+    button.textContent = t(label);
+    return button;
+  }
+
+  document.addEventListener('click', async (event) => {
+    const button = event.target.closest('button[data-copy-link]');
+    if (!button) return;
+    const url = new URL(button.dataset.copyLink, location.origin).href;
+    try {
+      await navigator.clipboard.writeText(url);
+      toast(t('链接已复制'));
+    } catch {
+      alertDialog({
+        title: t('请长按或选中链接复制'),
+        message: url,
+        confirmText: t('知道了'),
+      });
+    }
+  });
+
   function createClearButton() {
     const btn = document.createElement('button');
     btn.type = 'button';
@@ -261,7 +287,7 @@
     btn.addEventListener('click', async () => {
       const ok = await confirmDialog({
         title: t('清除本地数据'),
-        message: t('将清除本站保存在此浏览器中的最高纪录、游戏存档、球色、音效设置与教学提示，且无法恢复。'),
+        message: t('将清除本站在此浏览器保存的游戏纪录、存档、外观、模式偏好、音效设置和教学记录，且无法恢复。语言设置会保留。'),
         confirmText: t('清除'),
         cancelText: t('取消'),
         danger: true,
@@ -356,7 +382,7 @@
   }
 
   window.SiteData = {
-    getSound, setSound, clearAll, createClearButton, createUpdateButton, createCredit,
+    getSound, setSound, clearAll, createClearButton, createUpdateButton, createCopyLinkButton, createCredit,
     getAudioContext, unlockAudio, withAudio,
     isDialogOpen, confirmDialog, alertDialog, toast,
   };

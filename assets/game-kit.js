@@ -195,10 +195,16 @@
 
     function render() {
       container.textContent = '';
+      const heading = document.createElement('div');
+      heading.className = 'more-games-heading';
       const title = document.createElement('div');
       title.className = 'more-games-title';
       title.textContent = t('换个游戏');
-      container.appendChild(title);
+      heading.appendChild(title);
+      if (current >= 0 && window.SiteData) {
+        heading.appendChild(SiteData.createCopyLinkButton(catalog[current].url));
+      }
+      container.appendChild(heading);
 
       const grid = document.createElement('div');
       grid.className = 'more-games-grid';
