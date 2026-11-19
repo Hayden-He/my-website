@@ -376,8 +376,8 @@
     'iPhone：在控制中心关闭「竖排方向锁定」，再横握手机。全面屏机型从右上角下滑打开控制中心。':
       'iPhone: Turn off Portrait Orientation Lock in Control Center, then turn your phone sideways. On iPhones with Face ID, swipe down from the top-right corner to open Control Center.',
     'Android：开启自动旋转，再横握手机。': 'Android: Turn on Auto-rotate, then turn your phone sideways.',
-    '微信或 QQ 里转不了？可以用「沉浸模式」竖屏玩，或复制链接到 Safari 等浏览器尝试横屏。':
-      'Page stays upright in WeChat or QQ? Use Focus mode in portrait, or copy the link to Safari or another browser and try rotating there.',
+    '微信或 QQ 里转不了？可以用「沉浸模式」竖屏玩，或复制链接到 Safari 或 Chrome，试试横屏。':
+      'Page stays upright in WeChat or QQ? Use Focus mode in portrait, or copy the link and open it in Safari or Chrome to try landscape mode.',
     '极速切水果': 'Fruit Slicer',
     '极速切水果 - 小游乐场': 'Fruit Slicer - Little Playground',
     '剩余时间': 'Time',
