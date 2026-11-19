@@ -370,6 +370,9 @@
     '记忆翻牌牌桌': 'Memory board',
 
     // ---- 极速切水果 ----
+    '沉浸模式': 'Focus mode',
+    '退出沉浸': 'Exit focus mode',
+    '横屏体验更佳': 'Rotate for a larger play area',
     '极速切水果': 'Fruit Slicer',
     '极速切水果 - 小游乐场': 'Fruit Slicer - Little Playground',
     '剩余时间': 'Time',
