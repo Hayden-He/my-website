@@ -335,11 +335,25 @@
 
     .fruit-controls { display: contents; }
     .fruit-stage-slot { width: 100%; }
-    .rotate-hint { display: none; }
+    .rotate-guide { display: none; }
     #immersive-btn[hidden] { display: none; }
 
     @media (any-pointer: coarse) and (max-width: 1100px) and (orientation: portrait) {
-      body:not(.fruit-immersive) .overlay[data-ready] .rotate-hint { display: block; }
+      .overlay[data-ready] {
+        overflow: auto;
+        justify-content: safe center;
+        gap: 6px;
+        padding: 8px;
+      }
+
+      .overlay[data-ready] .rotate-guide { display: block; flex: 0 0 auto; }
+      .rotate-guide summary {
+        padding: 10px 6px;
+        color: #bfdbfe;
+        font-size: 0.86rem;
+        cursor: pointer;
+      }
+      .rotate-guide p { margin: 4px 0; font-size: 0.8rem; }
     }
 
     body.fruit-immersive > .game-topbar,
@@ -768,11 +782,16 @@
         <div id="overlay" class="overlay show" role="status" aria-live="polite">
           <h2 id="overlay-title" data-i18n="极速切水果">极速切水果</h2>
           <p id="overlay-desc" data-i18n="移动鼠标或手指划屏切开水果，连续一刀多切触发连击，小心炸弹！"></p>
-          <p class="rotate-hint" data-i18n="横屏体验更佳">横屏体验更佳</p>
           <p id="overlay-stats" class="overlay-stats" hidden></p>
           <div class="overlay-actions">
             <button id="overlay-btn" class="overlay-btn" type="button" data-i18n="开始游戏">开始游戏</button>
           </div>
+          <details class="rotate-guide">
+            <summary data-i18n="怎么横屏玩？">怎么横屏玩？</summary>
+            <p data-i18n="iPhone：在控制中心关闭「竖排方向锁定」，再横握手机。全面屏机型从右上角下滑打开控制中心。">iPhone：在控制中心关闭「竖排方向锁定」，再横握手机。全面屏机型从右上角下滑打开控制中心。</p>
+            <p data-i18n="Android：开启自动旋转，再横握手机。">Android：开启自动旋转，再横握手机。</p>
+            <p data-i18n="微信或 QQ 里转不了？可以用「沉浸模式」竖屏玩，或复制链接到 Safari 等浏览器尝试横屏。">微信或 QQ 里转不了？可以用「沉浸模式」竖屏玩，或复制链接到 Safari 等浏览器尝试横屏。</p>
+          </details>
         </div>
       </div>
     </div>
@@ -3741,6 +3760,7 @@
       document.addEventListener('keydown', (event) => {
         if (GameKit.shouldIgnoreGameKey(event, { ignoreOnControl: true })) return;
         if (GameKit.isTutorialOpen()) return;
+        if (event.target instanceof Element && event.target.closest('.rotate-guide summary')) return;
         if (event.code === 'Space' || event.code === 'Enter') {
           event.preventDefault();
           if (state === 'ready' || state === 'over') startGame();
