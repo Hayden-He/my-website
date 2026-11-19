@@ -130,7 +130,6 @@
     .status-badge[hidden] { display: none; }
 
     .stage-box {
-      position: relative;
       width: 100%;
       border-radius: 18px;
       overflow: hidden;
@@ -138,6 +137,8 @@
       box-shadow: var(--shadow-md);
       background: #060918;
     }
+
+    .playfield { position: relative; }
 
     canvas {
       display: block;
@@ -151,18 +152,12 @@
     }
 
     .boss-bar-wrap {
-      position: absolute;
-      top: 10px;
-      left: 14px;
-      right: 14px;
-      z-index: 2;
-      pointer-events: none;
       display: flex;
       flex-direction: column;
       gap: 4px;
-      padding: 6px 8px;
-      border-radius: 9px;
-      background: rgba(5, 10, 25, 0.87);
+      padding: 7px 13px;
+      border-bottom: 1px solid #26344c;
+      background: #0b1426;
     }
 
     .boss-bar-wrap[hidden] { display: none; }
@@ -392,7 +387,7 @@
       .status-strip { gap: 5px; padding: 5px 8px; }
       .status-group { gap: 4px; }
       .status-badge { padding: 2px 5px; }
-      .boss-bar-wrap { top: 7px; left: 8px; right: 8px; }
+      .boss-bar-wrap { padding: 5px 9px; }
       .boss-bar-label {
         grid-template-columns: minmax(0, 1fr) auto;
         grid-template-areas: 'name health' 'phase phase';
@@ -730,13 +725,15 @@
         </div>
         <div id="boss-bar-track" class="boss-bar-track" role="meter" aria-labelledby="boss-name" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100"><div id="boss-bar-fill" class="boss-bar-fill"></div></div>
       </div>
-      <canvas id="canvas" width="460" height="560" aria-label="太空战机画布" data-i18n-attr="aria-label:太空战机画布"></canvas>
-      <div id="overlay" class="overlay show" role="status" aria-live="polite">
-        <h2 id="overlay-title" data-i18n="太空战机">太空战机</h2>
-        <p id="overlay-desc" data-i18n="拖动战机躲避弹幕、拾取火力升级，每 5 波迎战星际 Boss！"></p>
-        <p id="overlay-stats" class="overlay-stats" hidden></p>
-        <div class="overlay-actions">
-          <button id="overlay-btn" class="overlay-btn" type="button" data-i18n="开始游戏">开始游戏</button>
+      <div class="playfield">
+        <canvas id="canvas" width="460" height="560" aria-label="太空战机画布" data-i18n-attr="aria-label:太空战机画布"></canvas>
+        <div id="overlay" class="overlay show" role="status" aria-live="polite">
+          <h2 id="overlay-title" data-i18n="太空战机">太空战机</h2>
+          <p id="overlay-desc" data-i18n="拖动战机躲避弹幕、拾取火力升级，每 5 波迎战星际 Boss！"></p>
+          <p id="overlay-stats" class="overlay-stats" hidden></p>
+          <div class="overlay-actions">
+            <button id="overlay-btn" class="overlay-btn" type="button" data-i18n="开始游戏">开始游戏</button>
+          </div>
         </div>
       </div>
     </div>
@@ -4337,9 +4334,7 @@
           ctx.font = '800 12px ui-sans-serif, system-ui, sans-serif';
           const tw = ctx.measureText(label).width + 18;
           const bx = W - tw - 12;
-          const by = boss && canvas.clientHeight
-            ? (bossBarWrap.offsetTop + bossBarWrap.offsetHeight + 6) * H / canvas.clientHeight
-            : 14;
+          const by = 14;
           ctx.fillStyle = 'rgba(15, 23, 42, 0.72)';
           ctx.beginPath();
           ctx.roundRect(bx, by, tw, 24, 999);
@@ -4410,30 +4405,30 @@
 
       canvas.addEventListener('pointerdown', (event) => {
         if (state !== 'playing') return;
-        const pt = toCanvasPoint(event);
         if (event.pointerType === 'mouse') {
-          mouseTarget = pt;
+          mouseTarget = toCanvasPoint(event);
           return;
         }
         if (!event.isPrimary) return;
         activeTouchId = event.pointerId;
-        touchLastPt = pt;
+        touchLastPt = { x: event.clientX, y: event.clientY };
         try { canvas.setPointerCapture(event.pointerId); } catch {}
       });
 
       canvas.addEventListener('pointermove', (event) => {
         if (state !== 'playing') return;
-        const pt = toCanvasPoint(event);
         if (event.pointerType === 'mouse') {
-          mouseTarget = pt;
+          mouseTarget = toCanvasPoint(event);
           return;
         }
         if (event.pointerId !== activeTouchId || !touchLastPt) return;
-        player.x += pt.x - touchLastPt.x;
-        player.y += (pt.y - touchLastPt.y) * 1.05;
+        // 计算手指在视口中的位移，避免血条出现时画布下移带动战机。
+        const { width, height } = canvas.getBoundingClientRect();
+        player.x += (event.clientX - touchLastPt.x) * W / width;
+        player.y += (event.clientY - touchLastPt.y) * H / height * 1.05;
         player.x = Math.max(22, Math.min(W - 22, player.x));
         player.y = Math.max(54, Math.min(H - 28, player.y));
-        touchLastPt = pt;
+        touchLastPt = { x: event.clientX, y: event.clientY };
       });
 
       function endTouch(event) {
