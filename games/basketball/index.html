@@ -185,6 +185,35 @@
       .hud { grid-template-columns: repeat(3, 1fr); }
     }
 
+    .game-wrap { --mobile-stage-ratio: 640 / 420; }
+
+    .mobile-game-immersive .controls-row,
+    .mobile-game-immersive .court-hint { display: none; }
+    .mobile-game-immersive .court-controls { justify-content: center; }
+    .mobile-game-immersive .court-controls .btn-group { justify-content: center; gap: 6px; }
+
+    @media (any-pointer: coarse) and (max-width: 1100px) and (orientation: portrait) {
+      body:not(.mobile-game-immersive) .basketball-rotate-guide {
+        display: block;
+        width: 100%;
+        color: var(--text-muted);
+        text-align: center;
+      }
+
+      .basketball-rotate-guide summary { color: var(--primary); }
+      .basketball-rotate-guide p { margin: 4px 0; font-size: 0.8rem; }
+    }
+
+    @media (orientation: landscape) {
+      .mobile-game-immersive .scene-hint { flex-wrap: wrap; margin: 0; }
+      .mobile-game-immersive .hud-box:last-child { grid-column: 1 / -1; }
+    }
+
+    @media (orientation: landscape) and (max-height: 320px) {
+      .mobile-game-immersive .hud-box:nth-child(n+3),
+      .mobile-game-immersive .scene-hint { display: none; }
+    }
+
   </style>
 </head>
 <body>
@@ -466,58 +495,72 @@
   </header>
 
   <main class="game-wrap">
-    <div class="hud">
-      <div class="hud-box">
-        <div class="hud-label" data-i18n="总得分">总得分</div>
-        <div id="score-el" class="hud-value">0</div>
+    <div class="mobile-game-controls">
+      <div class="hud">
+        <div class="hud-box">
+          <div class="hud-label" data-i18n="总得分">总得分</div>
+          <div id="score-el" class="hud-value">0</div>
+        </div>
+        <div class="hud-box">
+          <div class="hud-label" data-i18n="进球倒计时">进球倒计时</div>
+          <div id="time-el" class="hud-value">10.0s</div>
+        </div>
+        <div class="hud-box">
+          <div class="hud-label" data-i18n="空心入网">空心入网</div>
+          <div id="swish-el" class="hud-value accent">0</div>
+          <div class="hud-sub" data-i18n="+4 · 火焰+5">+4 · 火焰+5</div>
+        </div>
+        <div class="hud-box">
+          <div class="hud-label" data-i18n="打板进球">打板进球</div>
+          <div id="bank-el" class="hud-value">0</div>
+          <div class="hud-sub">+3</div>
+        </div>
+        <div class="hud-box">
+          <div class="hud-label" data-i18n="最高分">最高分</div>
+          <div id="best-el" class="hud-value">0</div>
+        </div>
       </div>
-      <div class="hud-box">
-        <div class="hud-label" data-i18n="进球倒计时">进球倒计时</div>
-        <div id="time-el" class="hud-value">10.0s</div>
+
+      <div id="shot-clock" class="timer-bar-wrap">
+        <div id="timer-bar" class="timer-bar"></div>
       </div>
-      <div class="hud-box">
-        <div class="hud-label" data-i18n="空心入网">空心入网</div>
-        <div id="swish-el" class="hud-value accent">0</div>
-        <div class="hud-sub" data-i18n="+4 · 火焰+5">+4 · 火焰+5</div>
+
+      <div class="scene-hint">
+        <span><span data-i18n="当前场景">当前场景</span> <strong id="scene-name">黄昏街头</strong></span>
+        <span id="scene-next">下一场景 15 分</span>
       </div>
-      <div class="hud-box">
-        <div class="hud-label" data-i18n="打板进球">打板进球</div>
-        <div id="bank-el" class="hud-value">0</div>
-        <div class="hud-sub">+3</div>
+
+      <div class="court-controls">
+        <div class="mode-pills" role="group" aria-label="游戏模式" data-i18n-attr="aria-label:游戏模式">
+          <button type="button" id="challenge-btn" class="mode-pill active" aria-pressed="true" data-i18n="挑战">挑战</button>
+          <button type="button" id="practice-btn" class="mode-pill" aria-pressed="false" data-i18n="练习">练习</button>
+        </div>
+        <div class="btn-group">
+          <button id="pause-btn" class="btn-small secondary" type="button">暂停</button>
+          <button id="immersive-btn" class="btn-small secondary" type="button" data-i18n="沉浸模式" hidden>沉浸模式</button>
+        </div>
       </div>
-      <div class="hud-box">
-        <div class="hud-label" data-i18n="最高分">最高分</div>
-        <div id="best-el" class="hud-value">0</div>
+    </div>
+    <p class="hint-text court-hint" data-i18n="连点球场让球升空，停手让球落入篮筐。">连点球场让球升空，停手让球落入篮筐。</p>
+    <div class="mobile-game-stage">
+      <div class="stage-box">
+        <canvas id="court" width="640" height="420" role="img" aria-label="街头投篮球场" data-i18n-attr="aria-label:街头投篮球场"></canvas>
+        <div id="game-overlay" class="overlay" role="status" aria-live="polite">
+          <h2 data-i18n="时间到！">时间到！</h2>
+          <p id="final-summary">本局得分：0</p>
+          <p id="final-stats"></p>
+          <button id="overlay-restart" class="btn-small" data-i18n="再来一局">再来一局</button>
+          <p style="font-size:0.8rem" data-i18n="按空格或回车也可重开">按空格或回车也可重开</p>
+        </div>
       </div>
     </div>
 
-    <div id="shot-clock" class="timer-bar-wrap">
-      <div id="timer-bar" class="timer-bar"></div>
-    </div>
-
-    <div class="scene-hint">
-      <span><span data-i18n="当前场景">当前场景</span> <strong id="scene-name">黄昏街头</strong></span>
-      <span id="scene-next">下一场景 15 分</span>
-    </div>
-
-    <div class="court-controls">
-      <div class="mode-pills" role="group" aria-label="游戏模式" data-i18n-attr="aria-label:游戏模式">
-        <button type="button" id="challenge-btn" class="mode-pill active" aria-pressed="true" data-i18n="挑战">挑战</button>
-        <button type="button" id="practice-btn" class="mode-pill" aria-pressed="false" data-i18n="练习">练习</button>
-      </div>
-      <button id="pause-btn" class="btn-small secondary">暂停</button>
-    </div>
-    <p class="hint-text" data-i18n="连点球场让球升空，停手让球落入篮筐。">连点球场让球升空，停手让球落入篮筐。</p>
-    <div class="stage-box">
-      <canvas id="court" width="640" height="420" role="img" aria-label="街头投篮球场" data-i18n-attr="aria-label:街头投篮球场"></canvas>
-      <div id="game-overlay" class="overlay" role="status" aria-live="polite">
-        <h2 data-i18n="时间到！">时间到！</h2>
-        <p id="final-summary">本局得分：0</p>
-        <p id="final-stats"></p>
-        <button id="overlay-restart" class="btn-small" data-i18n="再来一局">再来一局</button>
-        <p style="font-size:0.8rem" data-i18n="按空格或回车也可重开">按空格或回车也可重开</p>
-      </div>
-    </div>
+    <details class="rotate-guide basketball-rotate-guide">
+      <summary data-i18n="怎么横屏玩？">怎么横屏玩？</summary>
+      <p data-i18n="iPhone：在控制中心关闭「竖排方向锁定」，再横握手机。全面屏机型从右上角下滑打开控制中心。">iPhone：在控制中心关闭「竖排方向锁定」，再横握手机。全面屏机型从右上角下滑打开控制中心。</p>
+      <p data-i18n="Android：开启自动旋转，再横握手机。">Android：开启自动旋转，再横握手机。</p>
+      <p data-i18n="微信、QQ 等应用里转不了？可以用「沉浸模式」竖屏玩，也可以复制链接，用常用的手机浏览器打开（如 Safari、Chrome），再试横屏。">微信、QQ 等应用里转不了？可以用「沉浸模式」竖屏玩，也可以复制链接，用常用的手机浏览器打开（如 Safari、Chrome），再试横屏。</p>
+    </details>
 
     <div class="controls-row">
       <div class="hint-block">
@@ -2335,6 +2378,7 @@
       document.getElementById('overlay-restart').addEventListener('click', initGame);
 
       initGame();
+      GameKit.bindMobileLayout(document.getElementById('immersive-btn'), () => setPaused(true));
       GameKit.mountMoreGames('basketball', document.getElementById('more-games'));
       GameKit.showTutorial({
         id: 'basketball',

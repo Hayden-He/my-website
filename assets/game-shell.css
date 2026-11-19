@@ -362,3 +362,95 @@
   height: 46px;
   margin: 0 auto;
 }
+
+/* 切水果与投篮的手机沉浸布局 */
+.mobile-game-controls { display: contents; }
+.mobile-game-stage { width: 100%; }
+.rotate-guide,
+#immersive-btn[hidden] { display: none; }
+
+.rotate-guide summary {
+  padding: 10px 6px;
+  font-size: 0.86rem;
+  cursor: pointer;
+}
+
+body.mobile-game-immersive > .game-topbar,
+.mobile-game-immersive .more-games,
+.mobile-game-immersive .data-clear-wrap {
+  display: none;
+}
+
+.mobile-game-immersive .game-wrap {
+  max-width: none;
+  margin: 0 auto;
+  height: 100vh;
+  height: 100dvh;
+  padding: max(8px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right))
+    max(8px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 8px;
+}
+
+.mobile-game-immersive .mobile-game-controls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 6px;
+  min-width: 0;
+}
+
+.mobile-game-immersive .btn-small,
+.mobile-game-immersive .mode-pill { min-height: 40px; }
+
+.mobile-game-immersive .mobile-game-stage {
+  align-self: stretch;
+  min-height: 0;
+  min-width: 0;
+  display: grid;
+  place-items: start center;
+  container-type: size;
+}
+
+.mobile-game-immersive .overlay {
+  overflow: auto;
+  justify-content: safe center;
+  gap: 6px;
+  padding: 8px;
+}
+
+.mobile-game-immersive .overlay h2 { font-size: 1.1rem; }
+.mobile-game-immersive .overlay p { font-size: 0.8rem; }
+
+@media (orientation: landscape) {
+  .mobile-game-immersive .game-wrap {
+    grid-template-columns: minmax(0, 1fr) clamp(148px, 25vw, 208px);
+    grid-template-rows: minmax(0, 1fr);
+    padding-inline: max(24px, env(safe-area-inset-left)) max(24px, env(safe-area-inset-right));
+  }
+
+  .mobile-game-immersive .mobile-game-controls {
+    grid-column: 2;
+    grid-row: 1;
+    align-content: start;
+    align-self: stretch;
+    overflow-y: auto;
+  }
+
+  .mobile-game-immersive .hud { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; }
+  .mobile-game-immersive .hud-box { padding: 4px; }
+  .mobile-game-immersive .btn-small,
+  .mobile-game-immersive .mode-pill { padding-inline: 7px; }
+  .mobile-game-immersive .mobile-game-stage { grid-column: 1; grid-row: 1; place-items: center; }
+  .mobile-game-immersive .stage-box { width: min(100%, calc((100vh - 16px) * var(--mobile-stage-ratio))); }
+}
+
+@supports (height: 100cqh) {
+  .mobile-game-immersive .stage-box {
+    width: min(100%, calc((100cqh - 2px) * var(--mobile-stage-ratio) + 2px));
+  }
+}
+
+@media (orientation: landscape) and (max-height: 420px) {
+  .mobile-game-immersive .gk-tutorial { max-height: 100%; overflow: auto; }
+}

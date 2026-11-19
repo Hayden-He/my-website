@@ -333,10 +333,7 @@
       .legend-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 8px; }
     }
 
-    .fruit-controls { display: contents; }
-    .fruit-stage-slot { width: 100%; }
-    .rotate-guide { display: none; }
-    #immersive-btn[hidden] { display: none; }
+    .game-wrap { --mobile-stage-ratio: 640 / 460; }
 
     @media (any-pointer: coarse) and (max-width: 1100px) and (orientation: portrait) {
       .overlay[data-ready] {
@@ -347,109 +344,35 @@
       }
 
       .overlay[data-ready] .rotate-guide { display: block; flex: 0 0 auto; }
-      .rotate-guide summary {
-        padding: 10px 6px;
-        color: #bfdbfe;
-        font-size: 0.86rem;
-        cursor: pointer;
-      }
-      .rotate-guide p { margin: 4px 0; font-size: 0.8rem; }
+      .overlay .rotate-guide summary { color: #bfdbfe; }
+      .overlay .rotate-guide p { margin: 4px 0; font-size: 0.8rem; }
     }
 
-    body.fruit-immersive > .game-topbar,
-    .fruit-immersive .hint,
-    .fruit-immersive .fruit-legend,
-    .fruit-immersive .more-games,
-    .fruit-immersive .data-clear-wrap,
-    .fruit-immersive .skin-row,
-    .fruit-immersive #help-btn,
-    .fruit-immersive #restart-btn,
-    .fruit-immersive .fruit-controls[data-live] .mode-pills {
+    .mobile-game-immersive .hint,
+    .mobile-game-immersive .fruit-legend,
+    .mobile-game-immersive .skin-row,
+    .mobile-game-immersive #help-btn,
+    .mobile-game-immersive #restart-btn,
+    .mobile-game-immersive .mobile-game-controls[data-live] .mode-pills {
       display: none;
     }
 
-    .fruit-immersive .game-wrap {
-      max-width: none;
-      margin: 0 auto;
-      height: 100vh;
-      height: 100dvh;
-      padding: max(8px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right))
-        max(8px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
-      display: grid;
-      grid-template-rows: auto minmax(0, 1fr);
-      gap: 8px;
-    }
-
-    .fruit-immersive .fruit-controls {
-      display: grid;
-      gap: 6px;
-      min-width: 0;
-    }
-
-    .fruit-immersive .toolbar-row { justify-content: center; gap: 6px; }
-    .fruit-immersive .btn-group { justify-content: center; }
-    .fruit-immersive .btn-small,
-    .fruit-immersive .mode-pill { min-height: 40px; }
-
-    .fruit-immersive .fruit-stage-slot {
-      align-self: stretch;
-      min-height: 0;
-      min-width: 0;
-      display: grid;
-      place-items: start center;
-      container-type: size;
-    }
-
-    .fruit-immersive .overlay {
-      overflow: auto;
-      justify-content: safe center;
-      gap: 6px;
-      padding: 8px;
-    }
-
-    .fruit-immersive .overlay h2 { font-size: 1.1rem; }
-    .fruit-immersive .overlay p { font-size: 0.8rem; }
+    .mobile-game-immersive .toolbar-row { justify-content: center; gap: 6px; }
+    .mobile-game-immersive .btn-group { justify-content: center; }
 
     @media (orientation: landscape) {
-      .fruit-immersive .game-wrap {
-        grid-template-columns: minmax(0, 1fr) clamp(148px, 25vw, 208px);
-        grid-template-rows: minmax(0, 1fr);
-        padding-inline: max(24px, env(safe-area-inset-left)) max(24px, env(safe-area-inset-right));
-      }
-
-      .fruit-immersive .fruit-controls {
-        grid-column: 2;
-        grid-row: 1;
-        align-content: start;
-        align-self: stretch;
-        overflow-y: auto;
-      }
-
-      .fruit-immersive .hud { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; }
-      .fruit-immersive .hud-box { padding: 4px; }
-      .fruit-immersive .hud-box:last-child { grid-column: 1 / -1; }
-      .fruit-immersive .fever-bar-box { padding-inline: 5px; gap: 4px; }
-      .fruit-immersive .btn-small,
-      .fruit-immersive .mode-pill { padding-inline: 7px; }
-      .fruit-immersive #immersive-btn { flex-basis: 100%; }
-      .fruit-immersive .fruit-stage-slot { grid-column: 1; grid-row: 1; place-items: center; }
-      .fruit-immersive .stage-box { width: min(100%, calc((100vh - 16px) * 640 / 460)); }
-    }
-
-    @supports (height: 100cqh) {
-      .fruit-immersive .stage-box {
-        width: min(100%, calc((100cqh - 2px) * 640 / 460 + 2px));
-      }
+      .mobile-game-immersive .hud-box:last-child { grid-column: 1 / -1; }
+      .mobile-game-immersive .fever-bar-box { padding-inline: 5px; gap: 4px; }
+      .mobile-game-immersive #immersive-btn { flex-basis: 100%; }
     }
 
     @media (orientation: landscape) and (max-height: 420px) {
-      .fruit-immersive .toolbar { order: -1; }
-      .fruit-immersive .gk-tutorial { max-height: 100%; overflow: auto; }
+      .mobile-game-immersive .toolbar { order: -1; }
     }
 
     @media (orientation: landscape) and (max-height: 300px) {
-      .fruit-immersive .fruit-controls[data-live] .hud-box:last-child,
-      .fruit-immersive .fruit-controls[data-live] #sound-btn { display: none; }
+      .mobile-game-immersive .mobile-game-controls[data-live] .hud-box:last-child,
+      .mobile-game-immersive .mobile-game-controls[data-live] #sound-btn { display: none; }
     }
   </style>
 </head>
@@ -732,7 +655,7 @@
   </header>
 
   <main class="game-wrap">
-    <div class="fruit-controls">
+    <div class="mobile-game-controls">
       <div class="hud">
         <div class="hud-box">
           <div class="hud-label" data-i18n="当前得分">当前得分</div>
@@ -775,7 +698,7 @@
       </div>
     </div>
 
-    <div class="fruit-stage-slot">
+    <div class="mobile-game-stage">
       <div class="stage-box">
         <div id="buff-bar" class="buff-bar" aria-hidden="true"></div>
         <canvas id="canvas" width="640" height="460" aria-label="极速切水果画布" data-i18n-attr="aria-label:极速切水果画布"></canvas>
@@ -872,12 +795,7 @@
       const modeClassicBtn = document.getElementById('mode-classic');
       const modeArcadeBtn = document.getElementById('mode-arcade');
       const skinBtns = Array.from(document.querySelectorAll('.skin-pill'));
-      const controls = document.querySelector('.fruit-controls');
-      const immersiveBtn = document.getElementById('immersive-btn');
-      const mobileLayout = matchMedia('(any-pointer: coarse) and (max-width: 1100px)');
-      const landscapeLayout = matchMedia('(orientation: landscape)');
-      let immersivePortrait = false;
-      let immersiveLandscape = true;
+      const controls = document.querySelector('.mobile-game-controls');
 
       function readStored(key, fallback) {
         try {
@@ -3663,31 +3581,6 @@
         pauseGame();
       }
 
-      function syncImmersiveLayout() {
-        const immersive = mobileLayout.matches && (landscapeLayout.matches ? immersiveLandscape : immersivePortrait);
-        document.body.classList.toggle('fruit-immersive', immersive);
-        immersiveBtn.hidden = !mobileLayout.matches;
-        const label = immersive ? '退出沉浸' : '沉浸模式';
-        immersiveBtn.dataset.i18n = label;
-        immersiveBtn.textContent = t(label);
-      }
-
-      immersiveBtn.addEventListener('click', () => {
-        if (landscapeLayout.matches) immersiveLandscape = !immersiveLandscape;
-        else immersivePortrait = !immersivePortrait;
-        pauseForLayoutChange();
-        syncImmersiveLayout();
-      });
-
-      landscapeLayout.addEventListener('change', () => {
-        if (mobileLayout.matches || document.body.classList.contains('fruit-immersive')) pauseForLayoutChange();
-        syncImmersiveLayout();
-      });
-      mobileLayout.addEventListener('change', () => {
-        if (document.body.classList.contains('fruit-immersive')) pauseForLayoutChange();
-        syncImmersiveLayout();
-      });
-
       overlayBtn.addEventListener('click', () => {
         if (state === 'paused') resumeGame();
         else startGame();
@@ -3760,7 +3653,6 @@
       document.addEventListener('keydown', (event) => {
         if (GameKit.shouldIgnoreGameKey(event, { ignoreOnControl: true })) return;
         if (GameKit.isTutorialOpen()) return;
-        if (event.target instanceof Element && event.target.closest('.rotate-guide summary')) return;
         if (event.code === 'Space' || event.code === 'Enter') {
           event.preventDefault();
           if (state === 'ready' || state === 'over') startGame();
@@ -3788,7 +3680,7 @@
 
       syncModeButtons();
       resetState('ready');
-      syncImmersiveLayout();
+      GameKit.bindMobileLayout(document.getElementById('immersive-btn'), pauseForLayoutChange);
       GameKit.mountMoreGames('fruit', document.getElementById('more-games'));
       openTutorial(false);
       requestAnimationFrame(frame);

@@ -95,13 +95,48 @@
     if (event.code !== 'Space' && event.code !== 'Enter') return false;
     const target = event.target;
     return target instanceof Element &&
-      !!target.closest('button, a, input, textarea, select, [contenteditable="true"]');
+      !!target.closest('button, a, input, textarea, select, summary, [contenteditable="true"]');
   }
 
   function onHidden(callback) {
     document.addEventListener('visibilitychange', () => {
       if (document.hidden) callback();
     });
+  }
+
+  function bindMobileLayout(button, onLayoutChange) {
+    const mobile = matchMedia('(any-pointer: coarse) and (max-width: 1100px)');
+    const landscape = matchMedia('(orientation: landscape)');
+    let immersivePortrait = false;
+    let immersiveLandscape = true;
+
+    function render() {
+      const immersive = mobile.matches && (landscape.matches ? immersiveLandscape : immersivePortrait);
+      document.body.classList.toggle('mobile-game-immersive', immersive);
+      button.hidden = !mobile.matches;
+      const label = immersive ? '退出沉浸' : '沉浸模式';
+      button.dataset.i18n = label;
+      button.textContent = t(label);
+    }
+
+    button.addEventListener('click', () => {
+      if (landscape.matches) immersiveLandscape = !immersiveLandscape;
+      else immersivePortrait = !immersivePortrait;
+      onLayoutChange();
+      render();
+    });
+
+    landscape.addEventListener('change', () => {
+      if (mobile.matches || document.body.classList.contains('mobile-game-immersive')) onLayoutChange();
+      render();
+    });
+
+    mobile.addEventListener('change', () => {
+      if (document.body.classList.contains('mobile-game-immersive')) onLayoutChange();
+      render();
+    });
+
+    render();
   }
 
   function bindSwipe(element, { onDirection, onTap }) {
@@ -346,6 +381,7 @@
     bindSoundButton,
     shouldIgnoreGameKey,
     onHidden,
+    bindMobileLayout,
     bindSwipe,
     mountMoreGames,
     showTutorial,
