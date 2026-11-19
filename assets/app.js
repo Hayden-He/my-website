@@ -153,15 +153,30 @@
     );
     card.appendChild(top);
 
-    card.appendChild(createEl('p', 'game-desc', t(game.description)));
+    card.appendChild(createEl('p', 'game-desc'));
+    const btn = createEl('a', 'play-btn');
+    btn.href = game.url;
+    card.appendChild(btn);
 
+    syncGameCard(card, game);
+    return card;
+  }
+
+  // 把文案、最高分、续玩入口写入卡片。构建产物里已有静态卡片时就地更新，避免重建图片造成闪动。
+  function syncGameCard(card, game) {
+    card.querySelector('.game-title').textContent = t(game.title);
+    card.querySelector('.game-category-pill').textContent = t(game.categoryName);
+    card.querySelector('.game-desc').textContent = t(game.description);
+
+    card.querySelector('.game-meta')?.remove();
+    const btn = card.querySelector('.play-btn');
     const best = getBestScore(game.storageKey);
     if (best !== null) {
       const prefix = t(game.bestPrefix !== undefined ? game.bestPrefix : '最高分: ');
       const suffix = game.bestSuffix ? t(game.bestSuffix) : '';
       const meta = createEl('div', 'game-meta');
       meta.appendChild(createEl('span', 'best-score', prefix + best + suffix));
-      card.appendChild(meta);
+      card.insertBefore(meta, btn);
     }
 
     const resume = game.id === '2048' ? get2048Resume() : null;
@@ -172,18 +187,18 @@
         ? t('继续上局 · {board} {score} 分 →', { board, score: resume.score })
         : t('继续上局 · {board} →', { board });
     }
-    const btn = createEl('a', 'play-btn', btnLabel);
-    btn.href = game.url;
+    btn.textContent = btnLabel;
     btn.setAttribute('aria-label', t('{game}：{action}', { game: t(game.title), action: btnLabel }));
     if (resume) btn.title = t('继续上次未完成的棋局');
-    card.appendChild(btn);
+    else btn.removeAttribute('title');
 
-    card.addEventListener('click', (e) => {
-      if (e.target.closest('a, button')) return;
-      location.href = game.url;
-    });
-
-    return card;
+    if (!card.dataset.bound) {
+      card.dataset.bound = '1';
+      card.addEventListener('click', (e) => {
+        if (e.target.closest('a, button')) return;
+        location.href = game.url;
+      });
+    }
   }
 
   function renderGamePreview(game) {
@@ -223,10 +238,18 @@
 
     grid.classList.toggle('cols-2', games.length === 2 || games.length === 4);
     grid.classList.toggle('cols-4', games.length === 8);
-    grid.innerHTML = '';
-    games.forEach((game) => {
-      grid.appendChild(renderGameCard(game));
-    });
+    // 已有与清单一致的静态卡片时就地更新；否则（如直接打开源码页面）整块重建
+    const existing = Array.from(grid.children).filter((el) => el.classList.contains('game-card'));
+    const reusable = existing.length === games.length && existing.every((card, i) =>
+      card.querySelector('a.play-btn')?.getAttribute('href') === games[i].url);
+    if (reusable) {
+      games.forEach((game, i) => syncGameCard(existing[i], game));
+    } else {
+      grid.innerHTML = '';
+      games.forEach((game) => {
+        grid.appendChild(renderGameCard(game));
+      });
+    }
   }
 
   function renderFooter(activeKey) {
