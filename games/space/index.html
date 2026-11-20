@@ -906,6 +906,7 @@
       const BLAST_DAMAGE = 6;
       const MOTHERSHIP_DEPLOY_SECONDS = 0.48;
       const MOTHERSHIP_DODGE_SECONDS = 0.42;
+      const MOTHERSHIP_LASER_LOCK_SECONDS = 0.43;
       const PRISM_BEAM_WIDTH = 13;
       const PRISM_MIRROR_BEAM_WIDTH = 9;
       const PRISM_REFLECT_WARNING = 0.62;
@@ -1572,8 +1573,15 @@
               phaseLabel = t('{source} · {warning}', { source: attack.fromMirror ? t('镜像') : t('本体'), warning: phaseLabel });
             }
           } else if (boss.maneuver === 'mirror') phaseLabel = t('镜像交错火力');
-          else if (boss.laserState === 'telegraph') phaseLabel = t('双轨激光预警');
-          else if (boss.maneuver === 'dash-warn') {
+          else if (boss.laserState === 'telegraph') {
+            phaseLabel = boss.laserTimer > MOTHERSHIP_LASER_LOCK_SECONDS
+              ? t('双轨激光 · 正在瞄准')
+              : t('激光锁定 · 离开亮带');
+            cue = 'dodge';
+          } else if (boss.laserState === 'fire') {
+            phaseLabel = t('双轨激光 · 避开光束');
+            cue = 'dodge';
+          } else if (boss.maneuver === 'dash-warn') {
             phaseLabel = boss.dashPass === 2 ? t('折返突进 · 横向躲避') : t('突进预警 · 横向躲避');
             cue = 'dodge';
           }
@@ -1584,11 +1592,17 @@
               phaseLabel = player.empCharges > 0 ? t('护卫挡弹 · 脉冲可破') : t('护卫挡弹 · 先击破护卫');
               cue = 'guard';
             } else {
-              phaseLabel = boss.kind === 'crimson' ? t('反击窗口 · 瞄准本体') : t('核心暴露');
+              if (boss.kind === 'crimson') phaseLabel = t('反击窗口 · 瞄准本体');
+              else if (boss.kind === 'mothership') phaseLabel = t('核心暴露 · 攻击母舰');
+              else phaseLabel = t('核心暴露');
               cue = 'attack';
             }
           } else if (boss.supports?.length) {
-            phaseLabel = boss.supportJam > 0 ? t('供盾中断') : t('供盾护卫 {count}/2', { count: boss.supports.length });
+            const jammed = boss.supportJam > 0;
+            phaseLabel = jammed
+              ? t('供盾中断 · 攻击母舰')
+              : t('护卫供盾 {count}/2 · 先打护卫', { count: boss.supports.length });
+            cue = jammed ? 'attack' : 'guard';
           } else if (bossIntroHint && boss.y < boss.targetY) {
             phaseLabel = bossIntroHint;
           }
@@ -2596,7 +2610,7 @@
       function updateMothershipLaser(dt) {
         boss.laserTimer -= dt;
         if (boss.laserState === 'telegraph') {
-          if (boss.laserTimer > 0.43) {
+          if (boss.laserTimer > MOTHERSHIP_LASER_LOCK_SECONDS) {
             boss.x += (boss.laserTargetX - boss.x) * Math.min(1, dt * 9);
             boss.lasers = computeBossLasers(boss);
           }
@@ -4203,26 +4217,33 @@
           ctx.restore();
         }
 
-        // 紫曜母舰的固定双轨激光。
+        // 虚线随炮口瞄准，锁定后用实线标出两条光束的边界。
         if (boss.laserState === 'telegraph') {
+          const locked = boss.laserTimer <= MOTHERSHIP_LASER_LOCK_SECONDS;
           const blink = 0.48 + Math.sin(tNow * 0.038) * 0.36;
           for (const beam of lasers) {
             ctx.save();
             ctx.translate(beam.x, beam.y);
             ctx.beginPath();
             ctx.arc(0, 0, 5 + blink * 4, 0, Math.PI * 2);
-            ctx.fillStyle = `rgba(${beamPalette.warn}, ${(0.45 + blink * 0.35).toFixed(2)})`;
+            ctx.fillStyle = locked ? '#fed7aa' : `rgba(${beamPalette.warn}, ${(0.45 + blink * 0.35).toFixed(2)})`;
             ctx.fill();
             ctx.rotate(beam.angle);
-            ctx.fillStyle = 'rgba(' + beamPalette.warn + ', 0.16)';
+            ctx.fillStyle = locked ? 'rgba(251, 146, 60, 0.26)' : 'rgba(' + beamPalette.warn + ', 0.12)';
             ctx.fillRect(0, -boss.laserWidth, BOSS_BEAM_LENGTH, boss.laserWidth * 2);
-            ctx.setLineDash([8, 6]);
-            ctx.strokeStyle = `rgba(${beamPalette.warn}, ${blink.toFixed(2)})`;
-            ctx.lineWidth = 2.6;
-            ctx.beginPath();
-            ctx.moveTo(0, 0);
-            ctx.lineTo(BOSS_BEAM_LENGTH, 0);
-            ctx.stroke();
+            if (locked) {
+              ctx.strokeStyle = '#fed7aa';
+              ctx.lineWidth = 2.2;
+              ctx.strokeRect(0, -boss.laserWidth, BOSS_BEAM_LENGTH, boss.laserWidth * 2);
+            } else {
+              ctx.setLineDash([8, 6]);
+              ctx.strokeStyle = `rgba(${beamPalette.warn}, ${(0.28 + blink * 0.65).toFixed(2)})`;
+              ctx.lineWidth = 2;
+              ctx.beginPath();
+              ctx.moveTo(0, 0);
+              ctx.lineTo(BOSS_BEAM_LENGTH, 0);
+              ctx.stroke();
+            }
             ctx.restore();
           }
         } else if (boss.laserState === 'fire') {
