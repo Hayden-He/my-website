@@ -27,3 +27,32 @@ export function sitePages(config) {
     ...games.map(({ id, url, title }) => ({ file: 'games/' + id + '/index.html', url, title })),
   ];
 }
+
+export function previewPages(args) {
+  if (args.length === 0) return [];
+  const [flag, id] = args;
+  if (args.length !== 2 || flag !== '--preview-game' || !/^[a-z0-9-]+$/.test(id || '')) {
+    throw new Error('用法：node scripts/build-site.mjs [--preview-game <id>]');
+  }
+  const file = `prototypes/${id}/index.html`;
+  if (!fs.existsSync(path.join(root, file))) throw new Error('原型页面不存在：' + file);
+  return [{ file }];
+}
+
+export function assetFiles(directory) {
+  return fs.readdirSync(path.join(root, directory), { withFileTypes: true }).flatMap((entry) => {
+    if (entry.name.startsWith('.')) return [];
+    const relative = path.posix.join(directory, entry.name);
+    if (entry.isDirectory()) return assetFiles(relative);
+    return entry.isFile() ? [relative] : [];
+  });
+}
+
+export function pageModuleDirectory(file) {
+  return path.posix.join(path.posix.dirname(file), 'modules');
+}
+
+export function pageModuleFiles(file) {
+  const directory = pageModuleDirectory(file);
+  return fs.existsSync(path.join(root, directory)) ? assetFiles(directory).sort() : [];
+}

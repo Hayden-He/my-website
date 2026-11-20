@@ -2,25 +2,17 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
-import { root, readSiteConfig, sitePages } from './site-config.mjs';
+import { root, readSiteConfig, sitePages, previewPages, assetFiles, pageModuleDirectory, pageModuleFiles } from './site-config.mjs';
 
 const output = path.join(root, 'dist');
+const args = process.argv.slice(2);
+const previews = previewPages(args);
 
-for (const script of ['check-site.mjs', 'check-i18n.mjs']) {
-  execFileSync(process.execPath, [path.join(root, 'scripts', script)], { stdio: 'inherit' });
-}
+execFileSync(process.execPath, [path.join(root, 'scripts/check-site.mjs')], { stdio: 'inherit' });
+execFileSync(process.execPath, [path.join(root, 'scripts/check-i18n.mjs'), ...args], { stdio: 'inherit' });
 
 const config = readSiteConfig();
-const pages = sitePages(config).map(({ file }) => file);
-
-function assetFiles(directory) {
-  return fs.readdirSync(path.join(root, directory), { withFileTypes: true }).flatMap((entry) => {
-    if (entry.name.startsWith('.')) return [];
-    const relative = path.posix.join(directory, entry.name);
-    if (entry.isDirectory()) return assetFiles(relative);
-    return entry.isFile() ? [relative] : [];
-  });
-}
+const pages = [...sitePages(config), ...previews].map(({ file }) => file);
 
 const files = ['_headers', 'robots.txt', 'sitemap.xml', 'site.webmanifest', ...assetFiles('assets').sort()];
 const version = createHash('sha256');
@@ -31,6 +23,20 @@ for (const file of [...files, ...pages]) {
   const bytes = fs.readFileSync(path.join(root, file));
   content.set(file, bytes);
   version.update(file).update('\0').update(bytes).update('\0');
+}
+const modulePaths = new Map();
+for (const page of pages) {
+  const modules = pageModuleFiles(page).map((file) => [file, fs.readFileSync(path.join(root, file))]);
+  if (!modules.length) continue;
+  const hash = createHash('sha256');
+  for (const [file, bytes] of modules) {
+    hash.update(file).update('\0').update(bytes).update('\0');
+    version.update(file).update('\0').update(bytes).update('\0');
+  }
+  // 相对 import 与 CSS 资源路径需保留在同一版本目录内。
+  const directory = 'assets/v/' + hash.digest('hex').slice(0, 16);
+  modulePaths.set(page, directory + '/' + pageModuleDirectory(page));
+  for (const [file, bytes] of modules) content.set(directory + '/' + file, bytes);
 }
 const buildId = version.digest('hex').slice(0, 16);
 
@@ -173,6 +179,12 @@ for (const file of pages) {
   const legacyVersion = html.match(/\/assets\/style\.css\?v=(\d{11})/)?.[1];
   html = html.replace(/\b(src|href)="(\/assets\/[^"?]+)(?:\?v=\d+)?"(?=\s|>)/g,
     (_, attribute, asset) => attribute + '="' + versionedAsset(asset) + '"');
+  html = html.replace(/\b(src|href)="\.\/modules\/([^"?#]+)([?#][^"]*)?"(?=\s|>)/g,
+    (_, attribute, fileName, suffix = '') => {
+      const relative = modulePaths.get(file) + '/' + fileName;
+      if (!content.has(relative)) throw new Error(file + '：模块资源不存在 ./modules/' + fileName);
+      return attribute + '="/' + relative + suffix + '"';
+    });
   html = html.replace('</head>', [
     '  <meta name="site-build" content="' + buildId + '" />',
     '  <!-- 旧版检查更新脚本兼容：/assets/style.css?v=' + legacyVersion + ' -->',

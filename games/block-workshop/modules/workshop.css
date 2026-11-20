@@ -1,0 +1,215 @@
+.workshop {
+  height: 100vh;
+  height: 100dvh;
+  min-height: 350px;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  padding: max(6px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right))
+    max(8px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
+  gap: 8px;
+  background: #14263b;
+  color: #f1f5f9;
+}
+
+.workshop-header {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+}
+
+.workshop-header h1 { display: flex; align-items: center; gap: 6px; font-size: 1.2rem; }
+.workshop-header h1 svg { width: 24px; height: 24px; }
+.workshop-header a, .workshop-header .lang-btn {
+  width: max-content;
+  min-height: 44px;
+  display: grid;
+  place-items: center;
+  padding-inline: 8px;
+  color: #e1ecfb;
+}
+.workshop-header .lang-btn { justify-self: end; background: #223b55; }
+
+.workshop-stage {
+  min-height: 0;
+  min-width: 0;
+  position: relative;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid #94a9c1;
+  border-radius: 14px;
+  background: #c4d8e8;
+}
+
+.workshop-stage canvas {
+  display: block;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  cursor: crosshair;
+}
+.workshop-stage [hidden] { display: none; }
+#graphics-error { padding: 16px; color: #14263b; text-align: center; font-weight: 600; }
+
+.workshop-panel { display: grid; gap: 5px; }
+.workshop-tools {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+}
+.workshop-group { display: flex; align-items: center; gap: 4px; }
+.workshop-tools button {
+  min-height: 44px;
+  padding: 4px 8px;
+  border: 1px solid #536c86;
+  border-radius: 8px;
+  background: #223b55;
+  color: #f1f5f9;
+  font-size: 0.88rem;
+  font-weight: 650;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.workshop-tools button[aria-pressed="true"] { background: #dcecf9; color: #14263b; }
+.workshop-tools button:focus-visible, .workshop-header a:focus-visible {
+  outline: 2px solid #99f6e4;
+  outline-offset: 2px;
+}
+.workshop-tools button:is(:disabled, [aria-disabled="true"]) { opacity: 0.5; cursor: default; }
+.workshop-materials button { min-width: 44px; display: grid; place-items: center; }
+.workshop-materials button::before {
+  content: '';
+  width: 18px;
+  height: 18px;
+  border: 1px solid #102338;
+  border-radius: 4px;
+  background: var(--material-color);
+}
+.workshop-status,
+.workshop-blueprint { min-height: 1.4em; text-align: center; font-size: 0.88rem; color: #dbe7f4; }
+.workshop-blueprint { color: #f5dfa0; font-weight: 650; }
+.workshop-blueprint[data-complete] { color: #99f6ca; }
+
+.workshop-actions {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.workshop-actions button, .workshop-project button {
+  min-height: 44px;
+  padding: 4px 8px;
+  border: 1px solid #536c86;
+  border-radius: 8px;
+  background: #223b55;
+  color: #f1f5f9;
+  cursor: pointer;
+}
+
+.workshop-actions button[aria-pressed="true"] { background: #dcecf9; color: #14263b; }
+.workshop [hidden] { display: none; }
+.workshop-materials { display: grid; grid-template-columns: repeat(8, minmax(44px, 1fr)); }
+.workshop-materials button { padding: 3px 5px; font-size: 0.68rem; }
+@media (max-width: 440px) {
+  .workshop-materials { order: 1; grid-template-columns: repeat(4, minmax(44px, 1fr)); }
+}
+.workshop-dialog {
+  position: fixed;
+  margin: auto;
+  width: min(440px, calc(100% - 24px));
+  max-height: 85dvh;
+  padding: 16px;
+  border: 1px solid #536c86;
+  border-radius: 14px;
+  background: #14263b;
+  color: #f1f5f9;
+  overflow: auto;
+}
+
+.workshop-dialog::backdrop { background: #08111caa; }
+.workshop-dialog h2 { margin-bottom: 10px; font-size: 1.15rem; }
+.workshop-dialog .workshop-actions { margin-top: 12px; }
+.workshop-dialog input { display: block; width: 100%; min-height: 44px; padding: 6px; font: inherit; }
+.workshop-project {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding-block: 6px;
+  border-bottom: 1px solid #536c86;
+}
+
+.workshop-project span { flex: 1 1 110px; overflow-wrap: anywhere; }
+#workshop-save-status { min-height: 1.35em; text-align: center; font-size: 0.85rem; overflow-wrap: anywhere; }
+#workshop-name-error { color: #ffd997; }
+
+.mobile-game-immersive .workshop { gap: 4px; }
+.mobile-game-immersive .workshop .workshop-header,
+.mobile-game-immersive .workshop #workshop-save-status,
+.mobile-game-immersive .workshop [data-turn],
+.mobile-game-immersive .workshop .workshop-actions > button:not(#workshop-immersive) { display: none; }
+.mobile-game-immersive .workshop .workshop-stage { grid-row: 1 / 3; }
+.mobile-game-immersive .workshop .workshop-actions:has(#workshop-immersive) {
+  position: absolute;
+  z-index: 1;
+  top: max(10px, env(safe-area-inset-top));
+  right: max(16px, env(safe-area-inset-right));
+}
+
+.workshop-keys { display: none; text-align: center; font-size: 0.85rem; color: #a9bfd5; }
+.workshop:has(canvas:focus-visible) .workshop-keys { display: block; }
+.workshop-stage:has(canvas:focus-visible) { outline: 2px solid #99f6e4; outline-offset: -3px; }
+
+.mobile-game-immersive #more-games { display: none; }
+
+.workshop-panel .workshop-actions button { font-size: 0.78rem; }
+#workshop-save-status:empty { display: none; }
+
+@media (max-width: 440px) {
+  .workshop-tools { column-gap: 6px; }
+  .workshop-tools .workshop-group:not(.workshop-materials) button { padding-inline: 6px; font-size: 0.75rem; }
+  .workshop-materials { flex-basis: 100%; max-width: 260px; }
+}
+
+.workshop-gesture-tip {
+  position: absolute;
+  z-index: 1;
+  inset-inline-start: 8px;
+  inset-block-end: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 4px 12px;
+  max-width: calc(100% - 16px);
+  padding: 8px 10px;
+  border: 1px solid #879fb4;
+  border-radius: 10px;
+  background: #15283deb;
+  color: #f7fbff;
+  font-size: 0.83rem;
+}
+.workshop-gesture-tip ul { margin: 0; padding: 0; list-style: none; }
+.workshop-gesture-tip li + li { margin-top: 2px; }
+.workshop-gesture-tip button {
+  min-height: 44px;
+  padding-inline: 9px;
+  border: 1px solid #7990a8;
+  border-radius: 7px;
+  background: #dcecf9;
+  color: #14263b;
+  font: inherit;
+  cursor: pointer;
+}
+.workshop[data-tutorial] :is(#workshop-works, #workshop-save, #workshop-save-status) { display: none; }
+.mobile-game-immersive .workshop[data-tutorial] .workshop-actions > #workshop-help { display: inline-block; }
+.workshop-dialog button:disabled { opacity: .5; cursor: default; }
+
+#workshop-save-note {
+  margin-top: 8px;
+  color: #c6d7e7;
+  font-size: 0.85rem;
+}

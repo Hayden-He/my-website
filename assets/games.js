@@ -126,5 +126,16 @@ window.SITE_CONFIG = {
       bestSuffix: ' 次',
       tags: ['记忆配对', '双尺寸'],
     },
+    {
+      id: 'block-workshop',
+      title: '方块工坊',
+      icon: 'block-workshop',
+      preview: '/assets/previews/block-workshop.webp',
+      category: 'puzzle',
+      categoryName: '益智休闲',
+      description: '用不同材质的方块自由搭建 3D 作品，保存后随时回来继续。',
+      url: '/games/block-workshop/',
+      tags: ['自由搭建', '本地作品'],
+    },
   ],
 };

@@ -17,7 +17,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
-import { root, readSiteConfig, sitePages } from './site-config.mjs';
+import { root, readSiteConfig, sitePages, previewPages, pageModuleDirectory, pageModuleFiles } from './site-config.mjs';
 
 function read(relativePath) {
   try {
@@ -61,11 +61,15 @@ function loadEnglishDictionary() {
 }
 
 const config = readSiteConfig();
-const pageFiles = sitePages(config).map(({ file }) => file);
+const pageFiles = [...sitePages(config), ...previewPages(process.argv.slice(2))].map(({ file }) => file);
 
-const scriptFiles = fs.readdirSync(path.join(root, 'assets'))
+const sharedScripts = fs.readdirSync(path.join(root, 'assets'))
   .filter((name) => name.endsWith('.js') && name !== 'i18n.js')
   .map((name) => 'assets/' + name);
+const gameScripts = pageFiles.flatMap((file) => {
+  const vendor = pageModuleDirectory(file) + '/vendor/';
+  return pageModuleFiles(file).filter((module) => /\.m?js$/.test(module) && !module.startsWith(vendor));
+});
 
 const english = loadEnglishDictionary();
 const englishKeys = new Set(Object.keys(english));
@@ -83,7 +87,7 @@ function addHtmlKey(key) {
     ({ amp: '&', quot: '"', lt: '<', gt: '>' })[entity]));
 }
 
-for (const file of [...pageFiles, ...scriptFiles]) {
+for (const file of [...pageFiles, ...sharedScripts, ...gameScripts]) {
   const source = read(file);
   if (!source) continue;
 

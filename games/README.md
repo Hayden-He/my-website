@@ -2,8 +2,8 @@
 
 ## 新增游戏
 
-1. 在 `assets/games.js` 登记游戏。沿用现有条目的字段，给出小写短横线 `id`、标题、图标、分类、简介、`/games/<id>/` 地址和独立的纪录键。分类名称须与分类定义一致。大厅、分类页与游戏间推荐会使用这份清单。
-2. 运行 `node scripts/new-game.mjs <id>`。脚本复制 `games/_template/index.html`，填入游戏资料、分类链接和纪录键，再同步站点元数据。已有同名页面时会拒绝覆盖。
+1. 在 `assets/games.js` 登记游戏。沿用现有条目的字段，给出小写短横线 `id`、标题、图标、分类、简介和 `/games/<id>/` 地址。有最高分的游戏填写独立的 `storageKey`。分类名称须与分类定义一致。大厅、分类页与游戏间推荐会使用这份清单。
+2. 计分游戏可运行 `node scripts/new-game.mjs <id>`。脚本复制 `games/_template/index.html`，填入游戏资料、分类链接和纪录键，再同步站点元数据。已有同名页面时会拒绝覆盖。
 3. 在新页面实现棋盘、规则和操作，补齐 `assets/icons.svg` 中的 `game-<icon>` 图标，以及 `assets/i18n.js` 中的英文。新增游戏后，按需更新 `scripts/og-image.html` 并用 `node scripts/make-og-image.mjs` 导出共享分享图，该脚本需要本机 Chrome。
 4. 运行 `node scripts/sync-site.mjs /games/<id>/` 更新该页修改日期、SEO、站点地图和内联图标。运行 `node scripts/build-site.mjs`，在 320px 窄屏、键盘和触屏上试玩。
 
@@ -23,9 +23,15 @@
 - `site_lang` 保存语言选择，清除本地数据时保留。
 - 2048 仅在存档有效、已有操作且棋盘仍可走时显示「继续上局」。有效移动后即使是 0 分也会续玩。
 
+## 游戏模块与本地原型
+
+- 游戏页可通过 `./modules/` 引用同目录下的脚本、样式或资源。构建为整个模块目录生成同一个指纹，并保留目录结构。双语校验会扫描模块内的 JS 和 MJS，第三方代码放在 `modules/vendor/`。
+- 原型可运行 `node scripts/build-site.mjs --preview-game <id>` 本地构建，再通过静态 HTTP 服务访问输出中的 `/prototypes/<id>/`。
+- 方块工坊使用 npm 的 `three@0.187.0`，页面载入官方 WebGL 模块及其 core 模块。第三方许可放在 `games/block-workshop/modules/vendor/LICENSE`。
+
 ## Cloudflare Pages
 
 - 构建命令为 `node scripts/build-site.mjs`，输出目录为 `dist`。构建先执行结构和双语校验，产物只包含正式页面、站点资源和响应头配置。
-- 分类链接与 canonical 使用 `/categories/<id>`。构建保留 `categories/<id>.html` 文件，由 Pages 处理无扩展名路由。首页、两个分类与八款游戏共十一个可索引页面，404 和模板不进站点地图。
+- 分类链接与 canonical 使用 `/categories/<id>`。构建保留 `categories/<id>.html` 文件，由 Pages 处理无扩展名路由。首页、两个分类与九款游戏共十二个可索引页面，404 和模板不进站点地图。
 - 用 `node scripts/sync-site.mjs [已更新页面的 URL 路径…]` 从游戏清单同步 canonical、分享标签、站点地图及内联图标。参数仅用于更新指定页面的 `lastmod`。
 - 构建按资源内容生成带指纹的 URL，并写入供「检查更新」使用的构建编号。固定 URL 的分享图可重新验证。`node scripts/bump-assets.mjs` 保留给仍依赖旧版查询参数的页面兼容使用。

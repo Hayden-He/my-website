@@ -185,11 +185,13 @@ for (const game of games) {
   const expectedUrl = `/games/${game.id}/`;
   if (game.url !== expectedUrl) fail(`游戏 ${label} 的 url 应为 ${expectedUrl}，实际为 ${game.url}`);
 
-  if (!game.storageKey || !game.storageKey.startsWith('game_best_')) {
-    fail(`游戏 ${label} 的 storageKey 应以 game_best_ 开头`);
-  } else {
-    if (storageKeys.has(game.storageKey)) fail(`storageKey 重复：${game.storageKey}`);
-    storageKeys.add(game.storageKey);
+  if (game.storageKey !== undefined) {
+    if (typeof game.storageKey !== 'string' || !game.storageKey.startsWith('game_best_')) {
+      fail(`游戏 ${label} 的 storageKey 应以 game_best_ 开头`);
+    } else {
+      if (storageKeys.has(game.storageKey)) fail(`storageKey 重复：${game.storageKey}`);
+      storageKeys.add(game.storageKey);
+    }
   }
 
   const pagePath = `games/${game.id}/index.html`;
