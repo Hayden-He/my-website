@@ -339,6 +339,7 @@
     '重开本局': 'Restart this game',
     '切换模式': 'Switch mode',
     '切换模式会清除当前棋局进度。': 'Switching modes will reset the current board.',
+    '切换模式会结束当前飞行。': 'Switching modes will end your current flight.',
     '切换': 'Switch',
     '重试': 'Retry',
     '当前进度将被清除，确定重开吗？': 'Current progress will be lost. Restart?',
@@ -375,6 +376,7 @@
 
     // ---- 极速切水果 ----
     '沉浸模式': 'Focus mode',
+    '战机设置与图鉴': 'Flight settings & guide',
     '退出沉浸': 'Exit focus mode',
     '怎么横屏玩？': 'How do I play in landscape?',
     'iPhone：在控制中心关闭「竖排方向锁定」，再横握手机。全面屏机型从右上角下滑打开控制中心。':
@@ -489,10 +491,10 @@
     '道具与机制说明': 'Power-ups & Mechanics',
     '火力升级：Lv.5 中央重弹可贯穿敌机': 'Weapon Up: Lv.5 center rounds pierce enemies',
     '能量护盾：抵消一次伤害': 'Shield: blocks one hit',
-    '超载暴走：5.5秒双倍射速': 'Overdrive: 2× fire rate for 5.5s',
+    '超载暴走：5.5 秒免伤，主炮射速翻倍': 'Overdrive: immune to damage and 2× cannon fire rate for 5.5s',
     '护甲修复：恢复1点护甲': 'Repair: restore +1 armor',
     '脉冲补给：清弹冲击波+1': 'EMP Supply: +1 blast charge',
-    '爆破弹：拾取后自动夹射，命中造成范围伤害': 'Blast Rounds: auto-fire after pickup and deal area damage on impact',
+    '爆破弹：对准敌机时自动发射，命中造成范围伤害': 'Blast Rounds: fire automatically when lined up with an enemy and deal area damage on impact',
     'Boss预警：离开激光或突进范围': 'Boss Warning: clear the laser or charge path',
     '裁决者与棱镜：趁反击窗口打出全额伤害': 'Arbiter & Prism: deal full damage during counterattack windows',
     '镜面护甲：侧移躲反弹，或用脉冲打断': 'Mirror Armor: dodge reflected shots or disrupt with EMP',
@@ -524,14 +526,16 @@
     '晶弹齐射预警': 'Crystal Volley Warning',
     '双轨激光预警': 'Twin Laser Warning',
     '折返预警': 'Return Sweep',
-    '突进预警': 'Charge Warning',
-    '第二次突进预警': 'Second Charge',
+    '突进预警 · 横向躲避': 'Charge incoming · Dodge sideways',
+    '折返突进 · 横向躲避': 'Return charge · Dodge sideways',
     '侧翼散射预警': 'Spread Warning',
     '部署供盾护卫': 'Deploying Escorts',
     '供盾护卫 {count}/2': 'Shield Escorts {count}/2',
     '供盾中断': 'Shield Disrupted',
-    '护卫挡弹': 'Guard Blocking',
-    '反击窗口': 'Counterattack',
+    '护卫挡弹 · 脉冲可破': 'Guard blocking · Use EMP',
+    '护卫挡弹 · 先击破护卫': 'Guard blocking · Hit the guard',
+    '反击窗口 · 瞄准本体': 'Opening · Aim at the Boss',
+    '留意突进预警，向两侧躲避': 'Watch for charges and dodge sideways',
     '阶段 {phase}/2': 'Phase {phase}/2',
     '紫曜母舰 BOSS': 'Void Mothership BOSS',
     '⚠ 第 {w} 波 · {name}': '⚠ Wave {w} · {name}',
@@ -544,7 +548,7 @@
     '火力 Lv.{lv}!': 'Cannon Lv.{lv}!',
     '能量护盾!': 'Shield Ready!',
     '超载暴走!': 'OVERDRIVE!',
-    '超载 {sec}s': 'Overdrive {sec}s',
+    '免伤 {sec}s': 'Immune {sec}s',
     '护甲 +1': 'Armor +1',
     '+1 脉冲!': '+1 EMP!',
     '×{c} 连击！': '{c}× COMBO!',
@@ -555,8 +559,8 @@
     '击毁敌机掉落火力升级、护盾、超载与修甲道具；危机时按空格或点脉冲按钮消除全屏弹幕！':
       'Collect weapon, shield, overdrive & repair drops. Press Space or tap EMP Pulse to wipe enemy bullets!',
     '迎战星际 Boss': 'Boss Battles',
-    '每 5 波登场 1 架旗舰 Boss，看到激光预警线请立刻走位躲避，击破 Boss 补充脉冲次数。':
-      'A Boss arrives every 5 waves. Dodge laser sightlines; defeating a Boss refills +1 EMP!',
+    '第 5 波遇到绯红裁决者。横向躲开突进，用脉冲清除护卫，趁反击窗口瞄准本体。':
+      'Face the Crimson Arbiter in wave 5. Dodge charges sideways, use EMP to clear the guard, and aim at the Boss during openings.',
 
     // ---- 清数据 / 弹窗 ----
     '将清除本站在此浏览器保存的游戏纪录、存档、外观、模式偏好、音效设置和教学记录，且无法恢复。语言设置会保留。':

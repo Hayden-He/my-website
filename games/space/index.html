@@ -35,7 +35,10 @@
   <script src="/assets/games.js?v=20261118001"></script>
   <script src="/assets/game-kit.js?v=20261118001"></script>
   <style>
-    .game-wrap { --game-width: 500px; }
+    .game-wrap {
+      --game-width: 500px;
+      --battle-status-height: 48px;
+    }
 
     .hud { grid-template-columns: repeat(3, 1fr); }
 
@@ -43,23 +46,22 @@
 
     .status-strip {
       width: 100%;
-      display: flex;
+      display: grid;
+      grid-template-rows: repeat(2, 1.35rem);
       align-items: center;
-      justify-content: space-between;
-      gap: 8px;
+      gap: 2px;
       padding: 6px 12px;
       border-radius: 12px;
       background: var(--surface);
       border: 1px solid var(--border);
       box-shadow: var(--shadow-sm);
-      flex-wrap: wrap;
     }
 
     .status-group {
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      flex-wrap: wrap;
+      min-width: 0;
     }
 
     .armor-status {
@@ -96,15 +98,17 @@
     }
 
     .status-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
+      display: block;
+      min-width: 0;
       padding: 2px 8px;
       border-radius: 999px;
       font-size: 0.74rem;
       font-weight: 800;
       background: #eff6ff;
       color: #1d4ed8;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     .status-badge.overdrive {
@@ -132,6 +136,8 @@
 
     .status-badge.shield::before {
       content: '';
+      display: inline-block;
+      margin-inline-end: 4px;
       width: 7px;
       height: 9px;
       background: currentColor;
@@ -149,6 +155,7 @@
       background: #060918;
     }
 
+    .mobile-game-stage { width: 100%; }
     .playfield { position: relative; }
 
     canvas {
@@ -162,25 +169,38 @@
       cursor: crosshair;
     }
 
-    .boss-bar-wrap {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      padding: 7px 13px;
+    .battle-status {
+      box-sizing: border-box;
+      block-size: var(--battle-status-height);
+      display: grid;
+      align-items: center;
+      padding: 5px 10px;
       border-bottom: 1px solid #26344c;
       background: #0b1426;
+      color: #e0f2fe;
+    }
+
+    .battle-status > * { grid-area: 1 / 1; min-width: 0; }
+    .battle-status > [hidden] { display: none; }
+    .battle-wave { text-align: center; font-size: 0.85rem; font-weight: 800; }
+
+    .boss-bar-wrap {
+      display: grid;
+      gap: 4px;
     }
 
     .boss-bar-wrap[hidden] { display: none; }
 
     .boss-bar-label {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) auto auto;
-      grid-template-areas: 'name phase health';
+      grid-template-columns: minmax(0, 1fr) auto;
+      grid-template-rows: repeat(2, 1em);
+      grid-template-areas: 'name health' 'phase phase';
       align-items: baseline;
       gap: 3px 8px;
       font-size: 0.72rem;
       font-weight: 800;
+      line-height: 1;
       color: #fecaca;
       text-shadow: 0 1px 4px rgba(0, 0, 0, 0.85);
     }
@@ -251,7 +271,16 @@
       text-align: center;
     }
 
+    .boss-phase-label[data-cue='dodge'] { color: #fda4af; }
+    .boss-phase-label[data-cue='guard'] { color: #fde68a; }
+    .boss-phase-label[data-cue='attack'] { color: #86efac; }
+
     #boss-name { grid-area: name; }
+    :is(#boss-name, .boss-phase-label) {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
 
     #boss-hp-text {
       grid-area: health;
@@ -287,6 +316,12 @@
     }
 
     .emp-btn:active:not(:disabled) { transform: scale(0.96); }
+
+    #emp-count {
+      inline-size: 2.5ch;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
 
     .emp-btn:disabled {
       opacity: 0.45;
@@ -385,6 +420,43 @@
       font-weight: 800;
     }
 
+    #flight-options { display: none; }
+    .mobile-game-immersive #flight-options { display: block; max-width: 100%; }
+    #flight-options summary { cursor: pointer; padding: 6px 8px; }
+    #flight-options-content {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
+      gap: 6px;
+      padding-top: 5px;
+    }
+
+    .mobile-game-immersive .game-wrap {
+      grid-template-columns: minmax(0, 1fr) auto;
+      grid-template-rows: auto auto minmax(0, 1fr) auto;
+      width: min(100%, 500px);
+      align-items: center;
+      gap: 5px;
+    }
+
+    .mobile-game-immersive .hud { grid-column: 1; grid-row: 1; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; }
+    .mobile-game-immersive .hud-box { padding: 3px 4px; }
+    .mobile-game-immersive .best-hud { display: none; }
+    .mobile-game-immersive .toolbar { grid-column: 2; grid-row: 1; justify-content: end; }
+    .mobile-game-immersive .toolbar .btn-group { flex-wrap: nowrap; gap: 4px; }
+    .mobile-game-immersive .toolbar .btn-small { padding-inline: 6px; font-size: 0.74rem; }
+    .mobile-game-immersive #pause-btn { min-inline-size: 4.75rem; }
+    .mobile-game-immersive .status-strip { grid-column: 1 / -1; grid-row: 2; padding-block: 2px; }
+    .mobile-game-immersive .mobile-game-stage { grid-column: 1 / -1; grid-row: 3; }
+    .mobile-game-immersive .stage-box {
+      width: min(100%, calc((100vh - 175px) * (460 / 560)));
+      width: min(100%, max(1px, calc((100cqh - var(--battle-status-height) - 2px) * (460 / 560) + 2px)));
+    }
+    .mobile-game-immersive .action-bar { grid-column: 1 / -1; grid-row: 4; justify-content: center; }
+    .mobile-game-immersive .emp-btn { min-height: 44px; }
+    .mobile-game-immersive .hint { display: none; }
+
     @media (max-width: 560px) {
       .hud { gap: 8px; }
       .hud-box { padding: 8px 6px; }
@@ -398,11 +470,6 @@
       .status-strip { gap: 5px; padding: 5px 8px; }
       .status-group { gap: 4px; }
       .status-badge { padding: 2px 5px; }
-      .boss-bar-wrap { padding: 5px 9px; }
-      .boss-bar-label {
-        grid-template-columns: minmax(0, 1fr) auto;
-        grid-template-areas: 'name health' 'phase phase';
-      }
     }
   </style>
 </head>
@@ -694,7 +761,7 @@
         <div class="hud-label" data-i18n="当前波次">当前波次</div>
         <div id="wave-el" class="hud-value">1</div>
       </div>
-      <div class="hud-box">
+      <div class="hud-box best-hud">
         <div class="hud-label" data-i18n="模式最高">模式最高</div>
         <div id="best-el" class="hud-value accent">0</div>
       </div>
@@ -710,6 +777,7 @@
         <button id="sound-btn" class="btn-small secondary" type="button">音效: 开</button>
         <button id="help-btn" class="btn-small secondary" type="button" data-i18n="玩法">玩法</button>
         <button id="restart-btn" class="btn-small" type="button" data-i18n="重开">重开</button>
+        <button id="immersive-btn" class="btn-small secondary" type="button" data-i18n="沉浸模式" hidden>沉浸模式</button>
       </div>
     </div>
 
@@ -728,23 +796,32 @@
       </div>
     </div>
 
-    <div class="stage-box">
-      <div id="boss-bar-wrap" class="boss-bar-wrap" hidden>
-        <div class="boss-bar-label">
-          <span id="boss-name"></span>
-          <span id="boss-phase-label" class="boss-phase-label" aria-live="polite" hidden></span>
-          <span id="boss-hp-text">100%</span>
+    <div class="mobile-game-stage">
+      <div class="stage-box">
+        <div class="battle-status">
+          <div id="battle-wave" class="battle-wave"></div>
+          <div id="boss-bar-wrap" class="boss-bar-wrap" hidden>
+            <div class="boss-bar-label">
+              <span id="boss-name"></span>
+              <span id="boss-phase-label" class="boss-phase-label" aria-live="polite" hidden></span>
+              <span id="boss-hp-text">100%</span>
+            </div>
+            <div id="boss-bar-track" class="boss-bar-track" role="meter" aria-labelledby="boss-name" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100"><div id="boss-bar-fill" class="boss-bar-fill"></div></div>
+          </div>
         </div>
-        <div id="boss-bar-track" class="boss-bar-track" role="meter" aria-labelledby="boss-name" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100"><div id="boss-bar-fill" class="boss-bar-fill"></div></div>
-      </div>
-      <div class="playfield">
-        <canvas id="canvas" width="460" height="560" aria-label="太空战机画布" data-i18n-attr="aria-label:太空战机画布"></canvas>
-        <div id="overlay" class="overlay show" role="status" aria-live="polite">
-          <h2 id="overlay-title">太空战机</h2>
-          <p id="overlay-desc"></p>
-          <p id="overlay-stats" class="overlay-stats" hidden></p>
-          <div class="overlay-actions">
-            <button id="overlay-btn" class="overlay-btn" type="button">开始游戏</button>
+        <div class="playfield">
+          <canvas id="canvas" width="460" height="560" aria-label="太空战机画布" data-i18n-attr="aria-label:太空战机画布"></canvas>
+          <div id="overlay" class="overlay show" role="status" aria-live="polite">
+            <h2 id="overlay-title">太空战机</h2>
+            <p id="overlay-desc"></p>
+            <p id="overlay-stats" class="overlay-stats" hidden></p>
+            <div class="overlay-actions">
+              <button id="overlay-btn" class="overlay-btn" type="button">开始游戏</button>
+            </div>
+            <details id="flight-options" aria-live="off">
+              <summary data-i18n="战机设置与图鉴">战机设置与图鉴</summary>
+              <div id="flight-options-content"></div>
+            </details>
           </div>
         </div>
       </div>
@@ -779,10 +856,10 @@
           </span>
           <span data-i18n="能量护盾：抵消一次伤害">能量护盾：抵消一次伤害</span>
         </div>
-        <div class="legend-item"><span class="legend-badge" style="background:#7c3aed" aria-hidden="true">⚡</span><span data-i18n="超载暴走：5.5秒双倍射速">超载暴走：5.5秒双倍射速</span></div>
+        <div class="legend-item"><span class="legend-badge" style="background:#7c3aed" aria-hidden="true">⚡</span><span data-i18n="超载暴走：5.5 秒免伤，主炮射速翻倍">超载暴走：5.5 秒免伤，主炮射速翻倍</span></div>
         <div class="legend-item"><span class="legend-badge" style="background:#16a34a" aria-hidden="true">✚</span><span data-i18n="护甲修复：恢复1点护甲">护甲修复：恢复1点护甲</span></div>
         <div class="legend-item"><span class="legend-badge" style="background:#2563eb" aria-hidden="true">◎</span><span data-i18n="脉冲补给：清弹冲击波+1">脉冲补给：清弹冲击波+1</span></div>
-        <div class="legend-item"><span class="legend-badge" style="background:#c2410c" aria-hidden="true">✦</span><span data-i18n="爆破弹：拾取后自动夹射，命中造成范围伤害">爆破弹：拾取后自动夹射，命中造成范围伤害</span></div>
+        <div class="legend-item"><span class="legend-badge" style="background:#c2410c" aria-hidden="true">✦</span><span data-i18n="爆破弹：对准敌机时自动发射，命中造成范围伤害">爆破弹：对准敌机时自动发射，命中造成范围伤害</span></div>
         <div class="legend-item"><span class="legend-badge" style="background:#dc2626" aria-hidden="true">!</span><span data-i18n="Boss预警：离开激光或突进范围">Boss预警：离开激光或突进范围</span></div>
         <div class="legend-item"><span class="legend-badge" style="background:#475569" aria-hidden="true">◆</span><span data-i18n="裁决者与棱镜：趁反击窗口打出全额伤害">裁决者与棱镜：趁反击窗口打出全额伤害</span></div>
         <div class="legend-item"><span class="legend-badge" style="background:#7c3aed" aria-hidden="true">◇</span><span data-i18n="镜面护甲：侧移躲反弹，或用脉冲打断">镜面护甲：侧移躲反弹，或用脉冲打断</span></div>
@@ -849,6 +926,7 @@
       const weaponBadge = document.getElementById('weapon-badge');
       const blastBadge = document.getElementById('blast-badge');
       const overdriveBadge = document.getElementById('overdrive-badge');
+      const battleWave = document.getElementById('battle-wave');
       const bossBarWrap = document.getElementById('boss-bar-wrap');
       const bossBarTrack = document.getElementById('boss-bar-track');
       const bossNameEl = document.getElementById('boss-name');
@@ -860,6 +938,7 @@
       const overlayDesc = document.getElementById('overlay-desc');
       const overlayStats = document.getElementById('overlay-stats');
       const overlayBtn = document.getElementById('overlay-btn');
+      const flightOptions = document.getElementById('flight-options');
       const pauseBtn = document.getElementById('pause-btn');
       const soundBtn = document.getElementById('sound-btn');
       const helpBtn = document.getElementById('help-btn');
@@ -1317,6 +1396,7 @@
 
       // 游戏状态
       let state = 'ready'; // 'ready' | 'playing' | 'paused' | 'over'
+      let interruptionCount = 0;
       let score = 0;
       let wave = 1;
       let bestStandard = GameKit.readBest(BEST_KEYS.standard);
@@ -1327,6 +1407,7 @@
       let comboTimer = 0;
       let maxCombo = 0;
       let bossAlertAlpha = 0;
+      let bossIntroHint = '';
 
       // 自机状态
       const player = {
@@ -1405,6 +1486,9 @@
         scoreEl.textContent = score;
         waveEl.textContent = wave;
         bestEl.textContent = currentBest();
+        battleWave.hidden = Boolean(boss);
+        const waveLabel = t('第 {w} 波', { w: wave });
+        if (battleWave.textContent !== waveLabel) battleWave.textContent = waveLabel;
 
         armorEl.setAttribute('aria-label', t('剩余护甲：{hp}', { hp: player.hp }));
         armorEl.setAttribute('aria-valuemax', String(player.maxHp));
@@ -1436,7 +1520,7 @@
         if (player.overdriveTimer > 0) {
           overdriveBadge.hidden = false;
           const remaining = (Math.ceil(player.overdriveTimer * 10) / 10).toFixed(1);
-          const label = t('超载 {sec}s', { sec: remaining });
+          const label = t('免伤 {sec}s', { sec: remaining });
           if (overdriveBadge.textContent !== label) overdriveBadge.textContent = label;
           overdriveBadge.style.setProperty('--remaining', (100 * player.overdriveTimer / OVERDRIVE_SECONDS) + '%');
         } else {
@@ -1462,6 +1546,7 @@
           if (bossBarWrap.dataset.phase !== phase) bossBarWrap.dataset.phase = phase;
           if (bossBarWrap.dataset.kind !== boss.kind) bossBarWrap.dataset.kind = boss.kind;
           let phaseLabel = t('阶段 {phase}/2', { phase: boss.phase });
+          let cue = '';
           const attack = boss.prismAttack;
           if (boss.maneuver === 'transform') phaseLabel = t('相位转换 · 无敌');
           else if (boss.campCounter) phaseLabel = t('锁定预警 · 移动躲避');
@@ -1474,15 +1559,27 @@
             }
           } else if (boss.maneuver === 'mirror') phaseLabel = t('镜像交错火力');
           else if (boss.laserState === 'telegraph') phaseLabel = t('双轨激光预警');
-          else if (boss.maneuver === 'dash-warn') phaseLabel = boss.dashPass === 2 ? t('第二次突进预警') : t('突进预警');
+          else if (boss.maneuver === 'dash-warn') {
+            phaseLabel = boss.dashPass === 2 ? t('折返突进 · 横向躲避') : t('突进预警 · 横向躲避');
+            cue = 'dodge';
+          }
           else if (boss.maneuver === 'scatter-warn') phaseLabel = t('侧翼散射预警');
           else if (boss.maneuver === 'deploy') phaseLabel = t('部署供盾护卫');
           else if (boss.maneuver === 'recover') {
-            phaseLabel = boss.kind !== 'crimson' ? t('核心暴露') : boss.guard ? t('护卫挡弹') : t('反击窗口');
+            if (boss.kind === 'crimson' && boss.guard) {
+              phaseLabel = player.empCharges > 0 ? t('护卫挡弹 · 脉冲可破') : t('护卫挡弹 · 先击破护卫');
+              cue = 'guard';
+            } else {
+              phaseLabel = boss.kind === 'crimson' ? t('反击窗口 · 瞄准本体') : t('核心暴露');
+              cue = 'attack';
+            }
           } else if (boss.supports?.length) {
             phaseLabel = boss.supportJam > 0 ? t('供盾中断') : t('供盾护卫 {count}/2', { count: boss.supports.length });
+          } else if (bossIntroHint && boss.y < boss.targetY) {
+            phaseLabel = bossIntroHint;
           }
           if (bossPhaseLabel.textContent !== phaseLabel) bossPhaseLabel.textContent = phaseLabel;
+          if (bossPhaseLabel.dataset.cue !== cue) bossPhaseLabel.dataset.cue = cue;
           bossPhaseLabel.hidden = false;
         } else {
           if (bossBarWrap.dataset.phase) delete bossBarWrap.dataset.phase;
@@ -1499,7 +1596,10 @@
 
       function renderOverlay() {
         if (state === 'playing') {
+          const moveFocus = overlay.contains(document.activeElement);
+          flightOptions.open = false;
           overlay.classList.remove('show');
+          if (moveFocus) pauseBtn.focus({ preventScroll: true });
           return;
         }
         overlay.classList.add('show');
@@ -1655,6 +1755,7 @@
 
       function startWave(num) {
         wave = num;
+        bossIntroHint = wave === 5 ? t('留意突进预警，向两侧躲避') : '';
         const nextScene = Math.floor((num - 1) / 5) % SPACE_SCENES.length;
         if (nextScene !== sceneIndex) {
           previousScene = sceneIndex;
@@ -1729,6 +1830,7 @@
         shakeTimer = 0;
         flashAlpha = 0;
         bossAlertAlpha = 0;
+        bossIntroHint = '';
         bossSupplyTimer = 0;
         activeTouchId = null;
         touchLastPt = null;
@@ -1781,18 +1883,53 @@
         renderOverlay();
       }
 
-      async function confirmAbandonIfActive() {
-        if ((state === 'playing' || state === 'paused') && (score > 0 || wave > 1)) {
-          if (state === 'playing') pauseGame();
-          return window.SiteData.confirmDialog({
-            title: t('重开本局'),
-            message: t('当前进度将被清除，确定重开吗？'),
-            confirmText: t('重开'),
-            cancelText: t('继续本局'),
-            danger: true,
-          });
+      function pauseForInterruption() {
+        interruptionCount += 1;
+        pauseGame();
+      }
+
+      function bindImmersiveLayout() {
+        const options = document.getElementById('flight-options-content');
+        const controls = [
+          modeStandardBtn.parentElement, soundBtn, helpBtn, restartBtn,
+          skinBtns[0].parentElement, document.querySelector('.space-legend'),
+        ].map((control) => {
+          const anchor = document.createComment('flight option');
+          control.before(anchor);
+          return { control, anchor };
+        });
+        let immersive = false;
+        GameKit.bindMobileLayout('space', document.getElementById('immersive-btn'), pauseForInterruption, {
+          portraitOnly: true,
+          onRender(active) {
+            if (active === immersive) return;
+            immersive = active;
+            for (const { control, anchor } of controls) {
+              if (active) options.appendChild(control);
+              else anchor.after(control);
+            }
+          },
+        });
+      }
+
+      async function confirmAbandonIfActive(switchingMode = false) {
+        if (SiteData.isDialogOpen()) return false;
+        if (state !== 'playing' && state !== 'paused') return true;
+
+        const wasPlaying = state === 'playing';
+        const previousInterruptions = interruptionCount;
+        pauseGame();
+        const confirmed = await SiteData.confirmDialog({
+          title: switchingMode ? t('切换模式') : t('重开本局'),
+          message: switchingMode ? t('切换模式会结束当前飞行。') : t('当前进度将被清除，确定重开吗？'),
+          confirmText: switchingMode ? t('切换') : t('重开'),
+          cancelText: wasPlaying ? t('继续本局') : t('取消'),
+          danger: true,
+        });
+        if (!confirmed && wasPlaying && !document.hidden && interruptionCount === previousInterruptions) {
+          resumeGame();
         }
-        return true;
+        return confirmed;
       }
 
       // 特效辅助
@@ -3703,8 +3840,9 @@
         }
         if (player.overdriveTimer > 0) {
           ctx.save();
+          const ending = player.overdriveTimer <= OVERDRIVE_END_CUE;
           ctx.rotate(tNow * 0.002);
-          ctx.strokeStyle = sk.boostColor;
+          ctx.strokeStyle = ending ? '#fbbf24' : sk.boostColor;
           ctx.lineWidth = 2;
           const radius = player.hasShield ? 37 : 30;
           for (let i = 0; i < 4; i += 1) {
@@ -4931,9 +5069,6 @@
       function draw() {
         const tNow = performance.now();
         ctx.save();
-        if (shakeTimer > 0) {
-          ctx.translate((Math.random() - 0.5) * shakeMag * 2, (Math.random() - 0.5) * shakeMag * 2);
-        }
 
         if (sceneBlend < 1) {
           drawSpaceScene(previousScene, 1);
@@ -4945,7 +5080,7 @@
         // 背景流星
         for (const m of meteors) {
           ctx.save();
-          ctx.globalAlpha = Math.min(0.23, m.life * 0.35);
+          ctx.globalAlpha = Math.min(0.16, m.life * 0.24);
           const mag = Math.hypot(m.vx, m.vy) || 1;
           const tx = m.x - (m.vx / mag) * m.len;
           const ty = m.y - (m.vy / mag) * m.len;
@@ -4993,6 +5128,21 @@
         }
         ctx.globalAlpha = 1;
 
+        // Keep the flash behind ships, shots and warning lines.
+        if (flashAlpha > 0) {
+          ctx.save();
+          ctx.globalAlpha = Math.min(flashAlpha, 0.22);
+          ctx.fillStyle = flashColor;
+          ctx.fillRect(0, 0, W, H);
+          ctx.restore();
+        }
+
+        ctx.save();
+        if (shakeTimer > 0) {
+          const offset = Math.min(4, shakeMag) * Math.min(1, shakeTimer / 0.2);
+          ctx.translate((Math.random() - 0.5) * offset * 2, (Math.random() - 0.5) * offset * 2);
+        }
+
         // 道具胶囊（高辨识度矢量图标）
         for (const pickup of pickups) drawPickup(pickup, tNow);
         for (const bullet of bullets) drawPlayerBolt(bullet);
@@ -5000,45 +5150,6 @@
         // 敌机与 Boss
         for (const e of enemies) drawEnemy(e, tNow);
         drawBoss(tNow);
-
-        // 敌方弹幕（高对比亮心）
-        for (const eb of enemyBullets) {
-          if (eb.reflected) {
-            drawReflectedBolt(eb);
-            continue;
-          }
-          ctx.save();
-          if (eb.crystal) {
-            ctx.beginPath();
-            ctx.moveTo(eb.x, eb.y - eb.r * 1.5);
-            ctx.lineTo(eb.x + eb.r, eb.y);
-            ctx.lineTo(eb.x, eb.y + eb.r * 1.5);
-            ctx.lineTo(eb.x - eb.r, eb.y);
-            ctx.closePath();
-            ctx.fillStyle = eb.color;
-            ctx.strokeStyle = '#ecfeff';
-            ctx.lineWidth = 1.5;
-            ctx.fill();
-            ctx.stroke();
-            ctx.restore();
-            continue;
-          }
-          ctx.beginPath();
-          ctx.arc(eb.x, eb.y, eb.r + 2, 0, Math.PI * 2);
-          ctx.fillStyle = eb.color;
-          ctx.globalAlpha = 0.45;
-          ctx.fill();
-          ctx.globalAlpha = 1;
-          ctx.beginPath();
-          ctx.arc(eb.x, eb.y, eb.r, 0, Math.PI * 2);
-          ctx.fillStyle = eb.color;
-          ctx.fill();
-          ctx.beginPath();
-          ctx.arc(eb.x, eb.y, eb.r * 0.48, 0, Math.PI * 2);
-          ctx.fillStyle = '#ffffff';
-          ctx.fill();
-          ctx.restore();
-        }
 
         // 自机与炮口闪光
         drawPlayer(tNow);
@@ -5107,6 +5218,8 @@
           ctx.fillRect(-d.w * 0.5, -d.h * 0.5, d.w, d.h);
           ctx.restore();
         }
+        drawEnemyBullets();
+        ctx.restore();
 
         // 右上角连击与得分倍率指示器
         if (state === 'playing' && combo >= 2 && comboTimer > 0) {
@@ -5165,15 +5278,34 @@
           ctx.restore();
         }
 
-        if (flashAlpha > 0) {
+        ctx.restore();
+      }
+
+      function drawEnemyBullets() {
+        for (const bullet of enemyBullets) {
+          if (bullet.reflected) {
+            drawReflectedBolt(bullet);
+            continue;
+          }
+          const { x, y, r, color } = bullet;
           ctx.save();
-          ctx.globalAlpha = flashAlpha;
-          ctx.fillStyle = flashColor;
-          ctx.fillRect(0, 0, W, H);
+          ctx.beginPath();
+          if (bullet.crystal) {
+            traceArmorPlate([[x, y - r * 1.5], [x + r, y], [x, y + r * 1.5], [x - r, y]]);
+          } else {
+            ctx.arc(x, y, r, 0, Math.PI * 2);
+          }
+          ctx.strokeStyle = '#1b1224';
+          ctx.lineWidth = 3;
+          ctx.stroke();
+          ctx.fillStyle = color;
+          ctx.fill();
+          ctx.beginPath();
+          ctx.arc(x, y, r * 0.46, 0, Math.PI * 2);
+          ctx.fillStyle = '#fff';
+          ctx.fill();
           ctx.restore();
         }
-
-        ctx.restore();
       }
 
       // 输入事件（触屏相对拖动 + 鼠标跟随 + 键盘）
@@ -5276,7 +5408,7 @@
 
       async function switchMode(nextMode) {
         if (nextMode === mode) return;
-        if (!(await confirmAbandonIfActive())) return;
+        if (!(await confirmAbandonIfActive(true))) return;
         mode = nextMode;
         writeStored(MODE_KEY, mode);
         syncModeButtons();
@@ -5314,14 +5446,14 @@
             {
               icon: 'art-explosion',
               title: t('迎战星际 Boss'),
-              text: t('每 5 波登场 1 架旗舰 Boss，看到激光预警线请立刻走位躲避，击破 Boss 补充脉冲次数。'),
+              text: t('第 5 波遇到绯红裁决者。横向躲开突进，用脉冲清除护卫，趁反击窗口瞄准本体。'),
             },
           ],
         });
       }
 
       helpBtn.addEventListener('click', () => openTutorial(true));
-      GameKit.onHidden(pauseGame);
+      GameKit.onHidden(pauseForInterruption);
       document.addEventListener('site:dialogopen', () => {
         clearKeys();
         pauseGame();
@@ -5343,6 +5475,7 @@
       syncModeButtons();
       resetState('ready');
       GameKit.mountMoreGames('space', document.getElementById('more-games'));
+      bindImmersiveLayout();
       requestAnimationFrame(frame);
       openTutorial(false);
     })();
