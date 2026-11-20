@@ -563,7 +563,7 @@
       bestEl.textContent = bestScore;
 
       // 枚举所有空格后随机选取，避免蛇接近占满棋盘时随机撞格造成死循环；无空格时返回 null
-      function randomEmptyCell() {
+      function randomEmptyCell({ preferInterior = false } = {}) {
         const empty = [];
         for (let y = 0; y < GRID; y++) {
           for (let x = 0; x < GRID; x++) {
@@ -573,7 +573,15 @@
             if (!onSnake && !onFood && !onBonus) empty.push({ x, y });
           }
         }
-        return empty.length ? empty[Math.floor(Math.random() * empty.length)] : null;
+        const interior = preferInterior
+          ? empty.filter(({ x, y }) => x > 0 && x < GRID - 1 && y > 0 && y < GRID - 1)
+          : empty;
+        const pool = interior.length ? interior : empty;
+        return pool.length ? pool[Math.floor(Math.random() * pool.length)] : null;
+      }
+
+      function randomAppleCell() {
+        return randomEmptyCell({ preferInterior: !wrapMode });
       }
 
       function spawnParticles(gx, gy, color, count) {
@@ -631,7 +639,7 @@
         started = false;
         paused = false;
         gameOver = false;
-        food = randomEmptyCell();
+        food = randomAppleCell();
         overlay.classList.remove('show');
         pauseBtn.textContent = t('暂停');
         scoreEl.textContent = '0';
@@ -711,7 +719,7 @@
           playTone(520, 0.08, 760);
           spawnParticles(head.x, head.y, '#ef4444', 10);
           addPopup(head.x, head.y, '+10', '#15803d');
-          food = randomEmptyCell();
+          food = randomAppleCell();
           if (!food && !bonusItem) {
             updateBest();
             endGame('通关！🎉');
@@ -764,7 +772,7 @@
               '#94a3b8'
             );
             bonusItem = null;
-            if (!food) food = randomEmptyCell();
+            if (!food) food = randomAppleCell();
           }
         }
 
@@ -1007,7 +1015,7 @@
 
       document.querySelectorAll('.dpad-btn').forEach((btn) => {
         btn.addEventListener('pointerdown', (e) => {
-          if (!e.isPrimary || e.button !== 0) return;
+          if (e.button !== 0) return;
           e.preventDefault();
           setDirection(btn.dataset.dir);
         });
@@ -1018,6 +1026,9 @@
 
       GameKit.bindSwipe(canvas, {
         onDirection: setDirection,
+        getThreshold: (width) => Math.max(8, Math.min(12, width * 0.028)),
+        axisRatio: 1.1,
+        cancelOnMultiTouch: false,
         onTap() {
           if (gameOver) return;
           if (paused) togglePause();

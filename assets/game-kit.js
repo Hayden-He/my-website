@@ -151,12 +151,18 @@
     render();
   }
 
-  function bindSwipe(element, { onDirection, onTap }) {
+  function bindSwipe(element, {
+    onDirection,
+    onTap,
+    getThreshold = (width) => Math.max(10, Math.min(18, width * 0.04)),
+    axisRatio = 1.25,
+    cancelOnMultiTouch = true,
+  }) {
     let gesture = null;
 
     element.addEventListener('pointerdown', (event) => {
       if (!event.isPrimary) {
-        gesture = null;
+        if (cancelOnMultiTouch) gesture = null;
         return;
       }
       if (event.button !== 0 || event.target.closest('button, a')) return;
@@ -164,7 +170,7 @@
         id: event.pointerId,
         x: event.clientX,
         y: event.clientY,
-        threshold: Math.max(10, Math.min(18, element.clientWidth * 0.04)),
+        threshold: getThreshold(element.clientWidth),
         committed: false,
       };
       element.setPointerCapture(event.pointerId);
@@ -176,7 +182,7 @@
       const dy = event.clientY - gesture.y;
       const x = Math.abs(dx);
       const y = Math.abs(dy);
-      if (Math.max(x, y) < gesture.threshold || Math.max(x, y) < 1.25 * Math.min(x, y)) return;
+      if (Math.max(x, y) < gesture.threshold || Math.max(x, y) < axisRatio * Math.min(x, y)) return;
       gesture.committed = true;
       onDirection(x > y ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up'));
     }
