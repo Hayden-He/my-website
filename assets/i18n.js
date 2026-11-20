@@ -73,7 +73,9 @@
     // ---- 首页 ----
     '选个小游戏，打开就玩': 'Pick a game and play',
     '{game}：{action}': '{game}: {action}',
-    '纪录保存在当前浏览器，2048 支持续玩。': 'Records are saved in this browser. You can resume your 2048 game.',
+    '个人纪录保存在当前浏览器。': 'Personal bests are saved in this browser.',
+    '最近打开': 'Recently opened',
+    '{game} · 继续上局 →': '{game} · Resume →',
 
     // ---- 分类页 ----
     '动作街机 🏀': 'Arcade 🏀',
@@ -582,8 +584,8 @@
       'Face the Crimson Arbiter in wave 5. Dodge charges sideways, use EMP to clear the guard, and aim at the Boss during openings.',
 
     // ---- 清数据 / 弹窗 ----
-    '将清除本站在此浏览器保存的游戏纪录、存档、外观、模式偏好、音效设置和教学记录，且无法恢复。语言设置会保留。':
-      'This will permanently clear game records, saves, skins, mode preferences, sound settings and tutorial history in this browser. Your language setting will be kept.',
+    '将清除本站在此浏览器保存的游戏纪录、存档、外观、模式偏好、音效设置、教学记录和最近打开记录，且无法恢复。语言设置会保留。':
+      'This will permanently clear game records, saves, skins, mode preferences, sound settings, tutorial history and the recently opened game in this browser. Your language setting will be kept.',
     '本地数据已清除': 'Local data cleared',
     '清除失败': "Couldn't clear local data",
     '浏览器禁止访问本地存储，请检查浏览器的隐私设置后重试。':

@@ -18,25 +18,30 @@
     }
   }
 
-  // 2048 是唯一会保存“进行中棋局”的游戏：首页卡片给出继续入口
+  // 与 2048 游戏页的存档读取条件一致。
+  function isValid2048Position(position, size) {
+    return position && Number.isSafeInteger(position.score) && position.score >= 0 &&
+      Array.isArray(position.board) && position.board.length === size &&
+      position.board.every((row) => Array.isArray(row) && row.length === size && row.every((tile) =>
+        tile === 0 || (Number.isSafeInteger(tile) && tile >= 2 && tile === 2 ** Math.floor(Math.log2(tile))))) &&
+      position.board.some((row) => row.some((tile) => tile !== 0));
+  }
+
+  // 判断 2048 存档是否还有可续玩的棋局。
   function get2048Resume() {
     try {
       const mode = localStorage.getItem('game_save_2048_mode') === '5' ? 5 : 4;
       const raw = localStorage.getItem('game_save_2048_' + mode);
       if (!raw) return null;
       const save = JSON.parse(raw);
-      if (!save || !Array.isArray(save.board) || save.board.length !== mode) return null;
-      const score = Number(save.score);
-      if (!Number.isFinite(score) || score < 0) return null;
+      if (!isValid2048Position(save, mode)) return null;
 
-      const board = save.board;
+      const { board, score } = save;
       let tileCount = 0;
       let canMove = false;
       for (let r = 0; r < mode; r++) {
-        if (!Array.isArray(board[r]) || board[r].length !== mode) return null;
         for (let c = 0; c < mode; c++) {
           const v = board[r][c];
-          if (!Number.isSafeInteger(v) || v < 0) return null;
           if (v > 0) tileCount += 1;
           if (v === 0) canMove = true;
           if (c + 1 < mode && v !== 0 && v === board[r][c + 1]) canMove = true;
@@ -46,8 +51,8 @@
       // 旧存档没有 played，用得分、撤回快照与方块数识别已有进度。
       const played = typeof save.played === 'boolean'
         ? save.played
-        : score > 0 || Boolean(save.prevState) || tileCount > 2;
-      if (tileCount === 0 || !canMove || !played) return null;
+        : score > 0 || isValid2048Position(save.prevState, mode) || tileCount > 2;
+      if (!canMove || !played) return null;
       return { size: mode, score };
     } catch {
       return null;
@@ -252,6 +257,25 @@
     }
   }
 
+  function renderRecentGame() {
+    const shortcut = document.getElementById('recent-game');
+    if (!shortcut) return;
+    const id = window.SiteData?.getRecentGameId();
+    const game = window.SITE_CONFIG?.games.find((entry) => entry.id === id);
+    shortcut.hidden = !game;
+    const link = document.getElementById('recent-game-link');
+    if (!game) {
+      link.removeAttribute('href');
+      link.textContent = '';
+      return;
+    }
+    const title = t(game.title);
+    link.href = game.url;
+    link.textContent = game.id === '2048' && get2048Resume()
+      ? t('{game} · 继续上局 →', { game: title })
+      : title + ' →';
+  }
+
   function renderFooter(activeKey) {
     const footer = document.getElementById('site-footer');
     if (!footer || !window.SITE_CONFIG) return;
@@ -280,7 +304,10 @@
   window.initSitePage = function (activeKey) {
     renderHeader(activeKey);
     renderGamesGrid(activeKey);
+    renderRecentGame();
     renderFooter(activeKey);
+
+    if (activeKey === 'all') window.addEventListener('storage', renderRecentGame);
 
     if (!i18nBound) {
       i18nBound = true;
@@ -288,6 +315,7 @@
         const languageButtonFocused = document.activeElement?.matches('#site-header [data-lang-toggle]');
         renderHeader(activeKey);
         renderGamesGrid(activeKey);
+        renderRecentGame();
         renderFooter(activeKey);
         if (languageButtonFocused) {
           document.querySelector('#site-header [data-lang-toggle]')?.focus({ preventScroll: true });
@@ -295,11 +323,12 @@
       });
     }
 
-    // 从游戏页后退（bfcache 恢复）时，同步音效按钮与卡片上的最高分
+    // 从游戏页后退（bfcache 恢复）时同步首页状态。
     window.addEventListener('pageshow', (e) => {
       if (e.persisted) {
         renderHeader(activeKey);
         renderGamesGrid(activeKey);
+        renderRecentGame();
       }
     });
   };

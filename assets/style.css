@@ -182,6 +182,28 @@ textarea {
   max-width: 640px;
 }
 
+.hero-recent {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  column-gap: 8px;
+  margin-top: 6px;
+  color: var(--text-muted);
+  font-size: 0.86rem;
+}
+
+.hero-recent[hidden] { display: none; }
+
+.hero-recent a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--primary-hover);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 /* 分类与游戏卡片区 */
 .section-head {
   display: flex;

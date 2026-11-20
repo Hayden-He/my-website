@@ -8,8 +8,9 @@
 
   const SOUND_KEY = 'site_sound';
   const SILENT_HINT_KEY = 'site_ios_silent_hint_shown';
+  const RECENT_GAME_KEY = 'site_recent_game';
   const PREFIXES = ['game_best_', 'game_skin_', 'game_save_', 'game_mode_', 'game_tutorial_'];
-  const EXACT_KEYS = [SOUND_KEY];
+  const EXACT_KEYS = [SOUND_KEY, RECENT_GAME_KEY];
 
   function isAppleMobile() {
     try {
@@ -101,6 +102,20 @@
       ac.resume().then(() => {
         if (ac.state === 'running' && performance.now() - t0 < 300) fn(ac);
       }).catch(() => {});
+    } catch {}
+  }
+
+  function getRecentGameId() {
+    try {
+      return localStorage.getItem(RECENT_GAME_KEY);
+    } catch {
+      return null;
+    }
+  }
+
+  function recordRecentGame(id) {
+    try {
+      if (getRecentGameId() !== id) localStorage.setItem(RECENT_GAME_KEY, id);
     } catch {}
   }
 
@@ -287,7 +302,7 @@
     btn.addEventListener('click', async () => {
       const ok = await confirmDialog({
         title: t('清除本地数据'),
-        message: t('将清除本站在此浏览器保存的游戏纪录、存档、外观、模式偏好、音效设置和教学记录，且无法恢复。语言设置会保留。'),
+        message: t('将清除本站在此浏览器保存的游戏纪录、存档、外观、模式偏好、音效设置、教学记录和最近打开记录，且无法恢复。语言设置会保留。'),
         confirmText: t('清除'),
         cancelText: t('取消'),
         danger: true,
@@ -383,6 +398,7 @@
 
   window.SiteData = {
     getSound, setSound, clearAll, createClearButton, createUpdateButton, createCopyLinkButton, createCredit,
+    getRecentGameId, recordRecentGame,
     getAudioContext, unlockAudio, withAudio,
     isDialogOpen, confirmDialog, alertDialog, toast,
   };

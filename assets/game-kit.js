@@ -202,6 +202,15 @@
     if (!container || !window.SITE_CONFIG || !Array.isArray(window.SITE_CONFIG.games)) return;
     const catalog = window.SITE_CONFIG.games;
     const current = catalog.findIndex((game) => game.id === currentId);
+    if (current >= 0 && window.SiteData) {
+      // 刷新仍停留在同一游戏，也包含「清除本地数据」触发的自动刷新。
+      if (performance.getEntriesByType?.('navigation')[0]?.type !== 'reload') {
+        SiteData.recordRecentGame(currentId);
+      }
+      window.addEventListener('pageshow', (event) => {
+        if (event.persisted) SiteData.recordRecentGame(currentId);
+      });
+    }
     const games = catalog.slice(current + 1).concat(catalog.slice(0, Math.max(0, current))).slice(0, 4);
     if (games.length === 0) return;
 
