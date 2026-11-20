@@ -381,6 +381,20 @@
       color: #93c5fd !important;
     }
 
+    .overlay-actions { flex-wrap: wrap; justify-content: center; }
+
+    .practice-menu {
+      display: grid;
+      gap: 6px;
+      width: min(100%, 280px);
+    }
+
+    .practice-menu .overlay-btn { min-height: 40px; padding-block: 7px; }
+    .practice-menu .overlay-btn:disabled { background: #1e293b; color: #cbd5e1; cursor: default; }
+
+    .game-wrap :is(.practice-menu, #flight-options, .mode-pills)[hidden] { display: none; }
+    .game-wrap[data-practice] .hud { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
     .space-legend {
       width: 100%;
       background: var(--surface);
@@ -763,7 +777,7 @@
         <div id="score-el" class="hud-value">0</div>
       </div>
       <div class="hud-box">
-        <div class="hud-label" data-i18n="当前波次">当前波次</div>
+        <div id="wave-label" class="hud-label" data-i18n="当前波次">当前波次</div>
         <div id="wave-el" class="hud-value">1</div>
       </div>
       <div class="hud-box best-hud">
@@ -824,8 +838,15 @@
               <p id="overlay-boss-clears"></p>
               <p id="overlay-boss-target"></p>
             </div>
+            <div id="practice-menu" class="practice-menu" role="group" aria-label="Boss 练习" data-i18n-attr="aria-label:Boss 练习" hidden>
+              <button class="overlay-btn secondary" type="button" data-practice-tier="1" disabled></button>
+              <button class="overlay-btn secondary" type="button" data-practice-tier="2" disabled></button>
+              <button class="overlay-btn secondary" type="button" data-practice-tier="3" disabled></button>
+            </div>
             <div class="overlay-actions">
               <button id="overlay-btn" class="overlay-btn" type="button">开始游戏</button>
+              <button id="practice-menu-btn" class="overlay-btn secondary" type="button" data-i18n="Boss 练习" hidden>Boss 练习</button>
+              <button id="practice-back-btn" class="overlay-btn secondary" type="button" hidden></button>
             </div>
             <details id="flight-options" aria-live="off">
               <summary data-i18n="战机设置与图鉴">战机设置与图鉴</summary>
@@ -884,6 +905,7 @@
       const t = (key, params) => I18N.t(key, params);
       const MODE_KEY = 'game_mode_space';
       const SKIN_KEY = 'game_skin_space';
+      const BOSS_SEEN_PREFIX = 'game_save_space_boss_seen_';
       const BEST_KEYS = {
         standard: 'game_best_space_standard',
         ace: 'game_best_space_ace',
@@ -892,6 +914,7 @@
       const W = 460;
       const H = 560;
       const BOSS_WAVE_INTERVAL = 5;
+      const BOSS_KINDS = ['crimson', 'prism', 'mothership'];
       const BOSS_HP_SCALE = 1.80;
       const BOSS_ENTRY_SPEED = 168;
       const BOSS_BEAM_LENGTH = H + 120;
@@ -930,6 +953,7 @@
       const ctx = canvas.getContext('2d');
       const scoreEl = document.getElementById('score-el');
       const waveEl = document.getElementById('wave-el');
+      const waveLabelEl = document.getElementById('wave-label');
       const bestEl = document.getElementById('best-el');
       const armorEl = document.getElementById('armor-el');
       const armorCountEl = document.getElementById('armor-count');
@@ -952,6 +976,12 @@
       const bossClearsEl = document.getElementById('overlay-boss-clears');
       const bossTargetEl = document.getElementById('overlay-boss-target');
       const overlayBtn = document.getElementById('overlay-btn');
+      const practiceMenu = document.getElementById('practice-menu');
+      const practiceMenuBtn = document.getElementById('practice-menu-btn');
+      const practiceBackBtn = document.getElementById('practice-back-btn');
+      const practiceChoices = [...practiceMenu.querySelectorAll('[data-practice-tier]')];
+      const gameWrap = document.querySelector('.game-wrap');
+      const modePills = document.querySelector('.mode-pills');
       const flightOptions = document.getElementById('flight-options');
       const pauseBtn = document.getElementById('pause-btn');
       const soundBtn = document.getElementById('sound-btn');
@@ -977,8 +1007,22 @@
         } catch {}
       }
 
-      let mode = readStored(MODE_KEY, 'standard');
-      if (mode !== 'standard' && mode !== 'ace') mode = 'standard';
+      let campaignMode = readStored(MODE_KEY, 'standard');
+      if (campaignMode !== 'standard' && campaignMode !== 'ace') campaignMode = 'standard';
+      let mode = campaignMode;
+      let practiceTier = 0;
+      let practiceMenuOpen = false;
+      const seenBosses = new Set();
+
+      function hasSeenBoss(kind) {
+        return seenBosses.has(kind) || readStored(BOSS_SEEN_PREFIX + kind, '') === '1';
+      }
+
+      function recordBossEncounter(kind) {
+        if (hasSeenBoss(kind)) return;
+        seenBosses.add(kind);
+        writeStored(BOSS_SEEN_PREFIX + kind, '1');
+      }
 
       let skin = readStored(SKIN_KEY, 'cobalt');
       const SKINS = {
@@ -1641,7 +1685,20 @@
       }
 
       function renderOverlay() {
-        overlaySummary.hidden = state !== 'over';
+        const practicing = practiceTier > 0;
+        const choosingPractice = practiceMenuOpen;
+        gameWrap.toggleAttribute('data-practice', practicing);
+        modePills.hidden = practicing;
+        bestEl.parentElement.hidden = practicing;
+        waveLabelEl.dataset.i18n = practicing ? '练习波次' : '当前波次';
+        waveLabelEl.textContent = t(waveLabelEl.dataset.i18n);
+        practiceMenu.hidden = !choosingPractice;
+        practiceMenuBtn.hidden = practicing || choosingPractice || (state !== 'ready' && state !== 'over');
+        practiceBackBtn.hidden = !choosingPractice && !(practicing && state === 'over');
+        overlayBtn.hidden = choosingPractice;
+        overlaySummary.hidden = state !== 'over' || practicing || choosingPractice;
+        flightOptions.hidden = choosingPractice;
+        restartBtn.disabled = choosingPractice;
         if (state === 'playing') {
           const moveFocus = overlay.contains(document.activeElement);
           flightOptions.open = false;
@@ -1650,7 +1707,20 @@
           return;
         }
         overlay.classList.add('show');
-        if (state === 'ready') {
+        if (choosingPractice) {
+          overlayTitle.textContent = t('Boss 练习');
+          overlayDesc.textContent = t('标准难度 · 3 点护甲 · Lv.4 主炮 · 2 次脉冲');
+          practiceBackBtn.textContent = state === 'over' ? t('返回结算') : t('返回开局');
+          for (const choice of practiceChoices) {
+            const tier = Number(choice.dataset.practiceTier);
+            const kind = getBossKind(tier);
+            const name = getBossName(kind, false);
+            choice.disabled = !hasSeenBoss(kind);
+            choice.textContent = choice.disabled
+              ? t('{name} · 第 {wave} 波遇到后解锁', { name, wave: tier * BOSS_WAVE_INTERVAL })
+              : name;
+          }
+        } else if (state === 'ready') {
           overlayTitle.textContent = t('太空战机');
           overlayDesc.textContent = t(mode === 'standard'
             ? '标准闯关：3 点护甲起步，升级主炮、释放脉冲清弹，每 5 波迎战星际 Boss！'
@@ -1660,6 +1730,12 @@
           overlayTitle.textContent = t('已暂停');
           overlayDesc.textContent = t('当前得分：{score}', { score });
           overlayBtn.textContent = t('继续游戏');
+        } else if (state === 'over' && practicing) {
+          const kind = getBossKind(practiceTier);
+          overlayTitle.textContent = defeatedBosses.has(kind) ? t('练习成功') : t('战机坠毁');
+          overlayDesc.textContent = t('练习对象：{name} · 得分：{score}', { name: getBossName(kind, false), score });
+          overlayBtn.textContent = t('重试');
+          practiceBackBtn.textContent = t('返回选择');
         } else if (state === 'over') {
           overlayTitle.textContent = t('战机坠毁');
           const suffix = newBest ? t('（新纪录！）') : '';
@@ -1866,6 +1942,7 @@
           bossSupplyTimer = 9.5;
           bossAlertAlpha = 1;
           spawnBoss(wave / BOSS_WAVE_INTERVAL);
+          if (!practiceTier) recordBossEncounter(boss.kind);
           waveBanner = t('⚠ 第 {w} 波 · {name}', { w: wave, name: boss.name });
           waveBannerTimer = 2.6;
           playBossAlert();
@@ -1902,7 +1979,7 @@
         player.bank = 0;
         player.hp = 3;
         player.maxHp = 3;
-        player.weaponLv = mode === 'ace' ? 2 : 1;
+        player.weaponLv = practiceTier ? 4 : mode === 'ace' ? 2 : 1;
         player.hasShield = false;
         player.empCharges = 2;
         player.invulnTimer = 0;
@@ -1937,7 +2014,7 @@
         clearKeys();
 
         if (nextState === 'playing') {
-          startWave(1);
+          startWave(practiceTier ? practiceTier * BOSS_WAVE_INTERVAL : 1);
         } else {
           spawnQueue = [];
           waveBanner = '';
@@ -1949,13 +2026,37 @@
       }
 
       function startGame() {
+        if (practiceMenuOpen) return;
         resetState('playing');
+      }
+
+      function openPracticeMenu() {
+        if (state !== 'ready' && state !== 'over') return;
+        practiceMenuOpen = true;
+        if (practiceTier) {
+          practiceTier = 0;
+          mode = campaignMode;
+          syncModeButtons();
+          resetState('ready');
+        } else {
+          renderOverlay();
+        }
+        (practiceChoices.find((choice) => !choice.disabled) || practiceBackBtn).focus();
+      }
+
+      function startPractice(tier) {
+        const kind = BOSS_KINDS[tier - 1];
+        if (!practiceMenuOpen || !kind || !hasSeenBoss(kind)) return;
+        practiceMenuOpen = false;
+        practiceTier = tier;
+        mode = 'standard';
+        startGame();
       }
 
       function endGame() {
         if (state === 'over') return;
         state = 'over';
-        newBest = updateBest(score);
+        newBest = !practiceTier && updateBest(score);
         activeTouchId = null;
         touchLastPt = null;
         mouseTarget = null;
@@ -2249,8 +2350,7 @@
       }
 
       function getBossKind(tier) {
-        const mod = tier % 3;
-        return mod === 1 ? 'crimson' : mod === 2 ? 'prism' : 'mothership';
+        return BOSS_KINDS[(tier - 1) % BOSS_KINDS.length];
       }
 
       function getBossName(kind, showRole = true) {
@@ -3405,6 +3505,10 @@
         playWaveClear();
         spawnExplosion(bx, by, '#f97316', 46, 150, 14);
         addFloatText(bx, by, '+' + pts, '#fde047', 1.45);
+        if (practiceTier) {
+          endGame();
+          return;
+        }
         if (player.empCharges < 3) player.empCharges += 1;
         maybeDropPickup(bx - 26, by, true, false);
         maybeDropPickup(bx + 26, by, true, false);
@@ -3693,6 +3797,8 @@
             bullets.splice(i, 1);
           }
         }
+
+        if (state === 'over') return;
 
         // 更新敌机
         const enemyFireScale = Math.max(0.58, 1 - wave * 0.032 - (mode === 'ace' ? 0.12 : 0));
@@ -5509,6 +5615,19 @@
         if (state === 'paused') resumeGame();
         else startGame();
       });
+      practiceMenuBtn.addEventListener('click', openPracticeMenu);
+      practiceBackBtn.addEventListener('click', () => {
+        if (practiceTier) {
+          openPracticeMenu();
+        } else {
+          practiceMenuOpen = false;
+          renderOverlay();
+          practiceMenuBtn.focus();
+        }
+      });
+      practiceChoices.forEach((choice) => {
+        choice.addEventListener('click', () => startPractice(Number(choice.dataset.practiceTier)));
+      });
       pauseBtn.addEventListener('click', () => {
         if (state === 'playing') pauseGame();
         else if (state === 'paused') resumeGame();
@@ -5518,10 +5637,10 @@
       });
 
       async function switchMode(nextMode) {
-        if (nextMode === mode) return;
+        if (practiceTier || nextMode === mode) return;
         if (!(await confirmAbandonIfActive(true))) return;
-        mode = nextMode;
-        writeStored(MODE_KEY, mode);
+        campaignMode = mode = nextMode;
+        writeStored(MODE_KEY, campaignMode);
         syncModeButtons();
         resetState('ready');
       }
