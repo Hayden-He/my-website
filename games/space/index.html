@@ -367,14 +367,19 @@
       flex-shrink: 0;
     }
 
-    .overlay-stats {
-      margin: -4px 0 2px;
+    .overlay-summary {
+      display: grid;
+      gap: 5px;
+      max-width: 100%;
+    }
+
+    .overlay-summary[hidden] { display: none; }
+
+    .overlay-summary #overlay-stats {
       font-size: 0.84rem !important;
       font-weight: 700;
       color: #93c5fd !important;
     }
-
-    .overlay-stats[hidden] { display: none; }
 
     .space-legend {
       width: 100%;
@@ -814,7 +819,11 @@
           <div id="overlay" class="overlay show" role="status" aria-live="polite">
             <h2 id="overlay-title">太空战机</h2>
             <p id="overlay-desc"></p>
-            <p id="overlay-stats" class="overlay-stats" hidden></p>
+            <div id="overlay-summary" class="overlay-summary" hidden>
+              <p id="overlay-stats"></p>
+              <p id="overlay-boss-clears"></p>
+              <p id="overlay-boss-target"></p>
+            </div>
             <div class="overlay-actions">
               <button id="overlay-btn" class="overlay-btn" type="button">开始游戏</button>
             </div>
@@ -882,6 +891,7 @@
 
       const W = 460;
       const H = 560;
+      const BOSS_WAVE_INTERVAL = 5;
       const BOSS_HP_SCALE = 1.80;
       const BOSS_ENTRY_SPEED = 168;
       const BOSS_BEAM_LENGTH = H + 120;
@@ -936,7 +946,10 @@
       const overlay = document.getElementById('overlay');
       const overlayTitle = document.getElementById('overlay-title');
       const overlayDesc = document.getElementById('overlay-desc');
+      const overlaySummary = document.getElementById('overlay-summary');
       const overlayStats = document.getElementById('overlay-stats');
+      const bossClearsEl = document.getElementById('overlay-boss-clears');
+      const bossTargetEl = document.getElementById('overlay-boss-target');
       const overlayBtn = document.getElementById('overlay-btn');
       const flightOptions = document.getElementById('flight-options');
       const pauseBtn = document.getElementById('pause-btn');
@@ -1403,6 +1416,7 @@
       let bestAce = GameKit.readBest(BEST_KEYS.ace);
       let newBest = false;
       let kills = 0;
+      const defeatedBosses = new Map();
       let combo = 0;
       let comboTimer = 0;
       let maxCombo = 0;
@@ -1594,7 +1608,26 @@
         pauseBtn.textContent = t(state === 'paused' ? '继续' : '暂停');
       }
 
+      function renderBossSummary() {
+        const clearedNames = Array.from(defeatedBosses, ([kind, count]) => {
+          const name = getBossName(kind, false);
+          return count > 1 ? `${name} ×${count}` : name;
+        });
+        bossClearsEl.textContent = clearedNames.length
+          ? t('本局击破 Boss：{names}', { names: clearedNames.join(' · ') })
+          : t('本局尚未击破 Boss');
+
+        const tier = Math.ceil(wave / BOSS_WAVE_INTERVAL);
+        const bossWave = tier * BOSS_WAVE_INTERVAL;
+        const remaining = bossWave - wave;
+        const target = { wave: bossWave, name: getBossName(getBossKind(tier), false), remaining };
+        bossTargetEl.textContent = remaining > 0
+          ? t('再过 {remaining} 波迎战{name}（第 {wave} 波）', target)
+          : t('下次目标：第 {wave} 波 · {name}', target);
+      }
+
       function renderOverlay() {
+        overlaySummary.hidden = state !== 'over';
         if (state === 'playing') {
           const moveFocus = overlay.contains(document.activeElement);
           flightOptions.open = false;
@@ -1608,14 +1641,10 @@
           overlayDesc.textContent = t(mode === 'standard'
             ? '标准闯关：3 点护甲起步，升级主炮、释放脉冲清弹，每 5 波迎战星际 Boss！'
             : '王牌极速：初始 Lv.2 主炮、弹幕更密集、得分 1.5 倍加成，挑战极限操作！');
-          overlayStats.textContent = '';
-          overlayStats.hidden = true;
           overlayBtn.textContent = t('开始游戏');
         } else if (state === 'paused') {
           overlayTitle.textContent = t('已暂停');
           overlayDesc.textContent = t('当前得分：{score}', { score });
-          overlayStats.textContent = '';
-          overlayStats.hidden = true;
           overlayBtn.textContent = t('继续游戏');
         } else if (state === 'over') {
           overlayTitle.textContent = t('战机坠毁');
@@ -1629,7 +1658,7 @@
             wave,
             combo: maxCombo,
           });
-          overlayStats.hidden = false;
+          renderBossSummary();
           overlayBtn.textContent = t('再来一局');
         }
       }
@@ -1810,19 +1839,19 @@
 
       function startWave(num) {
         wave = num;
-        bossIntroHint = wave === 5 ? t('留意突进预警，向两侧躲避') : '';
-        const nextScene = Math.floor((num - 1) / 5) % SPACE_SCENES.length;
+        bossIntroHint = wave === BOSS_WAVE_INTERVAL ? t('留意突进预警，向两侧躲避') : '';
+        const nextScene = Math.floor((num - 1) / BOSS_WAVE_INTERVAL) % SPACE_SCENES.length;
         if (nextScene !== sceneIndex) {
           previousScene = sceneIndex;
           sceneIndex = nextScene;
           sceneBlend = 0;
         }
-        if (wave % 5 === 0) {
+        if (wave % BOSS_WAVE_INTERVAL === 0) {
           spawnQueue = [];
           waveSpawnTimer = 0;
           bossSupplyTimer = 9.5;
           bossAlertAlpha = 1;
-          spawnBoss(Math.floor(wave / 5));
+          spawnBoss(wave / BOSS_WAVE_INTERVAL);
           waveBanner = t('⚠ 第 {w} 波 · {name}', { w: wave, name: boss.name });
           waveBannerTimer = 2.6;
           playBossAlert();
@@ -1848,6 +1877,7 @@
         meteorTimer = 3.5;
         newBest = false;
         kills = 0;
+        defeatedBosses.clear();
         combo = 0;
         comboTimer = 0;
         maxCombo = 0;
@@ -2204,10 +2234,15 @@
         }
       }
 
-      function getBossName(kind) {
-        if (kind === 'crimson') return t('绯红裁决者 BOSS');
-        if (kind === 'prism') return t('苍蓝棱镜 BOSS');
-        return t('紫曜母舰 BOSS');
+      function getBossKind(tier) {
+        const mod = tier % 3;
+        return mod === 1 ? 'crimson' : mod === 2 ? 'prism' : 'mothership';
+      }
+
+      function getBossName(kind, showRole = true) {
+        const name = kind === 'crimson' ? t('绯红裁决者')
+          : kind === 'prism' ? t('苍蓝棱镜') : t('紫曜母舰');
+        return showRole ? t('{name} BOSS', { name }) : name;
       }
 
       function openingEnemyShots(enemy) {
@@ -2250,8 +2285,7 @@
       }
 
       function spawnBoss(tier) {
-        const mod = tier % 3;
-        const kind = mod === 1 ? 'crimson' : (mod === 2 ? 'prism' : 'mothership');
+        const kind = getBossKind(tier);
         const hpBase = kind === 'mothership' ? 115 : (kind === 'prism' ? 100 : 90);
         const hp = Math.round((hpBase + tier * 60) * BOSS_HP_SCALE * (mode === 'ace' ? 1.25 : 1));
         boss = {
@@ -3339,6 +3373,7 @@
 
       function defeatBoss() {
         if (!boss) return;
+        defeatedBosses.set(boss.kind, (defeatedBosses.get(boss.kind) ?? 0) + 1);
         const bx = boss.x;
         const by = boss.y;
         const pts = addScore(boss.pts);
