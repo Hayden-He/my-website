@@ -1642,45 +1642,98 @@
         });
       }
 
+      function scoutFormation(positions) {
+        return positions.map((x, index) => ({ kind: 'scout', x, y: -24 - index * 15 }));
+      }
+
       function openingWaveQueue(num) {
-        const scouts = (positions) => positions.map((x, index) => ({ kind: 'scout', x, y: -24 - index * 15 }));
         const flight = (kind, lesson, x, y, side = 0) => ({ kind, lesson, x, y, side });
         let queue;
         if (num === 1) {
           queue = [
-            { items: scouts([W * 0.50, W * 0.34, W * 0.66]), delay: 1.38 },
-            { items: scouts([W * 0.23, W * 0.50, W * 0.77]), delay: 0 },
+            { items: scoutFormation([W * 0.50, W * 0.34, W * 0.66]), delay: 1.38 },
+            { items: scoutFormation([W * 0.23, W * 0.50, W * 0.77]), delay: 0 },
           ];
         } else if (num === 2) {
           queue = [
             { items: [flight('interceptor', 'aim', 138, -26), flight('interceptor', 'aim', 322, -82)], delay: 1.68 },
-            { items: scouts([95, 230, 365]), delay: 1.22 },
-            { items: scouts([155, 230, 305]), delay: 0 },
+            { items: scoutFormation([95, 230, 365]), delay: 1.22 },
+            { items: scoutFormation([155, 230, 305]), delay: 0 },
           ];
         } else if (num === 3) {
           queue = [
             { items: [flight('interceptor', 'flank', 54, -27, -1), flight('interceptor', 'flank', 406, -71, 1)], delay: 1.65 },
-            { items: scouts([145, 230, 315]), delay: 1.30 },
+            { items: scoutFormation([145, 230, 315]), delay: 1.30 },
             { items: [flight('interceptor', 'flank', 406, -28, 1), flight('interceptor', 'flank', 54, -82, -1),
-              ...scouts([191, 269])], delay: 0 },
+              ...scoutFormation([191, 269])], delay: 0 },
           ];
         } else {
           queue = [
-            { items: [flight('gunship', 'spread', 230, -38), ...scouts([77, 142, 383])], delay: 2.15 },
+            { items: [flight('gunship', 'spread', 230, -38), ...scoutFormation([77, 142, 383])], delay: 2.15 },
             { items: [flight('interceptor', 'aim', 108, -24), flight('interceptor', 'flank', 406, -65, 1),
-              ...scouts([171, 289])], delay: 1.63 },
-            { items: [flight('gunship', 'spread', 178, -38), ...scouts([88, 345])], delay: 0 },
+              ...scoutFormation([171, 289])], delay: 1.63 },
+            { items: [flight('gunship', 'spread', 178, -38), ...scoutFormation([88, 345])], delay: 0 },
           ];
         }
         if (mode === 'ace') {
           queue[queue.length - 1].delay = 0.82;
-          queue.push({ items: scouts([111, 349]), delay: 0 });
+          queue.push({ items: scoutFormation([111, 349]), delay: 0 });
         }
         return queue;
       }
 
+      function crossfireWaveQueue() {
+        return [-1, 1, -1].flatMap((side, index) => {
+          const fromFlank = (x) => side === -1 ? x : W - x;
+          return [
+            {
+              items: [
+                { kind: 'interceptor', lesson: 'aim', x: fromFlank(184), y: -26 },
+                ...scoutFormation([fromFlank(112), fromFlank(66)]),
+              ],
+              delay: 1.45,
+            },
+            {
+              items: [
+                { kind: 'interceptor', lesson: 'flank', x: fromFlank(50), y: -28, side },
+                ...scoutFormation([fromFlank(146)]),
+              ],
+              delay: index === 2 ? 0 : 1.62,
+            },
+          ];
+        });
+      }
+
+      function gunshipEscortWaveQueue() {
+        return [false, true].flatMap((mirrored) => {
+          const lane = (x) => mirrored ? W - x : x;
+          return [
+            {
+              items: [
+                { kind: 'scout', x: lane(158), y: -48 },
+                { kind: 'scout', x: lane(230), y: -82 },
+              ],
+              delay: 0.48,
+            },
+            {
+              items: [{ kind: 'gunship', lesson: 'spread', x: lane(194), y: -38 }],
+              delay: 1.2,
+            },
+            {
+              items: [
+                ...scoutFormation([52, 113, 313, 370, 414].map(lane)),
+                { kind: 'interceptor', x: lane(274), y: -84 },
+              ],
+              delay: mirrored ? 0 : 2.05,
+            },
+          ];
+        });
+      }
+
       function buildWaveQueue(num) {
         if (num <= 4) return openingWaveQueue(num);
+        if (mode === 'standard' && num === 7) return crossfireWaveQueue();
+        if (mode === 'standard' && num === 9) return gunshipEscortWaveQueue();
         const queue = [];
         const baseCount = mode === 'ace' ? 7 : 5;
         let remaining = baseCount + Math.floor(num * 1.5);
@@ -1750,6 +1803,8 @@
         if (num === 2) return t('第 2 波 · 躲避瞄准弹');
         if (num === 3) return t('第 3 波 · 留意侧翼拦截');
         if (num === 4) return t('第 4 波 · 从散射间隙穿过');
+        if (mode === 'standard' && num === 7) return t('第 7 波 · 留意交叉夹击');
+        if (mode === 'standard' && num === 9) return t('第 9 波 · 炮艇护送');
         return t('第 {w} 波', { w: num });
       }
 

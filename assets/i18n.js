@@ -543,6 +543,8 @@
     '第 2 波 · 躲避瞄准弹': 'Wave 2 · Dodge aimed shots',
     '第 3 波 · 留意侧翼拦截': 'Wave 3 · Watch the flanks',
     '第 4 波 · 从散射间隙穿过': 'Wave 4 · Slip between volleys',
+    '第 7 波 · 留意交叉夹击': 'Wave 7 · Watch for crossfire',
+    '第 9 波 · 炮艇护送': 'Wave 9 · Gunship escort',
     '脉冲清屏！': 'EMP BLAST!',
     '护盾抵消！': 'Shield Blocked!',
     '火力 Lv.{lv}!': 'Cannon Lv.{lv}!',
