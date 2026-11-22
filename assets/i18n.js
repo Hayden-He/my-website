@@ -143,14 +143,14 @@
 
     // ---- 页面标题 / 描述 ----
     '小游乐场 - 在线小游戏合集': 'Little Playground - Free Online Mini Games',
-    '小游乐场：打开即玩的在线轻游戏合集，包含街头投篮、经典贪吃蛇、极速切水果、太空战机、经典 2048、经典扫雷、数字华容道、记忆翻牌与方块工坊，支持电脑与手机。':
-      'Little Playground: instant online mini games—Street Hoops, Classic Snake, Fruit Slicer, Space Shooter, 2048, Minesweeper, Sliding Puzzle, Memory Match and Block Workshop. Play on desktop or mobile.',
+    '小游乐场：打开即玩的在线轻游戏合集，包含街头投篮、经典贪吃蛇、极速切水果、太空战机、经典 2048、经典扫雷、数字华容道、记忆翻牌、方块工坊与俄罗斯方块，支持电脑与手机。':
+      'Little Playground: instant online mini games—Street Hoops, Classic Snake, Fruit Slicer, Space Shooter, 2048, Minesweeper, Sliding Puzzle, Memory Match, Block Workshop and Tetris. Play on desktop or mobile.',
     '动作街机 - 小游乐场': 'Arcade - Little Playground',
     '动作街机分类：街头投篮、经典贪吃蛇、极速切水果、太空战机等考验反应的小游戏。':
       'Arcade games: Street Hoops, Classic Snake, Fruit Slicer, Space Shooter and more reflex-based challenges.',
     '益智休闲 - 小游乐场': 'Puzzle - Little Playground',
-    '益智休闲分类：经典 2048、经典扫雷、数字华容道、记忆翻牌与方块工坊等轻松动脑与自由搭建的小游戏。':
-      'Puzzle games: 2048, Minesweeper, Sliding Puzzle, Memory Match, Block Workshop and more relaxed brain-teasers and sandbox building.',
+    '益智休闲分类：经典 2048、经典扫雷、数字华容道、记忆翻牌、方块工坊与俄罗斯方块等轻松动脑与自由搭建的小游戏。':
+      'Puzzle games: 2048, Minesweeper, Sliding Puzzle, Memory Match, Block Workshop, Tetris and more relaxed brain-teasers and sandbox building.',
     '街头投篮 - 小游乐场': 'Street Hoops - Little Playground',
     '街头投篮：点击或按空格起跳，空心入网、打板进球，挑战你的最高分。':
       'Street Hoops: tap or press Space to rise, sink swishes and bank shots, and chase your best score.',
@@ -660,6 +660,87 @@
     '点方块将它拆除。': 'Tap a block to remove it.',
     '这里不能放置方块。': 'A block cannot be placed here.',
     '此设备暂无法运行 3D 场景。': '3D rendering is unavailable on this device.',
+
+    // ---- 俄罗斯方块 ----
+    '俄罗斯方块': 'Tetris',
+    '俄罗斯方块 - 小游乐场': 'Tetris - Little Playground',
+    '俄罗斯方块：经典马拉松、40 行竞速与道具狂热三模式，支持防卡手随机、贴墙旋转、暂存、落点虚影与自动存档。':
+      'Tetris: Marathon, 40-Line Sprint and Party modes with 7-Bag, wall kicks, Hold, Ghost piece and autosave.',
+    '旋转与拼接下落方块消行得分，支持经典马拉松、40 行竞速与道具狂热三模式。':
+      'Rotate and stack falling blocks to clear lines across Marathon, 40-Line Sprint and Party modes.',
+    '马拉松最高: ': 'Marathon best: ',
+    '经典方块': 'Classic blocks',
+    '三模式': '3 modes',
+    '模式切换': 'Game mode',
+    '经典马拉松': 'Marathon',
+    '40 行竞速': '40-Line Sprint',
+    '道具狂热': 'Party Mode',
+    '得分': 'Score',
+    '最高纪录': 'Best',
+    '等级': 'Level',
+    '消行': 'Lines',
+    '冰霜': 'Freeze',
+    '涨行': 'Rise in',
+    '剩余行数': 'Lines left',
+    '最快用时': 'Fastest',
+    '已消': 'Cleared',
+    '已消行': 'Lines cleared',
+    '本局得分': 'Score',
+    '达到等级': 'Level reached',
+    '道具触发': 'Powerups',
+    '四消次数': 'Tetrises',
+    '最高连击': 'Max combo',
+    '暂存': 'Hold',
+    '点击暂存当前方块': 'Tap to hold current piece',
+    '下一个': 'Next',
+    '下一个方块': 'Next pieces',
+    '俄罗斯方块棋盘': 'Tetris board',
+    '堆叠下落方块凑满整行消除，挑战更高分数或更快消满 40 行。':
+      'Stack falling blocks to clear full rows and chase high scores or a fast 40-line clear.',
+    '以最快速度消除 40 行，拼手速与节奏感。':
+      'Clear 40 lines as fast as you can.',
+    '炸弹、激光与冰霜方块轮番助阵，同时迎战定时涨行挑战！':
+      'Unleash bomb, laser and freeze blocks while surviving timed garbage rows!',
+    '堆叠下落方块凑满整行消除，不断升级挑战更高分。':
+      'Stack falling blocks to clear rows and level up for bigger scores.',
+    '当前棋局已保存，随时回来继续。': 'Progress is saved. Come back anytime.',
+    '尚未开始落块，准备好随时继续。': 'Ready whenever you are.',
+    '暂停期间不计时，准备好随时继续。': 'Timer is paused. Resume when ready.',
+    '重新开始': 'Restart',
+    '新最快纪录！': 'New fastest time!',
+    '40 行完成！': '40 lines cleared!',
+    '用时 {time}，手速 {pps} 块/秒。': 'Finished in {time} ({pps} pieces/sec).',
+    '刷新最高分！': 'New high score!',
+    '本局得分 {score}，共消除 {lines} 行。': 'Scored {score} pts across {lines} lines.',
+    '在 {lines} 行时触顶，再接再厉！': 'Topped out at {lines} lines. Try again!',
+    '全消！': 'All Clear!',
+    '连续四消 ×1.5': 'B2B ×1.5',
+    'T-Spin!': 'T-Spin!',
+    '四消！': 'Tetris!',
+    '三消': 'Triple!',
+    '双消': 'Double!',
+    '{n} 连击': '{n} Combo',
+    '炸弹爆破！': 'Bomb Blast!',
+    '激光清行！': 'Laser Beam!',
+    '冰霜减速 8s': 'Freeze 8s!',
+    '底部涨行！': 'Garbage Rise!',
+    '当前进行中的对局将暂停或结束，确定切换吗？': 'Your current run will be paused or ended. Switch mode?',
+    '触屏控制': 'Touch controls',
+    '左移': 'Move left',
+    '右移': 'Move right',
+    '旋转': 'Rotate',
+    '▼ 加速': '▼ Soft Drop',
+    '⤓ 落底': '⤓ Hard Drop',
+    '方向键移动 · ↑/X 旋转 · Z 逆转 · 空格 落底 · C 暂存 · P 暂停':
+      'Arrows move · ↑/X rotate · Z CCW · Space drop · C hold · P pause',
+    '凑满整行即可消除。四消、T-Spin 与全消得分最高，连续四消和连击还有额外加成！':
+      'Fill horizontal rows to clear them. Tetrises, T-Spins and All Clears score huge, with Back-to-Back and combo bonuses!',
+    '移动与暂存': 'Move & hold',
+    '电脑用方向键操作、空格落底、C 暂存；手机点底部按键或轻点棋盘旋转，点左上角「暂存」框可保留当前方块。':
+      'Use Arrow keys, Space to hard drop and C to hold on desktop; on mobile tap the bottom pad, tap the board to rotate, or tap the Hold box.',
+    '三种玩法模式': 'Three game modes',
+    '经典马拉松会自动存档；40 行竞速冲刺最快用时；道具狂热可触发炸弹、激光和冰霜！':
+      'Classic Marathon autosaves progress; 40-Line Sprint races the clock; Party Mode adds bombs, lasers and freeze blocks!',
 
     // ---- 清数据 / 弹窗 ----
     '将清除本站在此浏览器保存的游戏纪录、存档、外观、模式偏好、音效设置、教学记录和最近打开记录，且无法恢复。语言设置会保留。':

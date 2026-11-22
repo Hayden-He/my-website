@@ -137,5 +137,18 @@ window.SITE_CONFIG = {
       url: '/games/block-workshop/',
       tags: ['自由搭建', '本地作品'],
     },
+    {
+      id: 'tetris',
+      title: '俄罗斯方块',
+      icon: 'tetris',
+      preview: '/assets/previews/tetris.webp',
+      category: 'puzzle',
+      categoryName: '益智休闲',
+      description: '旋转与拼接下落方块消行得分，支持经典马拉松、40 行竞速与道具狂热三模式。',
+      url: '/games/tetris/',
+      storageKey: 'game_best_tetris_marathon',
+      bestPrefix: '马拉松最高: ',
+      tags: ['经典方块', '三模式'],
+    },
   ],
 };
