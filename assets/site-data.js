@@ -419,7 +419,7 @@
 
   // 游戏页：自动在页面底部追加入口（列表页由 app.js 在页脚渲染）
   document.addEventListener('DOMContentLoaded', () => {
-    const wrap = document.querySelector('main.game-wrap');
+    const wrap = document.querySelector('main.game-wrap, [data-site-footer-mount]');
     if (!wrap) return;
     const box = document.createElement('div');
     box.className = 'data-clear-wrap';

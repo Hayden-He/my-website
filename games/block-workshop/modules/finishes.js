@@ -1,4 +1,4 @@
-import { CanvasTexture, MeshStandardMaterial, NearestFilter, SRGBColorSpace } from './vendor/three.module.js';
+import { CanvasTexture, MeshStandardMaterial, NearestFilter, SRGBColorSpace } from './vendor/three.min.js';
 import { MATERIALS } from './world.js';
 
 const finishes = {

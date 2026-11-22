@@ -25,9 +25,9 @@
 
 ## 游戏模块与本地原型
 
-- 游戏页可通过 `./modules/` 引用同目录下的脚本、样式或资源。构建为整个模块目录生成同一个指纹，并保留目录结构。双语校验会扫描模块内的 JS 和 MJS，第三方代码放在 `modules/vendor/`。
+- 游戏页可通过 `./modules/` 引用同目录下的脚本、样式或资源。构建为业务模块目录生成统一指纹并保留目录结构；`modules/vendor/` 单独计算指纹并改写相对引用，改动业务代码不会击穿第三方库缓存。双语校验会扫描 `vendor/` 外的 JS 和 MJS。
 - 原型可运行 `node scripts/build-site.mjs --preview-game <id>` 本地构建，再通过静态 HTTP 服务访问输出中的 `/prototypes/<id>/`。
-- 方块工坊使用 npm 的 `three@0.187.0`，页面载入官方 WebGL 模块及其 core 模块。第三方许可放在 `games/block-workshop/modules/vendor/LICENSE`。
+- 方块工坊使用 `three@0.187.0` 离线压缩合并的 ESM 单文件 `games/block-workshop/modules/vendor/three.min.js`，第三方许可放在 `games/block-workshop/modules/vendor/LICENSE`。
 
 ## Cloudflare Pages
 

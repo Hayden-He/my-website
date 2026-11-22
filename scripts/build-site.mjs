@@ -28,15 +28,49 @@ const modulePaths = new Map();
 for (const page of pages) {
   const modules = pageModuleFiles(page).map((file) => [file, fs.readFileSync(path.join(root, file))]);
   if (!modules.length) continue;
-  const hash = createHash('sha256');
+  const moduleDir = pageModuleDirectory(page);
+  const vendorPrefix = moduleDir + '/vendor/';
+  const vendorFiles = [];
+  const appFiles = [];
   for (const [file, bytes] of modules) {
-    hash.update(file).update('\0').update(bytes).update('\0');
     version.update(file).update('\0').update(bytes).update('\0');
+    if (file.startsWith(vendorPrefix)) vendorFiles.push([file, bytes]);
+    else appFiles.push([file, bytes]);
   }
-  // 相对 import 与 CSS 资源路径需保留在同一版本目录内。
-  const directory = 'assets/v/' + hash.digest('hex').slice(0, 16);
-  modulePaths.set(page, directory + '/' + pageModuleDirectory(page));
-  for (const [file, bytes] of modules) content.set(directory + '/' + file, bytes);
+
+  let vendorDir = null;
+  let vendorHash = null;
+  const vendorSet = new Set(vendorFiles.map(([file]) => file));
+  if (vendorFiles.length) {
+    const hash = createHash('sha256');
+    for (const [file, bytes] of vendorFiles) hash.update(file).update('\0').update(bytes).update('\0');
+    vendorHash = hash.digest('hex').slice(0, 16);
+    const directory = 'assets/v/' + vendorHash;
+    vendorDir = directory + '/' + moduleDir + '/vendor';
+    for (const [file, bytes] of vendorFiles) content.set(directory + '/' + file, bytes);
+  }
+
+  let appDir = null;
+  if (appFiles.length) {
+    const rewritten = appFiles.map(([file, bytes]) => {
+      if (!vendorHash || !/\.m?js$/.test(file)) return [file, bytes];
+      const text = bytes.toString('utf8').replace(/(['"])((?:\.\.?\/)+vendor\/[^'"]+)\1/g, (match, quote, spec) => {
+        const resolved = path.posix.normalize(path.posix.join(path.posix.dirname(file), spec));
+        if (!resolved.startsWith(vendorPrefix)) return match;
+        if (!vendorSet.has(resolved)) throw new Error(file + '：第三方模块不存在 ' + spec);
+        return quote + '/assets/v/' + vendorHash + '/' + resolved + quote;
+      });
+      return [file, Buffer.from(text, 'utf8')];
+    });
+    const hash = createHash('sha256');
+    for (const [file, bytes] of rewritten) hash.update(file).update('\0').update(bytes).update('\0');
+    // 相对 import 与 CSS 资源路径需保留在同一版本目录内；vendor 目录单独计算指纹。
+    const directory = 'assets/v/' + hash.digest('hex').slice(0, 16);
+    appDir = directory + '/' + moduleDir;
+    for (const [file, bytes] of rewritten) content.set(directory + '/' + file, bytes);
+  }
+
+  modulePaths.set(page, { appDir, vendorDir });
 }
 const buildId = version.digest('hex').slice(0, 16);
 
@@ -181,8 +215,12 @@ for (const file of pages) {
     (_, attribute, asset) => attribute + '="' + versionedAsset(asset) + '"');
   html = html.replace(/\b(src|href)="\.\/modules\/([^"?#]+)([?#][^"]*)?"(?=\s|>)/g,
     (_, attribute, fileName, suffix = '') => {
-      const relative = modulePaths.get(file) + '/' + fileName;
-      if (!content.has(relative)) throw new Error(file + '：模块资源不存在 ./modules/' + fileName);
+      const entry = modulePaths.get(file);
+      const isVendor = fileName.startsWith('vendor/');
+      const dir = isVendor ? entry?.vendorDir : entry?.appDir;
+      const target = isVendor ? fileName.slice('vendor/'.length) : fileName;
+      const relative = dir && (dir + '/' + target);
+      if (!relative || !content.has(relative)) throw new Error(file + '：模块资源不存在 ./modules/' + fileName);
       return attribute + '="/' + relative + suffix + '"';
     });
   html = html.replace('</head>', [

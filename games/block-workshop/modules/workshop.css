@@ -15,10 +15,11 @@
   display: grid;
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
+  gap: 8px;
 }
 
-.workshop-header h1 { display: flex; align-items: center; gap: 6px; font-size: 1.2rem; }
-.workshop-header h1 svg { width: 24px; height: 24px; }
+.workshop-header h1 { display: flex; align-items: center; gap: 6px; font-size: 1.2rem; white-space: nowrap; }
+.workshop-header h1 svg { width: 24px; height: 24px; flex: 0 0 auto; }
 .workshop-header a, .workshop-header .lang-btn {
   width: max-content;
   min-height: 44px;
@@ -26,8 +27,29 @@
   place-items: center;
   padding-inline: 8px;
   color: #e1ecfb;
+  white-space: nowrap;
 }
-.workshop-header .lang-btn { justify-self: end; background: #223b55; }
+.workshop-back { justify-self: start; }
+.workshop-header-right {
+  justify-self: end;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.workshop-header .lang-btn { background: #223b55; border-color: #536c86; }
+.workshop-header .lang-btn:hover { background: #2d4d6e; color: #ffffff; border-color: #7893ad; }
+
+@media (max-width: 420px) {
+  .workshop-header { gap: 4px; }
+  .workshop-header h1 { font-size: 0.96rem; gap: 4px; }
+  .workshop-header h1 svg { width: 20px; height: 20px; }
+  .workshop-header a, .workshop-header .lang-btn { padding-inline: 6px; font-size: 0.8rem; }
+  .workshop-header-right { gap: 4px; }
+}
+
+@media (max-width: 350px) {
+  .workshop-header-right a { display: none; }
+}
 
 .workshop-stage {
   min-height: 0;

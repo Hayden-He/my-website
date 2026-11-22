@@ -1,4 +1,4 @@
-    # Cloudflare Pages 响应头
+# Cloudflare Pages 响应头
 # 说明：站点为纯静态页面，未启用 CSP（页面含内联脚本）；如需更严格策略，先拆分内联脚本再逐步收紧。
 /*
   X-Content-Type-Options: nosniff

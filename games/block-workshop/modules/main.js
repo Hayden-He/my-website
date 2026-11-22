@@ -2,7 +2,7 @@ import {
   BoxGeometry, BufferAttribute, BufferGeometry, Color, DirectionalLight, EdgesGeometry, GridHelper, HemisphereLight, InstancedMesh,
   LineBasicMaterial, LineSegments, Matrix4, Mesh, MeshBasicMaterial, MeshStandardMaterial, OrthographicCamera,
   PlaneGeometry, Points, PointsMaterial, Raycaster, Scene, Vector2, Vector3, WebGLRenderer,
-} from './vendor/three.module.js';
+} from './vendor/three.min.js';
 import {
   SIZE, MAX_HEIGHT, MATERIALS, BRIDGE_PLAN, bridgeProgress, canPlace, createPracticeWorld, hasBlock, placeBlock, removeBlock,
 } from './world.js';

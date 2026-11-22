@@ -83,8 +83,8 @@
       'Fast-paced arcade challenges—hoops, snake, fruit slicing and starfighter action to beat your personal best.',
     '动作街机游戏': 'Arcade games',
     '益智休闲 🧩': 'Puzzle 🧩',
-    '轻松动脑、节奏自在的经典数字、逻辑与记忆游戏，适合碎片时间放松一下。':
-      'Relaxed brain-teasers—numbers, logic and memory for a quick break.',
+    '轻松动脑、节奏自在的数字、逻辑、记忆与 3D 方块搭建游戏，适合碎片时间放松一下。':
+      'Relaxed brain-teasers and 3D block building—numbers, logic, memory and sandbox creation for a quick break.',
     '益智休闲游戏': 'Puzzle games',
 
     // ---- 404 ----
@@ -143,14 +143,14 @@
 
     // ---- 页面标题 / 描述 ----
     '小游乐场 - 在线小游戏合集': 'Little Playground - Free Online Mini Games',
-    '小游乐场：打开即玩的在线轻游戏合集，包含街头投篮、经典贪吃蛇、极速切水果、太空战机、经典 2048、经典扫雷、记忆翻牌与数字华容道，支持电脑与手机。':
-      'Little Playground: instant online mini games—Street Hoops, Classic Snake, Fruit Slicer, Space Shooter, 2048, Minesweeper, Memory Match and Sliding Puzzle. Play on desktop or mobile.',
+    '小游乐场：打开即玩的在线轻游戏合集，包含街头投篮、经典贪吃蛇、极速切水果、太空战机、经典 2048、经典扫雷、数字华容道、记忆翻牌与方块工坊，支持电脑与手机。':
+      'Little Playground: instant online mini games—Street Hoops, Classic Snake, Fruit Slicer, Space Shooter, 2048, Minesweeper, Sliding Puzzle, Memory Match and Block Workshop. Play on desktop or mobile.',
     '动作街机 - 小游乐场': 'Arcade - Little Playground',
     '动作街机分类：街头投篮、经典贪吃蛇、极速切水果、太空战机等考验反应的小游戏。':
       'Arcade games: Street Hoops, Classic Snake, Fruit Slicer, Space Shooter and more reflex-based challenges.',
     '益智休闲 - 小游乐场': 'Puzzle - Little Playground',
-    '益智休闲分类：经典 2048、经典扫雷、记忆翻牌与数字华容道等轻松动脑的小游戏。':
-      'Puzzle games: 2048, Minesweeper, Memory Match, Sliding Puzzle and more relaxed brain-teasers.',
+    '益智休闲分类：经典 2048、经典扫雷、数字华容道、记忆翻牌与方块工坊等轻松动脑与自由搭建的小游戏。':
+      'Puzzle games: 2048, Minesweeper, Sliding Puzzle, Memory Match, Block Workshop and more relaxed brain-teasers and sandbox building.',
     '街头投篮 - 小游乐场': 'Street Hoops - Little Playground',
     '街头投篮：点击或按空格起跳，空心入网、打板进球，挑战你的最高分。':
       'Street Hoops: tap or press Space to rise, sink swishes and bank shots, and chase your best score.',
@@ -638,6 +638,7 @@
     '双指捏合缩放': 'Pinch to zoom',
     '双指同向拖动平移': 'Drag with two fingers to pan',
     '方块工坊': 'Block Workshop',
+    '方块工坊 - 小游乐场': 'Block Workshop - Little Playground',
     '方块搭建场地': 'Block building area',
     '搭建工具': 'Building tools',
     '放置': 'Place',
