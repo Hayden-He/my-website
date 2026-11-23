@@ -34,6 +34,10 @@
       box-shadow: var(--shadow-sm);
     }
 
+    :root[data-theme="dark"] .not-found-card {
+      background: var(--hero-bg);
+    }
+
     .not-found-icon {
       display: inline-flex;
       align-items: center;
@@ -99,8 +103,8 @@
     }
 
     .secondary-btn:hover {
-      background: #f1f5f9;
-      border-color: #cbd5e1;
+      background: var(--surface-muted);
+      border-color: var(--border-strong);
     }
 
     @media (max-width: 600px) {

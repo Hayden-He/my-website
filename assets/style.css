@@ -1,18 +1,60 @@
 :root {
+  color-scheme: light;
   --bg: #f5f7fb;
   --surface: #ffffff;
+  --surface-muted: #f1f5f9;
   --text: #1e293b;
   --text-muted: #64748b;
   --border: #e2e8f0;
+  --border-strong: #cbd5e1;
+  --track: #e2e8f0;
   --primary: #2563eb;
   --primary-hover: #1d4ed8;
   --accent: #f97316;
   --accent-text: #c2410c;
   --accent-soft: #fff7ed;
   --primary-soft: #eff6ff;
+  --chip-bg: #eef2ff;
+  --input-bg: #f8fafc;
+  --header-bg: rgba(255, 255, 255, 0.9);
+  --topbar-bg: rgba(255, 255, 255, 0.92);
+  --hero-bg: linear-gradient(135deg, #ffffff 0%, #f8fafc 60%, #eff6ff 100%);
+  --danger: #dc2626;
+  --danger-text: #ef4444;
+  --toast-bg: #1e293b;
+  --scrim: rgba(15, 23, 42, 0.55);
   --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.06);
   --shadow-md: 0 10px 25px -5px rgba(15, 23, 42, 0.08), 0 4px 10px -6px rgba(15, 23, 42, 0.04);
   --radius: 16px;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0b1120;
+  --surface: #131c31;
+  --surface-muted: #1b2640;
+  --text: #e2e8f0;
+  --text-muted: #94a3b8;
+  --border: #24314b;
+  --border-strong: #334155;
+  --track: #24314b;
+  --primary: #3b82f6;
+  --primary-hover: #60a5fa;
+  --accent: #fb923c;
+  --accent-text: #fdba74;
+  --accent-soft: rgba(251, 146, 60, 0.14);
+  --primary-soft: rgba(59, 130, 246, 0.16);
+  --chip-bg: rgba(99, 102, 241, 0.18);
+  --input-bg: #0f172a;
+  --header-bg: rgba(11, 17, 32, 0.86);
+  --topbar-bg: rgba(11, 17, 32, 0.88);
+  --hero-bg: linear-gradient(135deg, #131c31 0%, #111a2e 60%, #16233f 100%);
+  --danger: #ef4444;
+  --danger-text: #f87171;
+  --toast-bg: #334155;
+  --scrim: rgba(2, 6, 23, 0.7);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 4px 10px -6px rgba(0, 0, 0, 0.4);
 }
 
 * {
@@ -57,7 +99,7 @@ textarea {
   top: 0;
   z-index: 20;
   min-height: 65px;
-  background: rgba(255, 255, 255, 0.9);
+  background: var(--header-bg);
   backdrop-filter: blur(10px);
   border-bottom: 1px solid var(--border);
 }
@@ -111,7 +153,7 @@ textarea {
 }
 
 .nav-link:hover {
-  background: #f1f5f9;
+  background: var(--surface-muted);
   color: var(--text);
 }
 
@@ -137,9 +179,9 @@ textarea {
 }
 
 .nav-sound-btn:hover {
-  background: #f1f5f9;
+  background: var(--surface-muted);
   color: var(--text);
-  border-color: #cbd5e1;
+  border-color: var(--border-strong);
 }
 
 /* 页面主视觉区 */
@@ -150,7 +192,7 @@ textarea {
 .hero-card {
   position: relative;
   overflow: hidden;
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 60%, #eff6ff 100%);
+  background: var(--hero-bg);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 28px 32px;
@@ -269,7 +311,7 @@ textarea {
 .game-card:hover {
   transform: translateY(-3px);
   box-shadow: var(--shadow-md);
-  border-color: #cbd5e1;
+  border-color: var(--border-strong);
 }
 
 .game-card:active {
@@ -291,7 +333,7 @@ textarea {
   margin-bottom: 14px;
   overflow: hidden;
   border-radius: 12px;
-  background: #eef2ff;
+  background: var(--chip-bg);
 }
 
 .game-preview-image {
@@ -371,7 +413,7 @@ textarea {
   position: sticky;
   top: 0;
   z-index: 20;
-  background: rgba(255, 255, 255, 0.92);
+  background: var(--topbar-bg);
   backdrop-filter: blur(10px);
   border-bottom: 1px solid var(--border);
 }
@@ -401,7 +443,7 @@ textarea {
 
 .back-link:hover {
   color: var(--text);
-  background: #e2e8f0;
+  background: var(--track);
 }
 
 .game-topbar-title {
@@ -581,7 +623,7 @@ textarea {
 }
 
 .data-clear-btn:hover {
-  color: #ef4444;
+  color: var(--danger-text);
 }
 
 /* 页脚贴底：仅列表页（含 #site-footer）启用，避免影响游戏页布局 */
@@ -646,7 +688,7 @@ body:has(#site-footer) > main {
   align-items: center;
   justify-content: center;
   padding: 20px;
-  background: rgba(15, 23, 42, 0.55);
+  background: var(--scrim);
   backdrop-filter: blur(4px);
   animation: dialog-fade 0.15s ease-out;
 }
@@ -687,7 +729,7 @@ body:has(#site-footer) > main {
   padding: 9px 16px;
   border: none;
   border-radius: 10px;
-  background: #e2e8f0;
+  background: var(--track);
   color: var(--text);
   font-size: 0.88rem;
   font-weight: 600;
@@ -700,7 +742,7 @@ body:has(#site-footer) > main {
 }
 
 .site-dialog-btn.danger {
-  background: #dc2626;
+  background: var(--danger);
   color: #fff;
 }
 
@@ -728,7 +770,7 @@ body:has(#site-footer) > main {
   max-width: calc(100% - 32px);
   padding: 9px 16px;
   border-radius: 999px;
-  background: #1e293b;
+  background: var(--toast-bg);
   color: #fff;
   font-size: 0.86rem;
   font-weight: 500;
@@ -775,9 +817,9 @@ body:has(#site-footer) > main {
 .nav-lang-btn:hover,
 .lang-btn:hover,
 .nav-theme-btn:hover {
-  background: #f1f5f9;
+  background: var(--surface-muted);
   color: var(--text);
-  border-color: #cbd5e1;
+  border-color: var(--border-strong);
 }
 
 .nav-lang-btn:focus-visible,

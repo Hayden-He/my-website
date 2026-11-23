@@ -66,7 +66,7 @@
 
 .mode-pills {
   display: flex;
-  background: #e2e8f0;
+  background: var(--track);
   padding: 3px;
   border-radius: 10px;
   gap: 4px;
@@ -109,7 +109,7 @@
 }
 
 .btn-small.secondary {
-  background: #e2e8f0;
+  background: var(--track);
   color: var(--text);
 }
 
@@ -217,8 +217,8 @@
 }
 
 .more-game-link:hover {
-  border-color: #cbd5e1;
-  background: #f8fafc;
+  border-color: var(--border-strong);
+  background: var(--input-bg);
 }
 
 .more-game-icon {
@@ -249,7 +249,7 @@
   align-items: center;
   justify-content: center;
   padding: 20px;
-  background: rgba(15, 23, 42, 0.55);
+  background: var(--scrim);
   backdrop-filter: blur(4px);
 }
 
@@ -293,7 +293,7 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #cbd5e1;
+  background: var(--border-strong);
 }
 
 .gk-tutorial-dot.active {
@@ -320,7 +320,7 @@
 }
 
 .gk-tutorial-btn.secondary {
-  background: #f1f5f9;
+  background: var(--surface-muted);
   color: var(--text-muted);
 }
 
