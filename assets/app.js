@@ -139,6 +139,7 @@
       themeBtn.setAttribute('aria-label', t('主题：跟随系统'));
       themeBtn.title = t('主题：跟随系统');
       themeBtn.appendChild(createIcon('theme-system', 'theme-ico', '0 0 24 24'));
+      themeBtn.appendChild(createEl('span', 'theme-label', t('自动')));
       nav.appendChild(themeBtn);
 
       const langBtn = createEl('button', 'nav-lang-btn', window.I18N.langLabel());

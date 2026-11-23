@@ -511,8 +511,9 @@ textarea {
     font-size: 0.84rem;
   }
 
-  /* 手机上把“音效开/关”收成图标，避免导航被挤到第三行 */
-  .nav-sound-btn .sound-label {
+  /* 手机上把“音效开/关”和“主题”文字收成图标，避免导航被挤到第三行 */
+  .nav-sound-btn .sound-label,
+  .nav-theme-btn .theme-label {
     display: none;
   }
 }
@@ -814,6 +815,13 @@ body:has(#site-footer) > main {
   padding: 6px 8px;
 }
 
+.nav-theme-btn {
+  gap: 4px;
+  padding: 6px 11px;
+  font-size: 0.84rem;
+  font-weight: 600;
+}
+
 .nav-lang-btn:hover,
 .lang-btn:hover,
 .nav-theme-btn:hover {
@@ -962,7 +970,8 @@ body:has(#site-footer) > main {
   transition: none !important;
 }
 
-.sound-label {
+.sound-label,
+.theme-label {
   line-height: 1;
 }
 

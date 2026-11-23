@@ -124,7 +124,7 @@ function headerHtml(activeKey) {
     '<button class="nav-sound-btn" type="button" aria-pressed="true" aria-label="音效已开启，点击关闭" title="关闭音效">' +
     iconHtml('sound-on', 'sound-ico', '0 0 24 24') + '<span class="sound-label">音效开</span></button>' +
     '<button class="nav-theme-btn" type="button" data-theme-toggle aria-label="主题：跟随系统" title="主题：跟随系统">' +
-    iconHtml('theme-system', 'theme-ico', '0 0 24 24') + '</button>' +
+    iconHtml('theme-system', 'theme-ico', '0 0 24 24') + '<span class="theme-label">自动</span></button>' +
     '<button class="nav-lang-btn" type="button" data-lang-toggle aria-label="切换到英文" title="切换到英文">EN</button>' +
     '</nav></div>';
 }

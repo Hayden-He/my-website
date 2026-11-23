@@ -85,6 +85,12 @@
     return t('跟随系统');
   }
 
+  function shortLabel(value) {
+    if (value === 'light') return t('浅色');
+    if (value === 'dark') return t('深色');
+    return t('自动');
+  }
+
   function toggleAria(current) {
     const next = prefName(nextOf(current));
     if (current === 'light') return t('主题：浅色（点击切换为{next}）', { next });
@@ -106,12 +112,24 @@
 
   function refreshToggles() {
     const label = toggleAria(pref);
+    const shortText = shortLabel(pref);
+    const expected = '#theme-' + pref;
     document.querySelectorAll('[data-theme-toggle]').forEach((btn) => {
+      const wantsLabel = btn.classList?.contains('nav-theme-btn') || !!btn.querySelector('.theme-label');
       const use = btn.querySelector('use');
-      const expected = '#theme-' + pref;
+      let labelEl = btn.querySelector('.theme-label');
       if (!use || use.getAttribute('href') !== expected) {
         btn.textContent = '';
         btn.appendChild(createThemeIcon(pref));
+        labelEl = null;
+      }
+      if (wantsLabel) {
+        if (!labelEl) {
+          labelEl = document.createElement('span');
+          labelEl.className = 'theme-label';
+          btn.appendChild(labelEl);
+        }
+        labelEl.textContent = shortText;
       }
       btn.setAttribute('aria-label', label);
       btn.setAttribute('title', label);

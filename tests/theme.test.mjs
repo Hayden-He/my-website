@@ -233,3 +233,96 @@ test('SiteData.clearAll preserves site_theme while clearing game keys', () => {
   assert.equal(h.localStorage.getItem('site_lang'), 'en');
   assert.equal(h.localStorage.getItem('site_theme'), 'dark');
 });
+
+test('refreshToggles updates .theme-label on .nav-theme-btn and keeps .theme-btn icon-only', () => {
+  function makeButton(classes) {
+    const attrs = new Map();
+    const children = [];
+    const el = {
+      classList: { contains: (c) => classes.includes(c) },
+      children,
+      set textContent(v) { if (v === '') children.length = 0; },
+      appendChild(child) { children.push(child); return child; },
+      setAttribute(k, v) { attrs.set(k, String(v)); },
+      getAttribute(k) { return attrs.get(k) ?? null; },
+      querySelector(sel) {
+        if (sel === 'use') {
+          for (const c of children) {
+            if (c.tagName === 'svg') {
+              const u = c.children.find((n) => n.tagName === 'use');
+              if (u) return u;
+            }
+          }
+          return null;
+        }
+        if (sel === '.theme-label') {
+          return children.find((c) => c.className === 'theme-label') || null;
+        }
+        return null;
+      },
+    };
+    return el;
+  }
+
+  const navBtn = makeButton(['nav-theme-btn']);
+  const gameBtn = makeButton(['lang-btn', 'theme-btn']);
+  const docListeners = new Map();
+  const storage = new Map();
+  const document = {
+    readyState: 'complete',
+    documentElement: { dataset: {}, classList: { add() {}, remove() {} } },
+    querySelector() { return null; },
+    querySelectorAll(sel) { return sel === '[data-theme-toggle]' ? [navBtn, gameBtn] : []; },
+    createElement(tag) {
+      const node = { tagName: tag, className: '', textContent: '' };
+      return node;
+    },
+    createElementNS(_ns, tag) {
+      const attrs = new Map();
+      const children = [];
+      return {
+        tagName: tag,
+        children,
+        setAttribute(k, v) { attrs.set(k, String(v)); },
+        getAttribute(k) { return attrs.get(k) ?? null; },
+        appendChild(c) { children.push(c); return c; },
+      };
+    },
+    addEventListener(type, fn) {
+      if (!docListeners.has(type)) docListeners.set(type, new Set());
+      docListeners.get(type).add(fn);
+    },
+    dispatchEvent() { return true; },
+  };
+
+  const sandbox = {
+    document,
+    localStorage: {
+      getItem: (k) => storage.get(k) ?? null,
+      setItem: (k, v) => storage.set(k, String(v)),
+    },
+    CustomEvent: class { constructor(t, i = {}) { this.type = t; this.detail = i.detail; } },
+    setTimeout,
+    clearTimeout,
+    matchMedia: () => ({ matches: false, addEventListener() {}, removeEventListener() {} }),
+    addEventListener() {},
+  };
+  sandbox.window = sandbox;
+
+  vm.runInNewContext(themeSource, sandbox, { filename: 'assets/theme.js' });
+
+  assert.equal(navBtn.querySelector('use')?.getAttribute('href'), '#theme-system');
+  assert.equal(navBtn.querySelector('.theme-label')?.textContent, '自动');
+  assert.equal(gameBtn.querySelector('use')?.getAttribute('href'), '#theme-system');
+  assert.equal(gameBtn.querySelector('.theme-label'), null);
+
+  sandbox.SiteTheme.cycle();
+  assert.equal(navBtn.querySelector('use')?.getAttribute('href'), '#theme-light');
+  assert.equal(navBtn.querySelector('.theme-label')?.textContent, '浅色');
+  assert.equal(gameBtn.querySelector('.theme-label'), null);
+
+  sandbox.SiteTheme.cycle();
+  assert.equal(navBtn.querySelector('use')?.getAttribute('href'), '#theme-dark');
+  assert.equal(navBtn.querySelector('.theme-label')?.textContent, '深色');
+  assert.equal(gameBtn.querySelector('.theme-label'), null);
+});

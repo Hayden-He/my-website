@@ -743,6 +743,7 @@
       'Classic Marathon autosaves progress; 40-Line Sprint races the clock; Party Mode adds bombs, lasers and freeze blocks!',
 
     // ---- 主题切换 ----
+    '自动': 'Auto',
     '跟随系统': 'Follow system',
     '浅色': 'Light',
     '深色': 'Dark',
