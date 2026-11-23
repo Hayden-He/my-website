@@ -30,6 +30,14 @@
   gap: 12px;
 }
 
+.left-rail {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
 .side-panel {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -59,7 +67,7 @@
 }
 
 .hold-btn.dimmed {
-  opacity: 0.72;
+  opacity: 0.68;
 }
 
 .side-label {
@@ -75,7 +83,14 @@
   width: 72px;
   height: 48px;
   border-radius: 8px;
-  background: #0f172a;
+  background: #e8eef6;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+:root[data-theme="dark"] .mini-canvas {
+  background: rgba(2, 6, 23, 0.5);
+  border-color: rgba(148, 163, 184, 0.16);
 }
 
 .next-list {
@@ -94,53 +109,123 @@
 
 .board-wrap {
   position: relative;
-  width: min(100%, 300px, calc((100vh - 266px) * 0.5));
-  width: min(100%, 300px, calc((100dvh - 266px) * 0.5));
+  width: min(100%, 306px, calc((100vh - 266px) * 0.5));
+  width: min(100%, 306px, calc((100dvh - 266px) * 0.5));
   min-width: 190px;
-  max-width: 300px;
-  aspect-ratio: 1 / 2;
-  border-radius: 16px;
+  max-width: 306px;
+  padding: 6px;
+  border-radius: 14px;
   overflow: hidden;
-  background: #0f172a;
-  border: 2px solid #1e293b;
-  box-shadow: var(--shadow-md);
+  background: #cbd5e1;
+  border: 1px solid #94a3b8;
+  box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255, 255, 255, 0.55);
 }
 
 :root[data-theme="dark"] .board-wrap {
+  background: #162033;
   border-color: var(--border-strong);
+  box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.board-wrap .overlay {
+  border-radius: inherit;
 }
 
 #tetris-canvas {
   display: block;
   width: 100%;
-  height: 100%;
+  height: auto;
+  aspect-ratio: 1 / 2;
+  border-radius: 4px;
   touch-action: manipulation;
 }
 
+@keyframes callout-pop {
+  0% { transform: translateY(-2px) scale(0.95); }
+  55% { transform: translateY(0) scale(1.03); }
+  100% { transform: translateY(0) scale(1); }
+}
+
 .tetris-callout {
-  position: absolute;
-  top: 14px;
-  left: 50%;
-  transform: translateX(-50%) translateY(-6px);
-  padding: 6px 16px;
-  border-radius: 999px;
-  background: rgba(15, 23, 42, 0.92);
-  border: 1px solid rgba(250, 204, 21, 0.65);
-  box-shadow: 0 6px 18px rgba(2, 6, 23, 0.55);
-  color: #fde047;
-  font-size: 0.95rem;
+  width: 100%;
+  min-height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 6px;
+  border-radius: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  color: var(--text);
+  font-size: 0.83rem;
   font-weight: 800;
-  letter-spacing: 0.03em;
-  white-space: nowrap;
+  line-height: 1.32;
+  letter-spacing: 0.02em;
+  text-align: center;
+  white-space: normal;
+  word-break: keep-all;
   pointer-events: none;
   opacity: 0;
-  transition: opacity 0.16s ease, transform 0.16s ease;
-  z-index: 3;
+  transform: translateY(-4px) scale(0.97);
+  transition: opacity 0.22s ease, transform 0.22s ease, border-color 0.2s ease, background-color 0.2s ease;
 }
 
 .tetris-callout.show {
   opacity: 1;
-  transform: translateX(-50%) translateY(0);
+  transform: translateY(0) scale(1);
+}
+
+.tetris-callout.pop {
+  animation: callout-pop 0.24s ease-out;
+}
+
+.tetris-callout[data-tone="normal"] {
+  border-color: rgba(14, 165, 233, 0.42);
+  background: rgba(240, 249, 255, 0.94);
+  color: #0369a1;
+}
+
+.tetris-callout[data-tone="special"] {
+  border-color: rgba(217, 119, 6, 0.52);
+  background: rgba(254, 249, 195, 0.96);
+  color: #b45309;
+}
+
+.tetris-callout[data-tone="powerup"] {
+  border-color: rgba(6, 182, 212, 0.52);
+  background: rgba(236, 254, 255, 0.96);
+  color: #0e7490;
+}
+
+.tetris-callout[data-tone="danger"] {
+  border-color: rgba(239, 68, 68, 0.5);
+  background: rgba(254, 242, 242, 0.96);
+  color: #b91c1c;
+}
+
+:root[data-theme="dark"] .tetris-callout[data-tone="normal"] {
+  border-color: rgba(56, 189, 248, 0.36);
+  background: rgba(15, 23, 42, 0.9);
+  color: #7dd3fc;
+}
+
+:root[data-theme="dark"] .tetris-callout[data-tone="special"] {
+  border-color: rgba(250, 204, 21, 0.55);
+  background: rgba(30, 27, 20, 0.92);
+  color: #fde047;
+}
+
+:root[data-theme="dark"] .tetris-callout[data-tone="powerup"] {
+  border-color: rgba(34, 211, 238, 0.5);
+  background: rgba(12, 30, 42, 0.92);
+  color: #67e8f9;
+}
+
+:root[data-theme="dark"] .tetris-callout[data-tone="danger"] {
+  border-color: rgba(248, 113, 113, 0.52);
+  background: rgba(42, 16, 22, 0.92);
+  color: #fca5a5;
 }
 
 .overlay p {
@@ -184,8 +269,8 @@
 .tetris-pad {
   display: none;
   width: 100%;
-  max-width: 380px;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  max-width: 390px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 7px;
   touch-action: none;
   user-select: none;
@@ -194,12 +279,12 @@
 
 .pad-btn {
   min-height: 46px;
-  padding: 8px 6px;
+  padding: 8px 4px;
   border: 1px solid var(--border);
   border-radius: 12px;
   background: var(--surface);
   color: var(--text);
-  font-size: 0.96rem;
+  font-size: 0.9rem;
   font-weight: 700;
   box-shadow: var(--shadow-sm);
   cursor: pointer;
@@ -207,6 +292,7 @@
   user-select: none;
   -webkit-user-select: none;
   white-space: nowrap;
+  transition: transform 0.1s ease, background-color 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
 }
 
 .pad-btn:active,
@@ -216,11 +302,15 @@
   border-color: var(--primary);
 }
 
+.pad-btn.dimmed {
+  opacity: 0.52;
+}
+
 .pad-btn.accent {
   background: var(--primary-soft);
   color: var(--primary);
   border-color: #bfdbfe;
-  font-size: 0.92rem;
+  font-size: 0.88rem;
 }
 
 :root[data-theme="dark"] .pad-btn.accent {
@@ -239,9 +329,10 @@
   color: #ffffff;
 }
 
-.pad-btn.wide {
-  grid-column: span 2;
-  font-size: 0.92rem;
+@media (prefers-reduced-motion: reduce) {
+  .tetris-callout.pop {
+    animation: none;
+  }
 }
 
 @media (any-pointer: coarse), (max-width: 720px) {
@@ -300,9 +391,74 @@
   }
 
   .tetris-arena {
+    position: relative;
     grid-template-columns: 1fr 2.35fr;
     grid-template-rows: auto auto;
     gap: 6px;
+  }
+
+  .left-rail {
+    display: contents;
+  }
+
+  .tetris-callout {
+    position: absolute;
+    top: calc(50px + 20%);
+    left: 50%;
+    width: auto;
+    min-height: 0;
+    max-width: calc(100% - 28px);
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    line-height: 1.25;
+    white-space: nowrap;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    box-shadow: 0 4px 14px rgba(2, 6, 23, 0.24);
+    transform: translateX(-50%) translateY(-4px) scale(0.97);
+    z-index: 4;
+  }
+
+  .tetris-callout.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) scale(1);
+  }
+
+  .tetris-callout.pop {
+    animation: none;
+  }
+
+  .tetris-callout[data-tone="normal"] {
+    background: rgba(240, 249, 255, 0.78);
+  }
+
+  .tetris-callout[data-tone="special"] {
+    background: rgba(254, 249, 195, 0.78);
+  }
+
+  .tetris-callout[data-tone="powerup"] {
+    background: rgba(236, 254, 255, 0.78);
+  }
+
+  .tetris-callout[data-tone="danger"] {
+    background: rgba(254, 242, 242, 0.78);
+  }
+
+  :root[data-theme="dark"] .tetris-callout[data-tone="normal"] {
+    background: rgba(15, 23, 42, 0.78);
+  }
+
+  :root[data-theme="dark"] .tetris-callout[data-tone="special"] {
+    background: rgba(30, 27, 20, 0.78);
+  }
+
+  :root[data-theme="dark"] .tetris-callout[data-tone="powerup"] {
+    background: rgba(12, 30, 42, 0.78);
+  }
+
+  :root[data-theme="dark"] .tetris-callout[data-tone="danger"] {
+    background: rgba(42, 16, 22, 0.78);
   }
 
   .hold-panel {
@@ -345,10 +501,12 @@
   }
 
   .board-wrap {
-    width: min(100%, 248px, calc((100vh - 355px) * 0.5));
-    width: min(100%, 248px, calc((100svh - 355px) * 0.5));
+    width: min(100%, 252px, calc((100vh - 355px) * 0.5));
+    width: min(100%, 252px, calc((100svh - 355px) * 0.5));
     min-width: 150px;
     max-width: none;
+    padding: 4px;
+    border-radius: 12px;
   }
 }
 
@@ -358,9 +516,10 @@
     height: 26px;
   }
 
-  .pad-btn {
+  .pad-btn,
+  .pad-btn.accent {
     min-height: 44px;
-    font-size: 0.88rem;
+    font-size: 0.82rem;
   }
 
   .mode-pill {
@@ -416,7 +575,8 @@
   width: min(100%, 290px);
   min-width: 0;
   max-width: none;
-  aspect-ratio: 1 / 2;
+  padding: 4px;
+  border-radius: 12px;
 }
 
 @supports (height: 100cqh) {

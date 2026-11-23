@@ -29,6 +29,10 @@ export function createRenderer(boardCanvas) {
     return { width: rect.width, height: rect.height, dpr };
   }
 
+  function isDarkTheme() {
+    return document.documentElement.dataset.theme === 'dark';
+  }
+
   function getBlockPalette(type) {
     if (type === 'G') return GARBAGE_STYLE;
     return PIECES[type] || null;
@@ -38,59 +42,63 @@ export function createRenderer(boardCanvas) {
     const cx = bx + bs / 2;
     const cy = by + bs / 2;
     targetCtx.save();
+    // 微暗圆形衬底，确保在浅黄/亮青等高明度方块上也有清晰对比
+    targetCtx.fillStyle = 'rgba(15, 23, 42, 0.42)';
+    targetCtx.beginPath();
+    targetCtx.arc(cx, cy, Math.max(3.2, bs * 0.36), 0, Math.PI * 2);
+    targetCtx.fill();
+
     if (powerup === 'bomb') {
-      const r = Math.max(2.6, bs * 0.26);
-      // 炸弹球体
+      const r = Math.max(2.3, bs * 0.22);
       targetCtx.fillStyle = '#0f172a';
+      targetCtx.strokeStyle = 'rgba(254, 215, 170, 0.65)';
+      targetCtx.lineWidth = Math.max(0.8, bs * 0.045);
       targetCtx.beginPath();
-      targetCtx.arc(cx - bs * 0.04, cy + bs * 0.06, r, 0, Math.PI * 2);
+      targetCtx.arc(cx - bs * 0.03, cy + bs * 0.04, r, 0, Math.PI * 2);
       targetCtx.fill();
-      targetCtx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
-      targetCtx.lineWidth = Math.max(0.8, bs * 0.05);
-      targetCtx.beginPath();
-      targetCtx.arc(cx - bs * 0.04, cy + bs * 0.06, r * 0.65, Math.PI * 1.05, Math.PI * 1.55);
       targetCtx.stroke();
       // 引线与火星
       targetCtx.strokeStyle = '#fdba74';
-      targetCtx.lineWidth = Math.max(1, bs * 0.07);
+      targetCtx.lineWidth = Math.max(1, bs * 0.065);
+      targetCtx.lineCap = 'round';
       targetCtx.beginPath();
       targetCtx.moveTo(cx + r * 0.45, cy - r * 0.55);
       targetCtx.quadraticCurveTo(cx + r * 0.9, cy - r * 1.15, cx + r * 1.15, cy - r * 0.95);
       targetCtx.stroke();
       targetCtx.fillStyle = '#fef08a';
       targetCtx.beginPath();
-      targetCtx.arc(cx + r * 1.15, cy - r * 0.95, Math.max(1.4, bs * 0.11), 0, Math.PI * 2);
+      targetCtx.arc(cx + r * 1.15, cy - r * 0.95, Math.max(1.3, bs * 0.1), 0, Math.PI * 2);
       targetCtx.fill();
     } else if (powerup === 'laser') {
-      const haloH = Math.max(4, bs * 0.4);
-      const coreH = Math.max(1.8, bs * 0.16);
-      targetCtx.fillStyle = 'rgba(34, 211, 238, 0.35)';
+      const haloH = Math.max(3.6, bs * 0.34);
+      const coreH = Math.max(1.6, bs * 0.14);
+      targetCtx.fillStyle = 'rgba(34, 211, 238, 0.42)';
       targetCtx.beginPath();
-      targetCtx.roundRect(bx + bs * 0.12, cy - haloH / 2, bs * 0.76, haloH, haloH / 2);
+      targetCtx.roundRect(bx + bs * 0.14, cy - haloH / 2, bs * 0.72, haloH, haloH / 2);
       targetCtx.fill();
       targetCtx.fillStyle = '#ecfeff';
       targetCtx.beginPath();
-      targetCtx.roundRect(bx + bs * 0.16, cy - coreH / 2, bs * 0.68, coreH, coreH / 2);
+      targetCtx.roundRect(bx + bs * 0.18, cy - coreH / 2, bs * 0.64, coreH, coreH / 2);
       targetCtx.fill();
       // 左右能量箭头
-      const tip = Math.max(1.8, bs * 0.14);
+      const tip = Math.max(1.6, bs * 0.12);
       targetCtx.strokeStyle = '#cffafe';
-      targetCtx.lineWidth = Math.max(1, bs * 0.065);
+      targetCtx.lineWidth = Math.max(1, bs * 0.06);
       targetCtx.lineCap = 'round';
       targetCtx.beginPath();
       targetCtx.moveTo(bx + bs * 0.28, cy - tip);
-      targetCtx.lineTo(bx + bs * 0.16, cy);
+      targetCtx.lineTo(bx + bs * 0.17, cy);
       targetCtx.lineTo(bx + bs * 0.28, cy + tip);
       targetCtx.moveTo(bx + bs * 0.72, cy - tip);
-      targetCtx.lineTo(bx + bs * 0.84, cy);
+      targetCtx.lineTo(bx + bs * 0.83, cy);
       targetCtx.lineTo(bx + bs * 0.72, cy + tip);
       targetCtx.stroke();
     } else if (powerup === 'ice') {
-      const r = Math.max(3, bs * 0.3);
+      const r = Math.max(2.6, bs * 0.26);
       targetCtx.shadowColor = '#38bdf8';
       targetCtx.shadowBlur = bs * 0.25;
-      targetCtx.strokeStyle = '#e0f2fe';
-      targetCtx.lineWidth = Math.max(1, bs * 0.075);
+      targetCtx.strokeStyle = '#f0f9ff';
+      targetCtx.lineWidth = Math.max(1, bs * 0.07);
       targetCtx.lineCap = 'round';
       for (let i = 0; i < 3; i++) {
         const a = (Math.PI / 3) * i;
@@ -103,7 +111,7 @@ export function createRenderer(boardCanvas) {
       }
       targetCtx.fillStyle = '#ffffff';
       targetCtx.beginPath();
-      targetCtx.arc(cx, cy, Math.max(1.2, bs * 0.09), 0, Math.PI * 2);
+      targetCtx.arc(cx, cy, Math.max(1.1, bs * 0.085), 0, Math.PI * 2);
       targetCtx.fill();
     }
     targetCtx.restore();
@@ -112,58 +120,74 @@ export function createRenderer(boardCanvas) {
   function drawBlock(targetCtx, x, y, size, type, alpha = 1, lockRatio = 0, powerup = null) {
     const palette = getBlockPalette(type);
     if (!palette) return;
-    const pad = Math.max(0.65, size * 0.032);
+    const pad = Math.max(0.6, size * 0.035);
     const bx = x + pad;
     const by = y + pad;
     const bs = size - pad * 2;
-    const bevel = Math.max(2, bs * 0.17);
-    const radius = Math.max(2, bs * 0.14);
+    const radius = Math.max(2, bs * 0.22);
 
     targetCtx.save();
     targetCtx.globalAlpha = alpha;
 
-    // 主体圆角填充
+    // 纵向渐变基底（顶部饱满本色 -> 底部沉稳暗调）
+    const bodyGrad = targetCtx.createLinearGradient(0, by, 0, by + bs);
+    if (type === 'G') {
+      bodyGrad.addColorStop(0, palette.light);
+      bodyGrad.addColorStop(0.45, palette.color);
+      bodyGrad.addColorStop(1, palette.dark);
+    } else {
+      bodyGrad.addColorStop(0, palette.color);
+      bodyGrad.addColorStop(0.62, palette.color);
+      bodyGrad.addColorStop(1, palette.dark);
+    }
     targetCtx.beginPath();
     targetCtx.roundRect(bx, by, bs, bs, radius);
-    targetCtx.fillStyle = palette.color;
+    targetCtx.fillStyle = bodyGrad;
     targetCtx.fill();
 
-    // 顶部与左侧高光斜边
-    targetCtx.fillStyle = palette.light;
-    targetCtx.beginPath();
-    targetCtx.moveTo(bx + radius, by);
-    targetCtx.lineTo(bx + bs - radius, by);
-    targetCtx.lineTo(bx + bs - bevel, by + bevel);
-    targetCtx.lineTo(bx + bevel, by + bevel);
-    targetCtx.lineTo(bx + bevel, by + bs - bevel);
-    targetCtx.lineTo(bx, by + bs - radius);
-    targetCtx.lineTo(bx, by + radius);
-    targetCtx.closePath();
-    targetCtx.fill();
+    if (type === 'G') {
+      // 垃圾石块凹陷内框，与彩块明确区分
+      const inset = Math.max(2, bs * 0.24);
+      targetCtx.fillStyle = 'rgba(15, 23, 42, 0.26)';
+      targetCtx.beginPath();
+      targetCtx.roundRect(bx + inset, by + inset, bs - inset * 2, bs - inset * 2, Math.max(1, radius * 0.5));
+      targetCtx.fill();
+      targetCtx.fillStyle = 'rgba(255, 255, 255, 0.18)';
+      targetCtx.fillRect(bx + radius * 0.6, by + 1, Math.max(2, bs - radius * 1.2), 1.2);
+    } else {
+      // 裁切在圆角内部：柔和亚克力顶部高光膜
+      targetCtx.save();
+      targetCtx.beginPath();
+      targetCtx.roundRect(bx, by, bs, bs, radius);
+      targetCtx.clip();
 
-    // 底部与右侧暗部斜边
-    targetCtx.fillStyle = palette.dark;
-    targetCtx.beginPath();
-    targetCtx.moveTo(bx + bs, by + radius);
-    targetCtx.lineTo(bx + bs, by + bs - radius);
-    targetCtx.lineTo(bx + bs - radius, by + bs);
-    targetCtx.lineTo(bx + radius, by + bs);
-    targetCtx.lineTo(bx + bevel, by + bs - bevel);
-    targetCtx.lineTo(bx + bs - bevel, by + bs - bevel);
-    targetCtx.lineTo(bx + bs - bevel, by + bevel);
-    targetCtx.closePath();
-    targetCtx.fill();
+      const glossGrad = targetCtx.createLinearGradient(0, by, 0, by + bs * 0.48);
+      glossGrad.addColorStop(0, 'rgba(255, 255, 255, 0.34)');
+      glossGrad.addColorStop(1, 'rgba(255, 255, 255, 0.02)');
+      targetCtx.fillStyle = glossGrad;
+      targetCtx.fillRect(bx, by, bs, bs * 0.48);
 
-    // 内芯高光光泽
-    targetCtx.fillStyle = type === 'G' ? 'rgba(255, 255, 255, 0.12)' : 'rgba(255, 255, 255, 0.22)';
-    const innerSize = Math.max(2, bs * 0.24);
-    targetCtx.fillRect(bx + bevel + 1, by + bevel + 1, innerSize, Math.max(2, bs * 0.13));
+      // 顶部边缘窄亮带
+      targetCtx.fillStyle = 'rgba(255, 255, 255, 0.28)';
+      targetCtx.fillRect(bx + 1, by, Math.max(2, bs - 2), Math.max(1.2, bs * 0.09));
+      targetCtx.restore();
+
+      // 细微内折光边线（大格下增强立体晶莹感）
+      if (bs >= 12) {
+        const inset = Math.max(1.2, bs * 0.075);
+        targetCtx.beginPath();
+        targetCtx.roundRect(bx + inset, by + inset, bs - inset * 2, bs - inset * 2, Math.max(1.2, radius - inset * 0.7));
+        targetCtx.lineWidth = Math.max(0.8, bs * 0.04);
+        targetCtx.strokeStyle = 'rgba(255, 255, 255, 0.16)';
+        targetCtx.stroke();
+      }
+    }
 
     // 外描边分隔线（保证同色相邻块清晰可辨）
     targetCtx.beginPath();
     targetCtx.roundRect(bx, by, bs, bs, radius);
-    targetCtx.lineWidth = Math.max(1, size * 0.05);
-    targetCtx.strokeStyle = 'rgba(2, 6, 23, 0.56)';
+    targetCtx.lineWidth = Math.max(0.9, size * 0.045);
+    targetCtx.strokeStyle = 'rgba(2, 6, 23, 0.48)';
     targetCtx.stroke();
 
     if (powerup) {
@@ -184,20 +208,21 @@ export function createRenderer(boardCanvas) {
   function drawGhostBlock(targetCtx, x, y, size, type) {
     const palette = PIECES[type];
     if (!palette) return;
-    const pad = Math.max(1, size * 0.06);
+    const pad = Math.max(1.2, size * 0.075);
     const bx = x + pad;
     const by = y + pad;
     const bs = size - pad * 2;
-    const radius = Math.max(2, bs * 0.14);
+    const radius = Math.max(2, bs * 0.2);
 
     targetCtx.save();
     targetCtx.beginPath();
     targetCtx.roundRect(bx, by, bs, bs, radius);
     targetCtx.fillStyle = palette.color;
-    targetCtx.globalAlpha = 0.16;
+    targetCtx.globalAlpha = 0.09;
     targetCtx.fill();
-    targetCtx.globalAlpha = 0.65;
-    targetCtx.lineWidth = Math.max(1.3, size * 0.06);
+    targetCtx.globalAlpha = 0.72;
+    targetCtx.lineWidth = Math.max(1.2, size * 0.055);
+    targetCtx.setLineDash([Math.max(2.5, size * 0.15), Math.max(2, size * 0.1)]);
     targetCtx.strokeStyle = palette.light;
     targetCtx.stroke();
     targetCtx.restore();
@@ -297,7 +322,7 @@ export function createRenderer(boardCanvas) {
       row: Math.max(2, Math.min(ROWS - 3, visibleRow)),
       color,
       ageMs: 0,
-      durationMs: reducedMotion.matches ? 650 : 900,
+      durationMs: reducedMotion.matches ? 800 : 1050,
     });
   }
 
@@ -379,15 +404,21 @@ export function createRenderer(boardCanvas) {
     ctx.save();
     ctx.setTransform(dpr, 0, 0, dpr, shakeX * dpr, shakeY * dpr);
 
-    // 深色高对比棋盘底板
+    // 主题感知高对比棋盘井底色
+    const dark = isDarkTheme();
     const bg = ctx.createLinearGradient(0, 0, 0, height);
-    bg.addColorStop(0, '#0b1224');
-    bg.addColorStop(1, '#111c33');
+    if (dark) {
+      bg.addColorStop(0, '#090f1f');
+      bg.addColorStop(1, '#0f1a31');
+    } else {
+      bg.addColorStop(0, '#1b273c');
+      bg.addColorStop(1, '#23334e');
+    }
     ctx.fillStyle = bg;
     ctx.fillRect(0, 0, width, height);
 
     // 网格线
-    ctx.strokeStyle = 'rgba(148, 163, 184, 0.11)';
+    ctx.strokeStyle = dark ? 'rgba(148, 163, 184, 0.1)' : 'rgba(203, 213, 225, 0.13)';
     ctx.lineWidth = 1;
     ctx.beginPath();
     for (let c = 1; c < COLS; c++) {
@@ -401,6 +432,10 @@ export function createRenderer(boardCanvas) {
       ctx.lineTo(offsetX + COLS * cell, gy);
     }
     ctx.stroke();
+
+    // 棋盘内壁细描边，自然过渡到外框凹槽
+    ctx.strokeStyle = dark ? 'rgba(148, 163, 184, 0.16)' : 'rgba(15, 23, 42, 0.42)';
+    ctx.strokeRect(offsetX + 0.5, offsetY + 0.5, COLS * cell - 1, ROWS * cell - 1);
 
     // 堆高危险区红光预警（顶区 4 行）
     const danger = getDangerRatio(state);
@@ -622,11 +657,13 @@ export function createRenderer(boardCanvas) {
       ctx.restore();
     }
 
-    // 道具狂热状态指示（柔和寒霜渐变暗角与飘雪微粒 / 即将涨行底部警报）
+    // 道具狂热状态指示（柔和寒霜渐变暗角与飘雪微粒 / 即将涨行底部顶升预告）
     if (state.mode === 'party' && state.status === 'playing') {
       if (state.iceTimerMs > 0) {
         const edge = cell * 1.8;
+        const iceFade = Math.min(1, state.iceTimerMs / 1500);
         ctx.save();
+        ctx.globalAlpha = iceFade;
         const topG = ctx.createLinearGradient(0, offsetY, 0, offsetY + edge);
         topG.addColorStop(0, 'rgba(56, 189, 248, 0.24)');
         topG.addColorStop(1, 'rgba(56, 189, 248, 0)');
@@ -665,18 +702,77 @@ export function createRenderer(boardCanvas) {
         }
         ctx.restore();
       } else if (state.garbageTimerMs >= GARBAGE_INTERVAL_MS - GARBAGE_WARN_MS) {
-        const pulse = reducedMotion.matches ? 0.75 : (0.45 + 0.55 * Math.abs(Math.sin(performance.now() * 0.012)));
+        const warnProgress = Math.min(
+          1,
+          Math.max(0, (state.garbageTimerMs - (GARBAGE_INTERVAL_MS - GARBAGE_WARN_MS)) / GARBAGE_WARN_MS)
+        );
+        const nowSec = performance.now() / 1000;
+        const pulse = reducedMotion.matches
+          ? 0.78
+          : (0.64 + 0.36 * Math.sin(nowSec * (5 + warnProgress * 7)));
+        const boardW = COLS * cell;
+        const bottomY = offsetY + ROWS * cell;
+        const glowH = cell * (1.1 + warnProgress * 0.65);
+        const stripH = cell * (0.16 + warnProgress * 0.28);
+        const stripTop = bottomY - stripH;
+
         ctx.save();
-        ctx.fillStyle = `rgba(245, 158, 11, ${(0.85 * pulse).toFixed(3)})`;
-        ctx.fillRect(offsetX, offsetY + ROWS * cell - 4, COLS * cell, 4);
+        ctx.beginPath();
+        ctx.rect(offsetX, offsetY, boardW, ROWS * cell);
+        ctx.clip();
+
+        // 1) 底部向上漫射暖橙热晕
+        const warnGrad = ctx.createLinearGradient(0, bottomY, 0, bottomY - glowH);
+        warnGrad.addColorStop(0, `rgba(249, 115, 22, ${((0.28 + 0.18 * warnProgress) * pulse).toFixed(3)})`);
+        warnGrad.addColorStop(0.55, `rgba(245, 158, 11, ${(0.08 * pulse).toFixed(3)})`);
+        warnGrad.addColorStop(1, 'rgba(245, 158, 11, 0)');
+        ctx.fillStyle = warnGrad;
+        ctx.fillRect(offsetX, bottomY - glowH, boardW, glowH);
+
+        // 2) 待顶升的半透明分格垃圾行剪影
+        ctx.fillStyle = `rgba(100, 116, 139, ${(0.42 + 0.26 * warnProgress).toFixed(3)})`;
+        ctx.fillRect(offsetX, stripTop, boardW, stripH);
+        ctx.fillStyle = `rgba(245, 158, 11, ${(0.22 * pulse).toFixed(3)})`;
+        ctx.fillRect(offsetX, stripTop, boardW, stripH);
+
+        ctx.strokeStyle = 'rgba(15, 23, 42, 0.45)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        for (let c = 1; c < COLS; c++) {
+          const sx = offsetX + c * cell;
+          ctx.moveTo(sx, stripTop);
+          ctx.lineTo(sx, bottomY);
+        }
+        ctx.stroke();
+
+        // 3) 顶升光脊线与三枚上指小箭头
+        ctx.fillStyle = `rgba(251, 191, 36, ${(0.55 + 0.4 * pulse).toFixed(3)})`;
+        ctx.fillRect(offsetX, stripTop, boardW, 1.5);
+
+        const bob = reducedMotion.matches ? 0 : Math.abs(Math.sin(nowSec * 5.2)) * cell * 0.14;
+        const chevY = stripTop - Math.max(3, cell * 0.16) - bob;
+        const chevW = Math.max(3, cell * 0.18);
+        const chevH = Math.max(2.5, cell * 0.14);
+        ctx.strokeStyle = `rgba(253, 224, 71, ${(0.55 + 0.4 * pulse).toFixed(3)})`;
+        ctx.lineWidth = Math.max(1.4, cell * 0.075);
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.beginPath();
+        for (const frac of [0.25, 0.5, 0.75]) {
+          const cx = offsetX + boardW * frac;
+          ctx.moveTo(cx - chevW, chevY + chevH);
+          ctx.lineTo(cx, chevY);
+          ctx.lineTo(cx + chevW, chevY + chevH);
+        }
+        ctx.stroke();
         ctx.restore();
       }
     }
 
-    // 棋盘内得分/特技飘字（加粗大字 + 阴影提升清晰度）
+    // 棋盘内得分/特技飘字（加粗大字 + 柔和描边）
     for (const ft of floatingTexts) {
       const p = ft.ageMs / ft.durationMs;
-      const alpha = p < 0.7 ? 1 : Math.max(0, (1 - p) / 0.3);
+      const alpha = p < 0.68 ? 1 : Math.max(0, (1 - p) / 0.32);
       const lift = reducedMotion.matches ? 0 : p * cell * 1.4;
       const yPos = offsetY + ft.row * cell - lift;
       ctx.save();
@@ -685,10 +781,10 @@ export function createRenderer(boardCanvas) {
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.lineJoin = 'round';
-      ctx.lineWidth = 4.5;
-      ctx.strokeStyle = 'rgba(15, 23, 42, 0.94)';
-      ctx.shadowColor = 'rgba(2, 6, 23, 0.85)';
-      ctx.shadowBlur = 6;
+      ctx.lineWidth = 3.8;
+      ctx.strokeStyle = 'rgba(15, 23, 42, 0.9)';
+      ctx.shadowColor = 'rgba(2, 6, 23, 0.8)';
+      ctx.shadowBlur = 5;
       ctx.strokeText(ft.text, offsetX + (COLS * cell) / 2, yPos);
       ctx.shadowBlur = 0;
       ctx.fillStyle = ft.color;

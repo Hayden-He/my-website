@@ -389,15 +389,17 @@
 
     <div class="mobile-game-stage">
       <div class="tetris-arena">
-        <button id="hold-btn" type="button" class="side-panel hold-panel hold-btn" aria-label="点击暂存当前方块" data-i18n-attr="aria-label:点击暂存当前方块">
-          <div class="side-label" data-i18n="暂存">暂存</div>
-          <canvas id="hold-canvas" class="mini-canvas"></canvas>
-        </button>
+        <div class="left-rail">
+          <button id="hold-btn" type="button" class="side-panel hold-panel hold-btn" aria-label="点击暂存当前方块" data-i18n-attr="aria-label:点击暂存当前方块">
+            <div class="side-label" data-i18n="暂存">暂存</div>
+            <canvas id="hold-canvas" class="mini-canvas"></canvas>
+          </button>
+          <div id="tetris-callout" class="tetris-callout" aria-live="polite" aria-atomic="true"></div>
+        </div>
 
         <div class="board-slot">
           <div class="board-wrap">
             <canvas id="tetris-canvas" role="img" aria-label="俄罗斯方块棋盘" data-i18n-attr="aria-label:俄罗斯方块棋盘"></canvas>
-            <div id="tetris-callout" class="tetris-callout" aria-hidden="true"></div>
             <div id="overlay" class="overlay show" role="status" aria-live="polite">
               <h2 id="overlay-title" data-i18n="俄罗斯方块">俄罗斯方块</h2>
               <p id="overlay-desc" data-i18n="堆叠下落方块凑满整行消除，挑战更高分数或更快消满 40 行。">堆叠下落方块凑满整行消除，挑战更高分数或更快消满 40 行。</p>
@@ -424,9 +426,10 @@
     <div class="tetris-pad" role="group" aria-label="触屏控制" data-i18n-attr="aria-label:触屏控制">
       <button type="button" class="pad-btn" data-action="left" aria-label="左移" data-i18n-attr="aria-label:左移">◀</button>
       <button type="button" class="pad-btn" data-action="right" aria-label="右移" data-i18n-attr="aria-label:右移">▶</button>
-      <button type="button" class="pad-btn wide accent" data-action="rotate" aria-label="旋转" data-i18n-attr="aria-label:旋转">↻ <span data-i18n="旋转">旋转</span></button>
-      <button type="button" class="pad-btn wide" data-action="soft" data-i18n="▼ 加速">▼ 加速</button>
-      <button type="button" class="pad-btn wide primary" data-action="hard" data-i18n="⤓ 落底">⤓ 落底</button>
+      <button type="button" class="pad-btn accent" data-action="rotate" aria-label="旋转" data-i18n-attr="aria-label:旋转">↻ <span data-i18n="旋转">旋转</span></button>
+      <button type="button" class="pad-btn" data-action="hold" aria-label="暂存" data-i18n-attr="aria-label:暂存">⇄ <span data-i18n="暂存">暂存</span></button>
+      <button type="button" class="pad-btn" data-action="soft" data-i18n="▼ 加速">▼ 加速</button>
+      <button type="button" class="pad-btn primary" data-action="hard" data-i18n="⤓ 落底">⤓ 落底</button>
     </div>
 
     <p class="hint-text tetris-keys" data-i18n="方向键移动 · ↑/X 旋转 · Z 逆转 · 空格 落底 · C 暂存 · P 暂停">方向键移动 · ↑/X 旋转 · Z 逆转 · 空格 落底 · C 暂存 · P 暂停</p>

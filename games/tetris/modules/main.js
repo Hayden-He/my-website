@@ -50,6 +50,7 @@ const overlayPrimaryBtn = document.getElementById('overlay-primary-btn');
 const overlaySecondaryBtn = document.getElementById('overlay-secondary-btn');
 const calloutEl = document.getElementById('tetris-callout');
 const padButtons = [...document.querySelectorAll('.tetris-pad [data-action]')];
+const padHoldBtn = document.querySelector('.tetris-pad [data-action="hold"]');
 
 let soundEnabled = window.SiteData ? window.SiteData.getSound() : true;
 const soundCtrl = window.GameKit.bindSoundButton(soundBtn, soundEnabled, (on) => {
@@ -149,11 +150,30 @@ function formatTime(ms) {
   return min > 0 ? `${min}:${remSec}.${remTenth}` : `${sec}.${remTenth}s`;
 }
 
-function showCallout(text) {
-  calloutEl.textContent = text;
-  calloutEl.classList.add('show');
+const CALLOUT_DURATIONS = {
+  normal: 1450,
+  danger: 1650,
+  powerup: 1750,
+  special: 1850,
+};
+
+function hideCallout() {
   clearTimeout(calloutTimer);
-  calloutTimer = setTimeout(() => calloutEl.classList.remove('show'), 950);
+  calloutTimer = null;
+  calloutEl.classList.remove('show', 'pop');
+}
+
+function showCallout(text, { tone = 'normal', durationMs } = {}) {
+  calloutEl.textContent = text;
+  calloutEl.dataset.tone = tone;
+  calloutEl.classList.remove('pop');
+  void calloutEl.offsetWidth;
+  calloutEl.classList.add('show', 'pop');
+  clearTimeout(calloutTimer);
+  const holdMs = durationMs || CALLOUT_DURATIONS[tone] || CALLOUT_DURATIONS.normal;
+  calloutTimer = setTimeout(() => {
+    calloutEl.classList.remove('show', 'pop');
+  }, holdMs);
 }
 
 function clearHeldInputs() {
@@ -332,6 +352,7 @@ function renderAll() {
   updateHud();
   syncOverlayAndButtons();
   holdBtn.classList.toggle('dimmed', game.holdUsed);
+  padHoldBtn?.classList.toggle('dimmed', game.holdUsed);
   renderer.renderBoard(game);
   renderer.renderMiniPiece(holdCanvas, game.hold, {
     dimmed: game.holdUsed,
@@ -346,7 +367,7 @@ function renderAll() {
 
 function handleGarbageEvent() {
   audio.playGarbageRise();
-  showCallout(t('底部涨行！'));
+  showCallout(t('底部涨行！'), { tone: 'danger' });
   renderer.triggerShake(2.5, 110);
 }
 
@@ -415,7 +436,9 @@ function handleLockEvent(event) {
   }
 
   if (calloutParts.length) {
-    showCallout(calloutParts.join(' · '));
+    const isSpecialTone = event.isAllClear || event.isBackToBack || event.isTSpin || event.isTetris;
+    const tone = isSpecialTone ? 'special' : (p ? 'powerup' : 'normal');
+    showCallout(calloutParts.join(' · '), { tone });
   }
 
   if (event.levelUp) audio.playLevelUp();
@@ -459,6 +482,7 @@ function pauseGame() {
 }
 
 function restartImmediate() {
+  hideCallout();
   clearHeldInputs();
   lastRunIsNewBest = false;
   if (currentMode === 'marathon') clearMarathonSave();
@@ -499,6 +523,7 @@ async function switchMode(nextMode) {
     });
     if (!ok) return;
   }
+  hideCallout();
   clearHeldInputs();
   lastRunIsNewBest = false;
   currentMode = nextMode;
@@ -604,6 +629,7 @@ function loop(now) {
       if (event) {
         syncOverlayAndButtons();
         holdBtn.classList.toggle('dimmed', game.holdUsed);
+        padHoldBtn?.classList.toggle('dimmed', game.holdUsed);
         renderer.renderMiniPiece(holdCanvas, game.hold, {
           dimmed: game.holdUsed,
           powerup: game.holdPowerup,
@@ -729,6 +755,8 @@ function pressAction(action) {
     doMove(0, 1);
   } else if (action === 'rotate') {
     doRotate(1);
+  } else if (action === 'hold') {
+    doHold();
   } else if (action === 'hard') {
     doHardDrop();
   }
@@ -831,6 +859,7 @@ window.GameKit.bindMobileLayout('tetris', immersiveBtn, () => {
 window.GameKit.onHidden(pauseGame);
 document.addEventListener('site:dialogopen', pauseGame);
 document.addEventListener('i18n:change', renderAll);
+document.addEventListener('theme:change', renderAll);
 window.addEventListener('resize', renderAll);
 window.addEventListener('pagehide', writeMarathonSave);
 
