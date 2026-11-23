@@ -92,6 +92,10 @@
   box-shadow: var(--shadow-md);
 }
 
+:root[data-theme="dark"] .board-wrap {
+  border-color: var(--border-strong);
+}
+
 #tetris-canvas {
   display: block;
   width: 100%;
@@ -202,6 +206,10 @@
   color: var(--primary);
   border-color: #bfdbfe;
   font-size: 0.92rem;
+}
+
+:root[data-theme="dark"] .pad-btn.accent {
+  border-color: rgba(59, 130, 246, 0.45);
 }
 
 .pad-btn.primary {

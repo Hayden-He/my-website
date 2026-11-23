@@ -156,6 +156,12 @@
 .workshop-dialog h2 { margin-bottom: 10px; font-size: 1.15rem; }
 .workshop-dialog .workshop-actions { margin-top: 12px; }
 .workshop-dialog input { display: block; width: 100%; min-height: 44px; padding: 6px; font: inherit; }
+:root[data-theme="dark"] .workshop-dialog input {
+  background: #0f172a;
+  color: #f1f5f9;
+  border: 1px solid #536c86;
+  border-radius: 8px;
+}
 .workshop-project {
   display: flex;
   flex-wrap: wrap;
