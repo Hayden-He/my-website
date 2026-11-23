@@ -1,51 +1,24 @@
+import { MAPS } from './maps.js';
+
+export { MAPS };
+
 // Deterministic rules for Tank Maze. Coordinates are measured in map units.
 export const STEP = 1 / 120;
 export const TANK_RADIUS = 0.30;
 export const SHELL_RADIUS = 0.095;
-export const WINS = 3;
+export const WINS = 2;
+export const MAX_HEALTH = 3;
+export const MAX_AMMO = 3;
 
 const TANK_SPEED = 3.25;
 const TURN_SPEED = 3.65;
-const SHELL_SPEED = 9.5;
+const SHELL_SPEED = 7.5;
 const SHELL_LIFE = 5.5;
 const SHOT_COOLDOWN = 0.52;
+const AMMO_RECHARGE = 1.8;
+const HIT_PROTECTION = 0.8;
+const REPAIR_RADIUS = 0.36;
 const EPSILON = 1e-7;
-
-// Walls are interior rectangles. The map boundary is an implicit wall so that
-// every stage has a complete enclosure without repeating four extra rectangles.
-export const MAPS = Object.freeze([
-  Object.freeze({
-    id: 'lanes', width: 15, height: 11,
-    walls: Object.freeze([
-      { x: 4, y: 1, w: 1, h: 3 }, { x: 4, y: 7, w: 1, h: 3 },
-      { x: 10, y: 1, w: 1, h: 3 }, { x: 10, y: 7, w: 1, h: 3 },
-      { x: 7, y: 3, w: 1, h: 5 },
-    ]),
-    spawns: Object.freeze([{ x: 2, y: 5.5, angle: 0 }, { x: 13, y: 5.5, angle: Math.PI }]),
-  }),
-  Object.freeze({
-    id: 'corners', width: 15, height: 11,
-    walls: Object.freeze([
-      { x: 3, y: 2, w: 5, h: 1 }, { x: 7, y: 2, w: 1, h: 3 },
-      { x: 7, y: 7, w: 1, h: 2 }, { x: 4, y: 8, w: 5, h: 1 },
-      { x: 10, y: 2, w: 2, h: 1 }, { x: 11, y: 3, w: 1, h: 4 },
-      { x: 9, y: 8, w: 3, h: 1 }, { x: 3, y: 5, w: 2, h: 1 },
-    ]),
-    spawns: Object.freeze([{ x: 1.8, y: 1.3, angle: 0.15 }, { x: 13.2, y: 9.7, angle: Math.PI + 0.15 }]),
-  }),
-  Object.freeze({
-    id: 'loop', width: 15, height: 11,
-    walls: Object.freeze([
-      { x: 3, y: 2, w: 9, h: 1 }, { x: 3, y: 8, w: 9, h: 1 },
-      // Two openings on each side let tanks enter and leave the outer loop.
-      { x: 3, y: 3, w: 1, h: 2 }, { x: 3, y: 6, w: 1, h: 2 },
-      { x: 11, y: 3, w: 1, h: 2 }, { x: 11, y: 6, w: 1, h: 2 },
-      { x: 6, y: 4, w: 3, h: 1 }, { x: 6, y: 6, w: 3, h: 1 },
-      { x: 7, y: 5, w: 1, h: 1 },
-    ]),
-    spawns: Object.freeze([{ x: 1.8, y: 5.5, angle: 0 }, { x: 13.2, y: 5.5, angle: Math.PI }]),
-  }),
-]);
 
 function resolveMap(map) {
   if (!map) return MAPS[0];
@@ -94,7 +67,9 @@ export function hasLineOfSight(mapInput, from, to) {
 }
 
 function sanitizeInput(input) {
+  const move = input?.move;
   return {
+    move: Number.isFinite(move?.x) && Number.isFinite(move?.y) ? move : null,
     drive: clamp(Number.isFinite(input?.drive) ? input.drive : 0, -1, 1),
     turn: clamp(Number.isFinite(input?.turn) ? input.turn : 0, -1, 1),
     fire: Boolean(input?.fire),
@@ -104,7 +79,7 @@ function sanitizeInput(input) {
 function createTank(spawn, id) {
   return {
     id, x: spawn.x, y: spawn.y, angle: spawn.angle, cooldown: 0,
-    vx: 0, vy: 0, active: true,
+    vx: 0, vy: 0, health: MAX_HEALTH, protection: 0, ammo: MAX_AMMO, reload: 0, active: true,
   };
 }
 
@@ -112,6 +87,7 @@ function resetRound(match) {
   const spawns = match.spawnFlip ? [match.map.spawns[1], match.map.spawns[0]] : match.map.spawns;
   match.tanks = [createTank(spawns[0], 0), createTank(spawns[1], 1)];
   match.shells = [];
+  match.repair = null;
   match.result = null;
   match.events = [];
 }
@@ -134,10 +110,21 @@ export function nextRound(match) {
 }
 
 function moveTank(match, tank, input, dt) {
-  tank.angle = wrapAngle(tank.angle + input.turn * TURN_SPEED * dt);
-  const speed = input.drive * TANK_SPEED;
-  const dx = Math.cos(tank.angle) * speed * dt;
-  const dy = Math.sin(tank.angle) * speed * dt;
+  let dx;
+  let dy;
+  if (input.move) {
+    const { x, y } = input.move;
+    const length = Math.hypot(x, y);
+    if (length > 0) tank.angle = Math.atan2(y, x);
+    const scale = TANK_SPEED * dt / Math.max(1, length);
+    dx = x * scale;
+    dy = y * scale;
+  } else {
+    tank.angle = wrapAngle(tank.angle + input.turn * TURN_SPEED * dt);
+    const travel = input.drive * TANK_SPEED * dt;
+    dx = Math.cos(tank.angle) * travel;
+    dy = Math.sin(tank.angle) * travel;
+  }
   const other = match.tanks[1 - tank.id];
   let nx = tank.x;
   let ny = tank.y;
@@ -149,35 +136,47 @@ function moveTank(match, tank, input, dt) {
   tank.y = ny;
 }
 
-function fire(match, tank) {
-  if (tank.cooldown > 0) return;
+export function canFire(tank, elapsed = 0) {
+  return tank.cooldown <= elapsed + EPSILON &&
+    (tank.ammo > 0 || (elapsed > 0 && tank.reload <= elapsed + EPSILON));
+}
+
+function createShell(map, tank, angle) {
   const nose = TANK_RADIUS + SHELL_RADIUS + 0.04;
-  const directionX = Math.cos(tank.angle);
-  const directionY = Math.sin(tank.angle);
+  const directionX = Math.cos(angle);
+  const directionY = Math.sin(angle);
   let muzzleDistance = nose;
   // A tank can be pressed against a corner. Find the last clear point along
   // the barrel so a shot starts outside the wall and can immediately bounce.
   while (muzzleDistance > 0 && collidesCircle(
-    match.map, tank.x + directionX * muzzleDistance, tank.y + directionY * muzzleDistance, SHELL_RADIUS
+    map, tank.x + directionX * muzzleDistance, tank.y + directionY * muzzleDistance, SHELL_RADIUS
   )) muzzleDistance -= 0.02;
   const x = tank.x + directionX * muzzleDistance;
   const y = tank.y + directionY * muzzleDistance;
-  match.shells.push({
-    x, y, vx: Math.cos(tank.angle) * SHELL_SPEED, vy: Math.sin(tank.angle) * SHELL_SPEED,
+  return {
+    x, y, vx: directionX * SHELL_SPEED, vy: directionY * SHELL_SPEED,
     owner: tank.id, bounces: 0, life: SHELL_LIFE,
-  });
-  tank.cooldown = SHOT_COOLDOWN;
-  match.events.push({ type: 'shot', x, y, owner: tank.id });
+  };
 }
 
-function moveShell(match, shell, dt) {
+function fire(match, tank) {
+  if (!canFire(tank)) return;
+  const shell = createShell(match.map, tank, tank.angle);
+  match.shells.push(shell);
+  if (tank.ammo === MAX_AMMO) tank.reload = AMMO_RECHARGE;
+  tank.ammo -= 1;
+  tank.cooldown = SHOT_COOLDOWN;
+  match.events.push({ type: 'shot', x: shell.x, y: shell.y, owner: tank.id });
+}
+
+function moveShell(map, shell, dt) {
   const oldX = shell.x;
   const oldY = shell.y;
   const nextX = shell.x + shell.vx * dt;
   const nextY = shell.y + shell.vy * dt;
-  let hitX = collidesCircle(match.map, nextX, oldY, SHELL_RADIUS);
-  let hitY = collidesCircle(match.map, oldX, nextY, SHELL_RADIUS);
-  if (!hitX && !hitY && collidesCircle(match.map, nextX, nextY, SHELL_RADIUS)) {
+  let hitX = collidesCircle(map, nextX, oldY, SHELL_RADIUS);
+  let hitY = collidesCircle(map, oldX, nextY, SHELL_RADIUS);
+  if (!hitX && !hitY && collidesCircle(map, nextX, nextY, SHELL_RADIUS)) {
     hitX = true;
     hitY = true;
   }
@@ -185,33 +184,55 @@ function moveShell(match, shell, dt) {
   if (hitY) shell.vy *= -1;
   shell.x = hitX ? oldX : nextX;
   shell.y = hitY ? oldY : nextY;
-  if (hitX || hitY) {
-    shell.bounces += 1;
-    match.events.push({ type: 'bounce', x: shell.x, y: shell.y, owner: shell.owner, bounces: shell.bounces });
-  }
+  if (hitX || hitY) shell.bounces += 1;
   shell.life -= dt;
+  return hitX || hitY;
+}
+
+// Use the real muzzle and ricochet rules to predict a quick return to this pose.
+export function wouldReturnToShooter(map, tank, angle, horizon = 1.2) {
+  const shell = createShell(map, tank, angle);
+  const reachSquared = (TANK_RADIUS + SHELL_RADIUS) ** 2;
+  const steps = Math.ceil(Math.min(horizon, SHELL_LIFE) / STEP);
+  for (let step = 0; step < steps; step++) {
+    moveShell(map, shell, STEP);
+    if (shell.bounces > 0 && (shell.x - tank.x) ** 2 + (shell.y - tank.y) ** 2 <= reachSquared) return true;
+  }
+  return false;
 }
 
 function settleHits(match) {
-  const hits = new Set();
-  const hitBy = new Map();
-  for (const shell of match.shells) {
+  const knockouts = [];
+  let selfHit = false;
+  match.shells = match.shells.filter((shell) => {
+    let target = null;
+    let nearest = (SHELL_RADIUS + TANK_RADIUS) ** 2;
     for (const tank of match.tanks) {
       if (!tank.active) continue;
       // The muzzle is intentionally close to the firing tank. A shell only
       // becomes dangerous to its owner after its first wall bounce.
       if (tank.id === shell.owner && shell.bounces === 0) continue;
-      if ((shell.x - tank.x) ** 2 + (shell.y - tank.y) ** 2 > (SHELL_RADIUS + TANK_RADIUS) ** 2) continue;
-      hits.add(tank.id);
-      if (!hitBy.has(tank.id)) hitBy.set(tank.id, shell.owner);
-      match.events.push({ type: 'hit', x: shell.x, y: shell.y, owner: shell.owner, target: tank.id });
+      const distance = (shell.x - tank.x) ** 2 + (shell.y - tank.y) ** 2;
+      if (distance > nearest) continue;
+      nearest = distance;
+      target = tank;
     }
-  }
-  if (!hits.size) return;
-  const hitList = [...hits].sort((a, b) => a - b);
-  const both = hits.size === match.tanks.length;
-  const winner = both ? null : 1 - hitList[0];
-  match.result = { winner, hits: hitList, selfHit: hitList.some((id) => hitBy.get(id) === id) };
+    if (!target) return shell.life > 0;
+    if (target.protection > 0) return false;
+    target.health -= 1;
+    match.events.push({ type: 'hit', x: shell.x, y: shell.y, owner: shell.owner, target: target.id });
+    if (target.health === 0) {
+      target.active = false;
+      knockouts.push(target.id);
+      selfHit ||= target.id === shell.owner;
+    } else {
+      target.protection = HIT_PROTECTION;
+    }
+    return false;
+  });
+  if (!knockouts.length) return;
+  const winner = knockouts.length === 2 ? null : 1 - knockouts[0];
+  match.result = { winner, hits: knockouts, selfHit };
   if (winner === null) {
     match.events.push({ type: 'draw', x: (match.tanks[0].x + match.tanks[1].x) / 2, y: (match.tanks[0].y + match.tanks[1].y) / 2 });
   } else {
@@ -219,13 +240,51 @@ function settleHits(match) {
     match.events.push({ type: 'roundEnd', winner, score: [...match.scores] });
     if (match.scores[winner] >= WINS) match.winner = winner;
   }
-  for (const tank of match.tanks) tank.active = false;
   match.shells = [];
+}
+
+function updateRepair(match) {
+  if (match.result) return;
+  if (!match.repair) {
+    if (match.tanks.some(({ health }) => health < MAX_HEALTH)) {
+      match.repair = { ...match.map.repair, takenBy: null };
+      match.events.push({ type: 'repair-spawn' });
+    }
+    return;
+  }
+  const { repair } = match;
+  if (repair.takenBy !== null) return;
+  const reach = TANK_RADIUS + REPAIR_RADIUS;
+  let nearest = Infinity;
+  let recipient = null;
+  for (const tank of match.tanks) {
+    if (!tank.active || tank.health >= MAX_HEALTH) continue;
+    const distance = Math.hypot(tank.x - repair.x, tank.y - repair.y);
+    if (distance > reach) continue;
+    if (Math.abs(distance - nearest) <= EPSILON) {
+      recipient = null;
+    } else if (distance < nearest) {
+      recipient = tank;
+      nearest = distance;
+    }
+  }
+  if (!recipient) return;
+  recipient.health += 1;
+  repair.takenBy = recipient.id;
+  match.events.push({ type: 'repair', target: recipient.id, x: repair.x, y: repair.y });
 }
 
 function stepOnce(match, inputs, dt) {
   for (const tank of match.tanks) {
     tank.cooldown = Math.max(0, tank.cooldown - dt);
+    tank.protection = tank.protection - dt > EPSILON ? tank.protection - dt : 0;
+    if (tank.ammo < MAX_AMMO) {
+      tank.reload -= dt;
+      if (tank.reload <= EPSILON) {
+        tank.ammo += 1;
+        tank.reload = tank.ammo === MAX_AMMO ? 0 : AMMO_RECHARGE + tank.reload;
+      }
+    }
   }
   for (let index = 0; index < match.tanks.length; index++) {
     const input = sanitizeInput(inputs[index]);
@@ -233,9 +292,13 @@ function stepOnce(match, inputs, dt) {
     moveTank(match, tank, input, dt);
     if (input.fire) fire(match, tank);
   }
-  for (const shell of match.shells) moveShell(match, shell, dt);
+  for (const shell of match.shells) {
+    if (moveShell(match.map, shell, dt)) {
+      match.events.push({ type: 'bounce', x: shell.x, y: shell.y, owner: shell.owner, bounces: shell.bounces });
+    }
+  }
   settleHits(match);
-  match.shells = match.shells.filter((shell) => shell.life > 0);
+  updateRepair(match);
 }
 
 export function stepMatch(match, inputs = [], dt = STEP) {
@@ -258,5 +321,6 @@ export function stepMatch(match, inputs = [], dt = STEP) {
 export function angleDifference(from, to) { return wrapAngle(to - from); }
 
 export const rules = Object.freeze({
-  TANK_SPEED, TURN_SPEED, SHELL_SPEED, SHELL_LIFE, SHOT_COOLDOWN,
+  TANK_SPEED, TURN_SPEED, SHELL_SPEED, SHELL_LIFE, SHOT_COOLDOWN, AMMO_RECHARGE,
+  HIT_PROTECTION, REPAIR_RADIUS,
 });

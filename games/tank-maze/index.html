@@ -4,13 +4,13 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>坦克迷宫 - 小游乐场</title>
-  <meta name="description" content="在迷宫里和人机交锋，用墙壁反弹炮弹，也要小心自己的回弹。三张地图，三档难度，电脑和手机都能玩。" />
+  <meta name="description" content="坦克迷宫：五张原创地图、三档人机难度和三款坦克外观。利用掩体挡弹、沿侧路绕行，先赢两局。支持键盘和手机横屏沉浸。" />
   <link rel="canonical" href="https://my-website-all.pages.dev/games/tank-maze/" />
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="小游乐场" />
   <meta property="og:locale" content="zh_CN" />
   <meta property="og:title" content="坦克迷宫 · Little Playground" />
-  <meta property="og:description" content="在迷宫里和人机交锋，用墙壁反弹炮弹，也要小心自己的回弹。三张地图，三档难度，电脑和手机都能玩。" />
+  <meta property="og:description" content="坦克迷宫：五张原创地图、三档人机难度和三款坦克外观。利用掩体挡弹、沿侧路绕行，先赢两局。支持键盘和手机横屏沉浸。" />
   <meta property="og:url" content="https://my-website-all.pages.dev/games/tank-maze/" />
   <meta property="og:image" content="https://my-website-all.pages.dev/assets/og-image.jpg" />
   <meta property="og:image:type" content="image/jpeg" />
@@ -19,7 +19,7 @@
   <meta property="og:image:alt" content="小游乐场 · Little Playground：11 款即开即玩的小游戏" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="坦克迷宫 · Little Playground" />
-  <meta name="twitter:description" content="在迷宫里和人机交锋，用墙壁反弹炮弹，也要小心自己的回弹。三张地图，三档难度，电脑和手机都能玩。" />
+  <meta name="twitter:description" content="坦克迷宫：五张原创地图、三档人机难度和三款坦克外观。利用掩体挡弹、沿侧路绕行，先赢两局。支持键盘和手机横屏沉浸。" />
   <meta name="twitter:image" content="https://my-website-all.pages.dev/assets/og-image.jpg" />
   <meta name="twitter:image:alt" content="小游乐场 · Little Playground：11 款即开即玩的小游戏" />
   <meta name="author" content="Hayden-He" />
@@ -319,13 +319,17 @@
     <path d="M15.2 23.8 16 26.5l.8-2.7z" fill="#fde047"/>
   </symbol>
   <symbol id="game-tank-maze" viewBox="0 0 32 32">
-    <rect x="2" y="2" width="28" height="28" rx="8" fill="#1b293a"/>
-    <path d="M7 9h8m-8 0v5m17 4v6h-7" fill="none" stroke="#8296ad" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/>
-    <path d="m22 9 3 4-4 2" fill="none" stroke="#fba987" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
-    <g transform="rotate(-30 13 21)">
-      <rect x="7.5" y="16.5" width="10" height="9" rx="2" fill="#055748"/>
-      <rect x="8.5" y="17.9" width="8.5" height="6.2" rx="1.7" fill="#26bca1"/>
-      <path d="M12.5 21H21" stroke="#c7ffee" stroke-width="2.3" stroke-linecap="round"/>
+    <rect x="1.5" y="1.5" width="29" height="29" rx="7" fill="#162637"/>
+    <rect x="4" y="4" width="24" height="24" rx="4.5" fill="none" stroke="#526f89" stroke-width="1.2"/>
+    <path d="M8 13V8h8m10 12v5h-6" fill="none" stroke="#9eb7cc" stroke-width="1.7" stroke-linejoin="round"/>
+    <path d="m20 15 4.5-3.5-3-3" fill="none" stroke="#ffbe83" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="21.7" cy="8.6" r="1.3" fill="#ffedbb"/>
+    <g transform="rotate(-38 13.8 20.9)">
+      <rect x="8" y="15.6" width="10.7" height="3.1" rx="1.2" fill="#087665"/>
+      <rect x="8" y="22.9" width="10.7" height="3.1" rx="1.2" fill="#087665"/>
+      <rect x="8.8" y="17" width="10.7" height="7.5" rx="1.8" fill="#27c0a1"/>
+      <circle cx="13.8" cy="20.8" r="2.7" fill="#126c5f"/>
+      <path d="M14 20.8h8" stroke="#d6fff1" stroke-width="2.15" stroke-linecap="round"/>
     </g>
   </symbol>
   <symbol id="game-tetris" viewBox="0 0 32 32">
@@ -362,64 +366,84 @@
 
   <main class="game-wrap tank-game">
     <div class="tank-layout">
-      <section class="tank-scoreboard" aria-label="对局比分" data-i18n-attr="aria-label:对局比分">
-        <div class="tank-score tank-score-player">
-          <span class="tank-team"><i aria-hidden="true"></i><span data-i18n="玩家">玩家</span></span>
-          <strong id="player-score">0</strong>
-          <span class="tank-score-pips" id="player-pips" aria-hidden="true"></span>
+      <div class="tank-stage-header">
+        <section class="tank-scoreboard" aria-label="比分、血量和弹药" data-i18n-attr="aria-label:比分、血量和弹药">
+          <div class="tank-score tank-score-player">
+            <span class="tank-team"><i aria-hidden="true"></i><span data-i18n="玩家">玩家</span></span>
+            <strong id="player-score">0</strong>
+            <span class="tank-health">
+              <span aria-hidden="true" data-i18n="血量">血量</span>
+              <span class="tank-health-pips" id="player-health" role="meter" aria-label="玩家血量" aria-valuemin="0" aria-valuemax="3" aria-valuenow="3" data-i18n-attr="aria-label:玩家血量"></span>
+            </span>
+            <span class="tank-ammo">
+              <span aria-hidden="true" data-i18n="弹药">弹药</span>
+              <span class="tank-ammo-pips" id="player-ammo" role="meter" aria-label="玩家弹药" aria-valuemin="0" aria-valuemax="3" aria-valuenow="3" data-i18n-attr="aria-label:玩家弹药"></span>
+            </span>
+          </div>
+          <div class="tank-round">
+            <strong id="round-label">第 1 局</strong>
+            <span class="tank-compact-score" id="tank-compact-score">0 – 0</span>
+            <span id="tank-round-note" aria-live="polite" data-i18n="三局两胜">三局两胜</span>
+          </div>
+          <div class="tank-score tank-score-ai">
+            <span class="tank-team"><i aria-hidden="true"></i><span data-i18n="人机">人机</span></span>
+            <strong id="ai-score">0</strong>
+            <span class="tank-health">
+              <span aria-hidden="true" data-i18n="血量">血量</span>
+              <span class="tank-health-pips" id="ai-health" role="meter" aria-label="人机血量" aria-valuemin="0" aria-valuemax="3" aria-valuenow="3" data-i18n-attr="aria-label:人机血量"></span>
+            </span>
+            <span class="tank-ammo">
+              <span aria-hidden="true" data-i18n="弹药">弹药</span>
+              <span class="tank-ammo-pips" id="ai-ammo" role="meter" aria-label="人机弹药" aria-valuemin="0" aria-valuemax="3" aria-valuenow="3" data-i18n-attr="aria-label:人机弹药"></span>
+            </span>
+          </div>
+        </section>
+        <div class="tank-view-tools">
+          <button type="button" class="btn-small secondary" id="tank-stage-pause" data-i18n="暂停" hidden>暂停</button>
+          <button type="button" class="btn-small secondary tank-immersive-btn" id="tank-immersive" data-i18n="横屏沉浸" hidden>横屏沉浸</button>
         </div>
-        <div class="tank-round">
-          <strong id="round-label">第 1 局</strong>
-          <span data-i18n="先赢 3 局">先赢 3 局</span>
-        </div>
-        <div class="tank-score tank-score-ai">
-          <span class="tank-team"><i aria-hidden="true"></i><span data-i18n="人机">人机</span></span>
-          <strong id="ai-score">0</strong>
-          <span class="tank-score-pips" id="ai-pips" aria-hidden="true"></span>
-        </div>
-      </section>
+      </div>
 
-      <div class="tank-arena" id="tank-arena" tabindex="0">
-        <canvas id="tank-board" width="750" height="550" role="img" aria-label="坦克迷宫棋盘" data-i18n-attr="aria-label:坦克迷宫棋盘"></canvas>
-        <div class="tank-overlay" id="tank-overlay" hidden>
-          <div class="tank-overlay-card">
-            <div role="status" aria-live="polite" aria-atomic="true">
-              <h2 id="tank-overlay-title"></h2>
-              <p id="tank-overlay-note"></p>
-            </div>
-            <div class="tank-overlay-actions">
-              <button class="btn-small" id="tank-primary" type="button"></button>
-              <button class="btn-small secondary" id="tank-secondary" type="button" data-i18n="换图" hidden>换图</button>
+      <div class="tank-board-slot">
+        <div class="tank-arena" id="tank-arena" tabindex="0">
+          <canvas id="tank-board" width="750" height="550" role="img" aria-label="坦克迷宫棋盘" data-i18n-attr="aria-label:坦克迷宫棋盘"></canvas>
+          <div class="tank-overlay" id="tank-overlay" hidden>
+            <div class="tank-overlay-card">
+              <div role="status" aria-live="polite" aria-atomic="true">
+                <h2 id="tank-overlay-title"></h2>
+                <p id="tank-overlay-note"></p>
+              </div>
+              <div class="tank-overlay-actions">
+                <button class="btn-small" id="tank-primary" type="button"></button>
+                <button class="btn-small secondary" id="tank-secondary" type="button" data-i18n="换图" hidden>换图</button>
+              </div>
             </div>
           </div>
+          <div class="tank-unavailable" id="tank-unavailable" hidden role="status" data-i18n="当前浏览器无法显示迷宫。">当前浏览器无法显示迷宫。</div>
         </div>
-        <div class="tank-unavailable" id="tank-unavailable" hidden role="status" data-i18n="当前浏览器无法显示迷宫。">当前浏览器无法显示迷宫。</div>
       </div>
 
       <div class="tank-touch" id="tank-touch" role="group" aria-label="触屏控制" data-i18n-attr="aria-label:触屏控制" hidden>
-        <div class="tank-dpad" id="tank-dpad" role="group" aria-label="驾驶" data-i18n-attr="aria-label:驾驶">
-          <button type="button" tabindex="-1" class="tank-pad-key" data-dir="up" aria-label="前进" data-i18n-attr="aria-label:前进">▲</button>
-          <button type="button" tabindex="-1" class="tank-pad-key" data-dir="left" aria-label="向左转" data-i18n-attr="aria-label:向左转">◀</button>
-          <button type="button" tabindex="-1" class="tank-pad-key" data-dir="right" aria-label="向右转" data-i18n-attr="aria-label:向右转">▶</button>
-          <button type="button" tabindex="-1" class="tank-pad-key" data-dir="down" aria-label="倒车" data-i18n-attr="aria-label:倒车">▼</button>
+        <div class="tank-stick" id="tank-stick" role="group" aria-label="移动摇杆" data-i18n-attr="aria-label:移动摇杆">
+          <span class="tank-stick-thumb" aria-hidden="true"></span>
         </div>
-        <button type="button" tabindex="-1" class="tank-pad-key tank-pad-fire" id="tank-fire" data-i18n="开火">开火</button>
+        <button type="button" tabindex="-1" class="tank-pad-fire" id="tank-fire">
+          <svg class="tank-control-icon" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><use href="#art-target"></use></svg>
+          <span data-i18n="开火">开火</span>
+        </button>
       </div>
 
       <section class="tank-panel" aria-labelledby="tank-setup-title">
         <h2 id="tank-setup-title" data-i18n="对局设置">对局设置</h2>
-        <label for="tank-map" data-i18n="地图">地图</label>
-        <select id="tank-map">
-          <option value="lanes" data-i18n="长直道">长直道</option>
-          <option value="corners" data-i18n="连续拐角">连续拐角</option>
-          <option value="loop" data-i18n="环路">环路</option>
-        </select>
-        <label for="tank-difficulty" data-i18n="难度">难度</label>
-        <select id="tank-difficulty">
-          <option value="easy" data-i18n="简单">简单</option>
-          <option value="normal" data-i18n="普通" selected>普通</option>
-          <option value="hard" data-i18n="困难">困难</option>
-        </select>
+        <button type="button" class="tank-choice" id="tank-map" aria-haspopup="dialog" aria-controls="tank-picker">
+          <span data-i18n="地图">地图</span><strong id="tank-map-value">长直道</strong>
+        </button>
+        <button type="button" class="tank-choice" id="tank-difficulty" aria-haspopup="dialog" aria-controls="tank-picker">
+          <span data-i18n="难度">难度</span><strong id="tank-difficulty-value">普通</strong>
+        </button>
+        <button type="button" class="tank-choice" id="tank-skin" aria-haspopup="dialog" aria-controls="tank-picker">
+          <span data-i18n="坦克外观">坦克外观</span><strong id="tank-skin-value">标准型</strong>
+        </button>
         <button type="button" class="btn-small tank-start" id="tank-start" data-i18n="开始游戏">开始游戏</button>
         <div class="tank-tools">
           <button type="button" class="btn-small secondary" id="tank-pause" data-i18n="暂停" disabled>暂停</button>
@@ -427,10 +451,17 @@
           <button type="button" class="btn-small secondary" id="tank-help" data-i18n="玩法">玩法</button>
           <button type="button" class="btn-small secondary" id="tank-restart" data-i18n="重开" disabled>重开</button>
         </div>
-        <p class="tank-key-hint" data-i18n="↑ 前进 · ↓ 倒车 · ← / → 转向 · 空格开火 · P 暂停">↑ 前进 · ↓ 倒车 · ← / → 转向 · 空格开火 · P 暂停</p>
-        <p class="tank-touch-hint" data-i18n="左手驾驶，右手开火。小心回弹。">左手驾驶，右手开火。小心回弹。</p>
+        <p class="tank-key-hint" data-i18n="WASD 或方向键移动 · 空格开火 · P 暂停">WASD 或方向键移动 · 空格开火 · P 暂停</p>
+        <p class="tank-touch-hint" data-i18n="左侧摇杆移动，右侧开火。">左侧摇杆移动，右侧开火。</p>
       </section>
     </div>
+    <dialog class="site-dialog tank-picker" id="tank-picker" aria-labelledby="tank-picker-title">
+      <h2 class="site-dialog-title" id="tank-picker-title"></h2>
+      <div class="tank-picker-list" id="tank-picker-list"></div>
+      <form method="dialog" class="site-dialog-actions">
+        <button type="submit" class="site-dialog-btn" data-i18n="取消">取消</button>
+      </form>
+    </dialog>
     <div id="more-games" class="more-games"></div>
   </main>
 

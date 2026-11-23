@@ -78,7 +78,7 @@ window.SITE_CONFIG = {
       preview: '/assets/previews/tank-maze.webp',
       category: 'arcade',
       categoryName: '动作街机',
-      description: '在迷宫里和人机交锋，小心自己的炮弹弹回来。',
+      description: '驾驶自选外观的坦克，在五张迷宫地图中绕行、打回弹，先赢两局。',
       url: '/games/tank-maze/',
       tags: ['炮弹反弹', '三档难度'],
     },

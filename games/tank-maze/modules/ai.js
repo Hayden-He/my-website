@@ -1,5 +1,6 @@
 import {
-  STEP, TANK_RADIUS, SHELL_RADIUS, angleDifference, collidesCircle, hasLineOfSight, rules,
+  MAX_HEALTH, STEP, TANK_RADIUS, SHELL_RADIUS, angleDifference, canFire, collidesCircle,
+  hasLineOfSight, wouldReturnToShooter, rules,
 } from './engine.js';
 
 const GRID_STEP = 0.5;
@@ -9,9 +10,11 @@ const SEARCH_POINTS = [
 ];
 
 const PRESETS = Object.freeze({
-  easy: Object.freeze({ reaction: 0.32, aimError: 0.18, dodge: 0.42, lead: 0, hiddenFire: false, avoidOwn: false }),
-  normal: Object.freeze({ reaction: 0.19, aimError: 0.12, dodge: 0.67, lead: 0.18, hiddenFire: true, avoidOwn: false }),
-  hard: Object.freeze({ reaction: 0.08, aimError: 0.07, dodge: 0.95, lead: 0.34, hiddenFire: true, avoidOwn: true }),
+  // Every tier uses the same basic self-hit guard. Skill still comes from
+  // reaction, aiming, leading and how quickly a bot dodges incoming shells.
+  easy: Object.freeze({ reaction: 0.32, aimError: 0.18, dodge: 0.42, lead: 0, hiddenFire: false, recoil: 0.1, riskTime: 0.26 }),
+  normal: Object.freeze({ reaction: 0.19, aimError: 0.12, dodge: 0.67, lead: 0.18, hiddenFire: true, recoil: 0.16, riskTime: 0.3 }),
+  hard: Object.freeze({ reaction: 0.08, aimError: 0.07, dodge: 0.95, lead: 0.34, hiddenFire: true, recoil: 0.22, riskTime: 0.34 }),
 });
 
 function clamp(value, min, max) { return Math.max(min, Math.min(max, value)); }
@@ -95,7 +98,8 @@ function findPath(map, from, to) {
 }
 
 function chooseSearchPoint(state, map) {
-  const point = SEARCH_POINTS[state.searchIndex % SEARCH_POINTS.length];
+  const points = map.patrol || SEARCH_POINTS;
+  const point = points[state.searchIndex % points.length];
   state.searchIndex += 1;
   return {
     x: clamp(point.x, TANK_RADIUS + 0.2, map.width - TANK_RADIUS - 0.2),
@@ -171,7 +175,9 @@ function dangerFromShell(match, tank, preset) {
   let danger = null;
   let dangerDistance = preset.dodge;
   for (const shell of match.shells) {
-    if (shell.owner === tank.id && !(preset.avoidOwn && shell.bounces > 0)) continue;
+    // Ignore a newly fired shell until it has bounced. Once it ricochets,
+    // every difficulty avoids its own projectile using this same prediction.
+    if (shell.owner === tank.id && shell.bounces === 0) continue;
     const rx = tank.x - shell.x;
     const ry = tank.y - shell.y;
     const speedSquared = shell.vx * shell.vx + shell.vy * shell.vy;
@@ -196,11 +202,37 @@ function dodgeInput(tank, shell) {
   return { drive: -1, turn: cross >= 0 ? -1 : 1, fire: false };
 }
 
+function sameUnsafeShot(state, angle) {
+  return state.unsafeTime > 0 && state.unsafeAngle !== null
+    && Math.abs(angleDifference(state.unsafeAngle, angle)) < 0.16;
+}
+
+function rememberUnsafeShot(state, angle, preset) {
+  state.unsafeAngle = angle;
+  state.unsafeTime = Math.max(state.unsafeTime, preset.riskTime);
+  // Alternate when the tank is looking almost horizontally/vertically so a
+  // wall-adjacent bot does not keep trying the same turn forever.
+  const preferred = Math.abs(Math.sin(angle)) < 0.2
+    ? -state.riskTurn : Math.sign(Math.sin(angle));
+  state.riskTurn = preferred || 1;
+  state.path = [];
+  state.pathIndex = 0;
+  // A short reverse-and-turn is enough to leave the wall pocket before the
+  // next firing decision; this also gives a hidden bank shot a new pose.
+  state.moveBack = Math.max(state.moveBack, preset.recoil);
+  return { drive: -1, turn: state.riskTurn, fire: false };
+}
+
+function repositionFromUnsafeShot(state) {
+  return { drive: -1, turn: state.riskTurn || 1, fire: false };
+}
+
 function createState() {
   return {
     round: 0, path: [], pathIndex: 0, pathAge: 0,
     lastSeen: null, searchTarget: null, searchIndex: 0, reactionTimer: 0,
-    visibleFor: 0, bankAngle: null, bankTime: 0, moveBack: 0,
+    visibleFor: 0, bankAngle: null, bankTime: 0, moveBack: 0, repairTarget: null,
+    unsafeAngle: null, unsafeTime: 0, riskTurn: 1,
   };
 }
 
@@ -221,6 +253,7 @@ export function createAI(difficulty = 'normal') {
     state.pathAge += elapsed;
     state.reactionTimer -= elapsed;
     state.moveBack -= elapsed;
+    state.unsafeTime -= elapsed;
 
     const visible = hasLineOfSight(match.map, tank, enemy);
     const justLost = !visible && state.visibleFor >= preset.reaction;
@@ -233,6 +266,13 @@ export function createAI(difficulty = 'normal') {
     } else {
       state.visibleFor = 0;
     }
+    const repairTarget = !visible && tank.health < MAX_HEALTH && match.repair?.takenBy === null
+      ? match.repair : null;
+    if (repairTarget !== state.repairTarget) {
+      state.path = [];
+      state.pathIndex = 0;
+      state.repairTarget = repairTarget;
+    }
 
     const danger = dangerFromShell(match, tank, preset);
     if (danger && (state.reactionTimer <= 0 || preset.dodge > 0.8)) {
@@ -240,19 +280,31 @@ export function createAI(difficulty = 'normal') {
       return dodgeInput(tank, danger);
     }
 
-    if (justLost && preset.hiddenFire && tank.cooldown <= STEP) {
+    if (justLost && !repairTarget && preset.hiddenFire && canFire(tank, elapsed)) {
       state.bankAngle = bankAim(match.map, tank, state.lastSeen);
       state.bankTime = 0.8;
     }
-    if (!visible && state.bankAngle !== null && state.bankTime > 0) {
+    if (!visible && !repairTarget && state.bankAngle !== null && state.bankTime > 0) {
       state.bankTime -= elapsed;
       const bankError = angleDifference(tank.angle, state.bankAngle);
-      const fire = Math.abs(bankError) <= 0.033;
+      const turn = Math.abs(bankError) <= 0.033 ? 0 : Math.sign(bankError);
+      const projectedAngle = tank.angle + turn * rules.TURN_SPEED * elapsed;
+      const fire = Math.abs(bankError) <= 0.033 && canFire(tank, elapsed);
+      // Covers an obvious bank return, including a tank tucked against the
+      // outer frame; the angle includes this tick's turn before firing.
+      const blockedByRisk = sameUnsafeShot(state, projectedAngle);
+      if (fire && (blockedByRisk
+        || wouldReturnToShooter(match.map, tank, projectedAngle))) {
+        if (!blockedByRisk) rememberUnsafeShot(state, projectedAngle, preset);
+        state.bankAngle = null;
+        state.bankTime = 0;
+        return repositionFromUnsafeShot(state);
+      }
       if (fire) {
         state.bankAngle = null;
-        state.moveBack = 0.18;
+        state.moveBack = preset.recoil;
       }
-      return { drive: 0, turn: fire ? 0 : Math.sign(bankError), fire };
+      return { drive: 0, turn: fire ? 0 : turn, fire };
     }
     if (state.moveBack > 0) return { drive: -1, turn: 0, fire: false };
 
@@ -274,7 +326,7 @@ export function createAI(difficulty = 'normal') {
         state.pathIndex = 0;
       }
       if (!state.path.length) {
-        const goal = state.lastSeen || chooseSearchPoint(state, match.map);
+        const goal = repairTarget || state.lastSeen || chooseSearchPoint(state, match.map);
         state.searchTarget = goal;
         state.path = findPath(match.map, tank, goal);
         state.pathIndex = 0;
@@ -296,9 +348,18 @@ export function createAI(difficulty = 'normal') {
     if (visible && targetDistance < 1.4) drive = -1;
     if (visible && Math.abs(angleError) > 0.75) drive = targetDistance > 3 ? 0.55 : 0;
 
+    const projectedAngle = tank.angle + turn * rules.TURN_SPEED * elapsed;
     const fire = visible && state.visibleFor >= preset.reaction && Math.abs(angleError) <= preset.aimError
-      && tank.cooldown <= STEP;
-    if (fire && preset.hiddenFire) state.moveBack = 0.18;
+      && canFire(tank, elapsed);
+    // Use the shared bounce simulation so a direct shot that would ricochet
+    // back into the shooter is treated as a reposition decision at every tier.
+    const blockedByRisk = sameUnsafeShot(state, projectedAngle);
+    if (fire && (blockedByRisk
+      || wouldReturnToShooter(match.map, tank, projectedAngle))) {
+      if (!blockedByRisk) rememberUnsafeShot(state, projectedAngle, preset);
+      return repositionFromUnsafeShot(state);
+    }
+    if (fire) state.moveBack = preset.recoil;
     return { drive, turn, fire };
   };
 }

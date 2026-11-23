@@ -104,11 +104,18 @@
     });
   }
 
-  function bindMobileLayout(gameId, button, onLayoutChange, { portraitOnly = false, onRender } = {}) {
-    const mobile = matchMedia('(any-pointer: coarse) and (max-width: 1100px)');
+  function bindMobileLayout(gameId, button, onLayoutChange, {
+    portraitOnly = false, landscapeOnly = false, defaultLandscape = true, onRender, onRotateHint,
+  } = {}) {
+    const mobile = matchMedia(landscapeOnly
+      ? '(any-pointer: coarse) and (max-width: 1100px), (max-width: 1100px) and (max-height: 600px)'
+      : '(any-pointer: coarse) and (max-width: 1100px)');
     const landscape = matchMedia('(orientation: landscape)');
+    const portraitHint = onRotateHint
+      ? matchMedia('(any-pointer: coarse) and (max-width: 1100px), (max-width: 690px)')
+      : null;
     const storageKey = 'game_layout_' + gameId;
-    const choices = { portrait: false, landscape: true };
+    const choices = { portrait: false, landscape: defaultLandscape };
 
     try {
       const saved = JSON.parse(sessionStorage.getItem(storageKey));
@@ -117,18 +124,28 @@
       }
     } catch {}
 
+    function isAvailable() {
+      return mobile.matches && !(portraitOnly && landscape.matches) &&
+        (!landscapeOnly || landscape.matches);
+    }
+
     function render() {
-      const available = mobile.matches && !(portraitOnly && landscape.matches);
+      const available = isAvailable();
+      const showHint = !landscape.matches && portraitHint?.matches;
       const immersive = available && choices[landscape.matches ? 'landscape' : 'portrait'];
       document.body.classList.toggle('mobile-game-immersive', immersive);
-      button.hidden = !available;
-      const label = immersive ? '退出沉浸' : '沉浸模式';
+      button.hidden = !available && !showHint;
+      const label = immersive ? '退出沉浸' : onRotateHint ? '横屏沉浸' : '沉浸模式';
       button.dataset.i18n = label;
       button.textContent = t(label);
       onRender?.(immersive);
     }
 
     button.addEventListener('click', () => {
+      if (!isAvailable()) {
+        if (portraitHint?.matches && !landscape.matches) onRotateHint();
+        return;
+      }
       const direction = landscape.matches ? 'landscape' : 'portrait';
       choices[direction] = !choices[direction];
       try {
@@ -147,6 +164,7 @@
       if (document.body.classList.contains('mobile-game-immersive')) onLayoutChange();
       render();
     });
+    portraitHint?.addEventListener('change', render);
 
     render();
   }
