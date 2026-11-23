@@ -136,9 +136,11 @@ for (const category of categories) {
   if (categoryPage) {
     checkContains(categoryPage, "initSitePage('" + category.id + "')", `分类页 ${category.url}`);
     checkContains(categoryPage, 'id="games-grid"', `分类页 ${category.url}`);
+    checkContains(categoryPage, 'assets/theme.js', `分类页 ${category.url}`);
     checkContains(categoryPage, 'assets/i18n.js', `分类页 ${category.url}`);
     checkContains(categoryPage, 'class="icon-sprite"', `分类页 ${category.url}`);
     checkContains(categoryPage, 'assets/style.css?v=', `分类页 ${category.url}`);
+    checkContains(categoryPage, 'assets/theme.js?v=', `分类页 ${category.url}`);
     checkContains(categoryPage, 'assets/i18n.js?v=', `分类页 ${category.url}`);
     checkContains(categoryPage, 'site.webmanifest', `分类页 ${category.url}`);
     checkContains(categoryPage, 'assets/icon.svg', `分类页 ${category.url}`);
@@ -214,9 +216,11 @@ for (const game of games) {
   checkContains(page, 'assets/style.css', pagePath);
   checkContains(page, 'assets/game-shell.css', pagePath);
   checkContains(page, 'assets/site-data.js', pagePath);
+  checkContains(page, 'assets/theme.js', pagePath);
   checkContains(page, 'assets/i18n.js', pagePath);
   checkContains(page, 'class="icon-sprite"', pagePath);
   checkContains(page, 'assets/style.css?v=', pagePath);
+  checkContains(page, 'assets/theme.js?v=', pagePath);
   checkContains(page, 'assets/i18n.js?v=', pagePath);
   checkContains(page, 'game-' + game.icon, pagePath);
   if (game.id === 'snake' || game.id === 'basketball') {
@@ -231,6 +235,7 @@ for (const game of games) {
   checkContains(page, 'site.webmanifest', pagePath);
   checkContains(page, 'assets/icon.svg', pagePath);
   checkContains(page, 'apple-touch-icon.png', pagePath);
+  checkContains(page, 'data-theme-toggle', pagePath);
   checkContains(page, 'data-lang-toggle', pagePath);
   if (category) checkContains(page, `href="${category.url}"`, pagePath);
   checkContains(page, 'role="status"', pagePath);
@@ -259,6 +264,7 @@ try {
 // ---------- 首页 / 404 / 公共资源 ----------
 checkContains(read('index.html'), "initSitePage('all')", 'index.html');
 checkContains(read('index.html'), 'id="games-grid"', 'index.html');
+checkContains(read('index.html'), 'assets/theme.js?v=', 'index.html');
 checkContains(read('index.html'), 'assets/i18n.js?v=', 'index.html');
 checkContains(read('index.html'), 'class="icon-sprite"', 'index.html');
 checkSeoPage(read('index.html'), {
@@ -269,6 +275,7 @@ checkSeoPage(read('index.html'), {
 checkContains(read('index.html'), 'site.webmanifest', 'index.html');
 checkContains(read('index.html'), 'assets/icon.svg?v=', 'index.html');
 checkContains(read('index.html'), 'apple-touch-icon.png', 'index.html');
+checkContains(read('404.html'), 'assets/theme.js?v=', '404.html');
 checkContains(read('404.html'), 'assets/i18n.js?v=', '404.html');
 checkContains(read('404.html'), 'class="icon-sprite"', '404.html');
 checkContains(read('404.html'), 'site.webmanifest', '404.html');
@@ -318,6 +325,7 @@ for (const asset of [
   'assets/style.css',
   'assets/game-shell.css',
   'assets/site-data.js',
+  'assets/theme.js',
   'assets/i18n.js',
   'assets/games.js',
   'assets/app.js',
@@ -370,6 +378,8 @@ if (!exists(templatePath)) {
 } else {
   const template = read(templatePath);
   checkContains(template, 'assets/game-shell.css', templatePath);
+  checkContains(template, 'assets/theme.js', templatePath);
+  checkContains(template, 'data-theme-toggle', templatePath);
   checkContains(template, 'assets/game-kit.js', templatePath);
   checkContains(template, 'id="more-games"', templatePath);
   checkContains(template, '<h1', templatePath);

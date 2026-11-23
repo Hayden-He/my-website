@@ -123,6 +123,8 @@ function headerHtml(activeKey) {
     '<nav class="nav-links" aria-label="主导航">' + links.join('') +
     '<button class="nav-sound-btn" type="button" aria-pressed="true" aria-label="音效已开启，点击关闭" title="关闭音效">' +
     iconHtml('sound-on', 'sound-ico', '0 0 24 24') + '<span class="sound-label">音效开</span></button>' +
+    '<button class="nav-theme-btn" type="button" data-theme-toggle aria-label="主题：跟随系统" title="主题：跟随系统">' +
+    iconHtml('theme-system', 'theme-ico', '0 0 24 24') + '</button>' +
     '<button class="nav-lang-btn" type="button" data-lang-toggle aria-label="切换到英文" title="切换到英文">EN</button>' +
     '</nav></div>';
 }
@@ -203,6 +205,7 @@ function verifyShell(file, html) {
   }
   const navLinks = (html.match(/<a class="nav-link/g) || []).length;
   if (navLinks !== config.categories.length + 1) problems.push('顶栏导航数量不一致');
+  if (!html.includes('data-theme-toggle')) problems.push('缺少主题切换按钮');
   if (problems.length) throw new Error(file + '：静态外壳校验失败：' + problems.join('；'));
 }
 

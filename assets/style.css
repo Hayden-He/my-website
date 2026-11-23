@@ -502,21 +502,25 @@ textarea {
   }
 
   /* 窄屏下收紧游戏顶栏，避免标题与返回按钮折行 */
+  .game-topbar .container {
+    padding: 0 12px;
+  }
+
   .game-topbar-inner {
-    gap: 6px 8px;
+    gap: 4px 6px;
   }
 
   .back-link {
-    padding: 6px 8px;
+    padding: 6px 6px;
     font-size: 0.84rem;
   }
 
   .game-topbar-title {
-    font-size: 0.98rem;
+    font-size: 0.94rem;
   }
 }
 
-@media (max-width: 350px) {
+@media (max-width: 480px) {
   .game-topbar-cat {
     display: none;
   }
@@ -743,7 +747,8 @@ body:has(#site-footer) > main {
 
 /* 语言切换按钮（站点头部 / 游戏顶栏共用一套视觉） */
 .nav-lang-btn,
-.lang-btn {
+.lang-btn,
+.nav-theme-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -761,15 +766,23 @@ body:has(#site-footer) > main {
   transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
 
+.nav-theme-btn,
+.theme-btn {
+  min-width: 32px;
+  padding: 6px 8px;
+}
+
 .nav-lang-btn:hover,
-.lang-btn:hover {
+.lang-btn:hover,
+.nav-theme-btn:hover {
   background: #f1f5f9;
   color: var(--text);
   border-color: #cbd5e1;
 }
 
 .nav-lang-btn:focus-visible,
-.lang-btn:focus-visible {
+.lang-btn:focus-visible,
+.nav-theme-btn:focus-visible {
   outline: 2px solid var(--primary);
   outline-offset: 2px;
 }
@@ -793,10 +806,19 @@ body:has(#site-footer) > main {
     font-size: 0.77rem;
   }
 
+  .nav-theme-btn {
+    min-width: 30px;
+    padding: 5px 7px;
+  }
+
   .lang-btn {
     min-width: 30px;
     padding: 5px 7px;
     font-size: 0.76rem;
+  }
+
+  .theme-btn {
+    padding: 5px 7px;
   }
 }
 
@@ -806,7 +828,7 @@ body:has(#site-footer) > main {
   }
 
   .nav-link {
-    padding: 5px 7px;
+    padding: 5px 6px;
     font-size: 0.8rem;
   }
 
@@ -817,6 +839,21 @@ body:has(#site-footer) > main {
   .nav-lang-btn {
     padding: 5px 6px;
     font-size: 0.75rem;
+  }
+
+  .nav-theme-btn {
+    min-width: 28px;
+    padding: 5px 5px;
+  }
+
+  .game-topbar-actions {
+    gap: 4px;
+  }
+
+  .theme-btn,
+  .game-topbar-actions .lang-btn {
+    min-width: 28px;
+    padding: 5px 5px;
   }
 }
 
@@ -869,11 +906,18 @@ body:has(#site-footer) > main {
   flex: 0 0 auto;
 }
 
-.sound-ico {
+.sound-ico,
+.theme-ico {
   display: block;
   width: 16px;
   height: 16px;
   flex: 0 0 auto;
+}
+
+.theme-switching *,
+.theme-switching *::before,
+.theme-switching *::after {
+  transition: none !important;
 }
 
 .sound-label {

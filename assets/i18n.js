@@ -742,6 +742,17 @@
     '经典马拉松会自动存档；40 行竞速冲刺最快用时；道具狂热可触发炸弹、激光和冰霜！':
       'Classic Marathon autosaves progress; 40-Line Sprint races the clock; Party Mode adds bombs, lasers and freeze blocks!',
 
+    // ---- 主题切换 ----
+    '跟随系统': 'Follow system',
+    '浅色': 'Light',
+    '深色': 'Dark',
+    '主题：跟随系统': 'Theme: Follow system',
+    '主题：浅色': 'Theme: Light',
+    '主题：深色': 'Theme: Dark',
+    '主题：跟随系统（点击切换为{next}）': 'Theme: Follow system (click to switch to {next})',
+    '主题：浅色（点击切换为{next}）': 'Theme: Light (click to switch to {next})',
+    '主题：深色（点击切换为{next}）': 'Theme: Dark (click to switch to {next})',
+
     // ---- 清数据 / 弹窗 ----
     '将清除本站在此浏览器保存的游戏纪录、存档、外观、模式偏好、音效设置、教学记录和最近打开记录，且无法恢复。语言设置会保留。':
       'This will permanently clear game records, saves, skins, mode preferences, sound settings, tutorial history and the recently opened game in this browser. Your language setting will be kept.',

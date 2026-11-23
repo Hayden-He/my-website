@@ -133,6 +133,14 @@
     }
 
     if (window.I18N) {
+      const themeBtn = createEl('button', 'nav-theme-btn');
+      themeBtn.type = 'button';
+      themeBtn.setAttribute('data-theme-toggle', '');
+      themeBtn.setAttribute('aria-label', t('主题：跟随系统'));
+      themeBtn.title = t('主题：跟随系统');
+      themeBtn.appendChild(createIcon('theme-system', 'theme-ico', '0 0 24 24'));
+      nav.appendChild(themeBtn);
+
       const langBtn = createEl('button', 'nav-lang-btn', window.I18N.langLabel());
       langBtn.type = 'button';
       langBtn.setAttribute('data-lang-toggle', '');
@@ -145,6 +153,7 @@
     container.appendChild(nav);
     header.innerHTML = '';
     header.appendChild(container);
+    window.SiteTheme?.refreshToggles();
   }
 
   function renderGameCard(game) {
