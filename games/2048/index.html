@@ -115,6 +115,11 @@
       -webkit-user-select: none;
     }
 
+    :root[data-theme="dark"] .board-wrap {
+      background: #2b241e;
+      border: 1px solid var(--border);
+    }
+
     .board-stage {
       position: relative;
       width: 100%;
@@ -133,6 +138,10 @@
     .cell-bg {
       border-radius: 10px;
       background: rgba(238, 228, 218, 0.35);
+    }
+
+    :root[data-theme="dark"] .cell-bg {
+      background: rgba(238, 228, 218, 0.12);
     }
 
     .tile-layer {

@@ -146,6 +146,47 @@
     .n7 { color: #1e293b; }
     .n8 { color: #64748b; }
 
+    :root[data-theme="dark"] .board-wrap {
+      background: #1a243a;
+      border: 1px solid var(--border);
+    }
+
+    :root[data-theme="dark"] .cell.closed {
+      background: linear-gradient(180deg, #334155 0%, #24314b 100%);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 1px 2px rgba(0, 0, 0, 0.45);
+    }
+
+    :root[data-theme="dark"] .cell.closed:hover {
+      background: linear-gradient(180deg, #3b4c68 0%, #2a3a58 100%);
+    }
+
+    :root[data-theme="dark"] .cell.flagged {
+      background: linear-gradient(180deg, #7c2d12 0%, #4a1d0c 100%);
+      color: #fed7aa;
+    }
+
+    :root[data-theme="dark"] .cell.open {
+      background: #0f172a;
+      box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.35);
+    }
+
+    :root[data-theme="dark"] .cell.mine-show {
+      background: #fda4af;
+    }
+
+    :root[data-theme="dark"] .cell.wrong-flag {
+      background: rgba(239, 68, 68, 0.22);
+    }
+
+    :root[data-theme="dark"] .n1 { color: #60a5fa; }
+    :root[data-theme="dark"] .n2 { color: #4ade80; }
+    :root[data-theme="dark"] .n3 { color: #f87171; }
+    :root[data-theme="dark"] .n4 { color: #a78bfa; }
+    :root[data-theme="dark"] .n5 { color: #fb923c; }
+    :root[data-theme="dark"] .n6 { color: #22d3ee; }
+    :root[data-theme="dark"] .n7 { color: #e2e8f0; }
+    :root[data-theme="dark"] .n8 { color: #94a3b8; }
+
     /* 本页尺寸；其余外壳样式见 assets/game-shell.css */
     .game-wrap { --game-width: 540px; }
     .hud { grid-template-columns: repeat(3, 1fr); }
