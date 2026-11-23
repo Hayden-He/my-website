@@ -72,6 +72,17 @@ window.SITE_CONFIG = {
       tags: ['拖动/键盘', '双模式'],
     },
     {
+      id: 'tank-maze',
+      title: '坦克迷宫',
+      icon: 'tank-maze',
+      preview: '/assets/previews/tank-maze.webp',
+      category: 'arcade',
+      categoryName: '动作街机',
+      description: '在迷宫里和人机交锋，小心自己的炮弹弹回来。',
+      url: '/games/tank-maze/',
+      tags: ['炮弹反弹', '三档难度'],
+    },
+    {
       id: '2048',
       title: '经典 2048',
       icon: '2048',

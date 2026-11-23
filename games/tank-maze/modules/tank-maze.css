@@ -1,0 +1,269 @@
+.tank-game {
+  --game-width: 1060px;
+  --tank-player: #087866;
+  --tank-rival: #b34335;
+}
+
+[data-theme="dark"] .tank-game {
+  --tank-player: #67e8c6;
+  --tank-rival: #ffad91;
+}
+
+.tank-layout {
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(226px, 270px);
+  grid-template-areas: "score panel" "arena panel" "touch panel";
+  gap: 12px 18px;
+  align-items: start;
+}
+
+.tank-scoreboard,
+.tank-panel {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.tank-scoreboard {
+  grid-area: score;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: 12px;
+  padding: 12px 18px;
+  align-items: center;
+}
+
+.tank-score {
+  --team: var(--tank-player);
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 3px 9px;
+  justify-items: start;
+  align-items: center;
+  color: var(--team);
+}
+
+.tank-score-ai {
+  --team: var(--tank-rival);
+  grid-template-columns: 1fr auto;
+  justify-items: end;
+}
+
+.tank-score strong {
+  font-size: 1.4rem;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+}
+
+.tank-team,
+.tank-score-pips,
+.tank-round {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tank-score-ai .tank-team { grid-column: 2; grid-row: 1; }
+.tank-score-ai strong { grid-column: 1; grid-row: 1; }
+
+.tank-team {
+  font-weight: 700;
+  font-size: 0.875rem;
+  white-space: nowrap;
+}
+
+.tank-team i {
+  width: 0.62rem;
+  height: 0.62rem;
+  border-radius: 50%;
+  background: currentColor;
+}
+.tank-score-ai .tank-team i { border-radius: 2px; }
+
+.tank-score-pips {
+  grid-column: 1 / -1;
+  min-height: 6px;
+}
+
+.tank-score-pips i {
+  width: clamp(12px, 3vw, 25px);
+  height: 4px;
+  background: var(--track);
+  border-radius: 10px;
+}
+.tank-score-pips .filled { background: currentColor; }
+
+.tank-round {
+  flex-direction: column;
+  gap: 2px;
+  text-align: center;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+.tank-round strong { color: var(--text); }
+
+.tank-arena {
+  grid-area: arena;
+  position: relative;
+  isolation: isolate;
+  aspect-ratio: 15 / 11;
+  overflow: hidden;
+  border-radius: 16px;
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.tank-arena canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.tank-overlay,
+.tank-unavailable {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 12px;
+}
+.tank-overlay { background: rgb(10 18 31 / 46%); }
+.tank-unavailable { background: var(--surface); color: var(--text); }
+
+.tank-overlay-card {
+  width: min(100%, 310px);
+  border-radius: 14px;
+  padding: 16px;
+  background: var(--surface);
+  color: var(--text);
+  text-align: center;
+  box-shadow: 0 12px 34px rgb(0 0 0 / 28%);
+}
+
+.tank-overlay-card h2 {
+  margin: 0 0 5px;
+  font-size: clamp(1.1rem, 4vw, 1.45rem);
+}
+.tank-overlay-card p { margin: 0; color: var(--text-muted); }
+
+.tank-overlay-actions,
+.tank-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.tank-overlay-actions { margin-top: 12px; justify-content: center; }
+
+.tank-panel {
+  grid-area: panel;
+  display: grid;
+  padding: 16px;
+  gap: 6px;
+}
+
+.tank-panel h2 { margin: 0 0 5px; font-size: 1.14rem; }
+.tank-panel label { color: var(--text-muted); font-size: 0.875rem; font-weight: 650; }
+
+.tank-panel select {
+  display: block;
+  width: 100%;
+  min-height: 40px;
+  margin-bottom: 5px;
+  padding: 0 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+}
+.tank-panel select:disabled { opacity: 0.76; }
+
+.tank-game .btn-small { min-height: 40px; }
+.tank-start { margin: 3px 0; }
+.tank-tools { margin-top: 3px; }
+.tank-tools button { flex: 1 1 40%; }
+
+.tank-key-hint,
+.tank-touch-hint {
+  margin: 5px 0 0;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+.tank-touch-hint { display: none; }
+
+.tank-touch {
+  grid-area: touch;
+  display: none;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 8px;
+}
+
+.tank-dpad {
+  --key-size: clamp(42px, 12vw, 50px);
+  display: grid;
+  grid-template: repeat(3, var(--key-size)) / repeat(3, var(--key-size));
+  grid-template-areas: ". up ." "left . right" ". down .";
+  flex: 0 0 auto;
+  touch-action: none;
+}
+
+.tank-pad-key {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-weight: 750;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.tank-pad-key[data-dir="up"] { grid-area: up; }
+.tank-pad-key[data-dir="left"] { grid-area: left; }
+.tank-pad-key[data-dir="right"] { grid-area: right; }
+.tank-pad-key[data-dir="down"] { grid-area: down; }
+
+.tank-pad-fire {
+  width: 84px;
+  height: 72px;
+  border: 1px solid #842f28;
+  border-radius: 16px;
+  color: #fff;
+  background: #a43c30;
+}
+
+.tank-pad-key.active { box-shadow: inset 0 0 0 2px var(--tank-player); }
+.tank-pad-fire.active { box-shadow: inset 0 0 0 2px #ffe2c3; background: #802a24; }
+.tank-layout [hidden] { display: none; }
+
+@media (max-width: 690px) {
+  .tank-layout {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "score" "arena" "touch" "panel";
+    gap: 8px;
+  }
+
+  .tank-scoreboard { padding: 8px 10px; gap: 7px; }
+  .tank-panel { padding: 12px; }
+}
+
+@media (any-pointer: coarse), (max-width: 560px) {
+  .tank-touch:not([hidden]) { display: flex; }
+  .tank-key-hint { display: none; }
+  .tank-touch-hint { display: block; }
+}
+
+@media (any-pointer: coarse) and (orientation: landscape) and (max-height: 520px) {
+  .tank-layout {
+    grid-template-columns: minmax(0, 1fr) minmax(220px, 34%);
+    grid-template-areas: "score touch" "arena touch" "panel panel";
+    align-items: center;
+  }
+
+  .tank-arena { width: min(100%, calc((100svh - 120px) * 15 / 11)); justify-self: center; }
+  .tank-touch { flex-direction: column; gap: 10px; }
+}

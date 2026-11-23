@@ -143,11 +143,11 @@
 
     // ---- 页面标题 / 描述 ----
     '小游乐场 - 在线小游戏合集': 'Little Playground - Free Online Mini Games',
-    '小游乐场：打开即玩的在线轻游戏合集，包含街头投篮、经典贪吃蛇、极速切水果、太空战机、经典 2048、经典扫雷、数字华容道、记忆翻牌、方块工坊与俄罗斯方块，支持电脑与手机。':
-      'Little Playground: instant online mini games—Street Hoops, Classic Snake, Fruit Slicer, Space Shooter, 2048, Minesweeper, Sliding Puzzle, Memory Match, Block Workshop and Tetris. Play on desktop or mobile.',
+    '小游乐场：打开即玩的在线轻游戏合集，包含街头投篮、经典贪吃蛇、极速切水果、太空战机、坦克迷宫、经典 2048、经典扫雷、数字华容道、记忆翻牌、方块工坊与俄罗斯方块，支持电脑与手机。':
+      'Little Playground: instant online mini games—Street Hoops, Classic Snake, Fruit Slicer, Space Shooter, Tank Maze, 2048, Minesweeper, Sliding Puzzle, Memory Match, Block Workshop and Tetris. Play on desktop or mobile.',
     '动作街机 - 小游乐场': 'Arcade - Little Playground',
-    '动作街机分类：街头投篮、经典贪吃蛇、极速切水果、太空战机等考验反应的小游戏。':
-      'Arcade games: Street Hoops, Classic Snake, Fruit Slicer, Space Shooter and more reflex-based challenges.',
+    '动作街机分类：街头投篮、经典贪吃蛇、极速切水果、太空战机、坦克迷宫等考验反应的小游戏。':
+      'Arcade games: Street Hoops, Classic Snake, Fruit Slicer, Space Shooter, Tank Maze and more reflex-based challenges.',
     '益智休闲 - 小游乐场': 'Puzzle - Little Playground',
     '益智休闲分类：经典 2048、经典扫雷、数字华容道、记忆翻牌、方块工坊与俄罗斯方块等轻松动脑与自由搭建的小游戏。':
       'Puzzle games: 2048, Minesweeper, Sliding Puzzle, Memory Match, Block Workshop, Tetris and more relaxed brain-teasers and sandbox building.',
@@ -753,6 +753,60 @@
     '主题：跟随系统（点击切换为{next}）': 'Theme: Follow system (click to switch to {next})',
     '主题：浅色（点击切换为{next}）': 'Theme: Light (click to switch to {next})',
     '主题：深色（点击切换为{next}）': 'Theme: Dark (click to switch to {next})',
+
+    // ---- 坦克迷宫 ----
+    '坦克迷宫': 'Tank Maze',
+    '坦克迷宫 - 小游乐场': 'Tank Maze - Little Playground',
+    '坦克迷宫棋盘': 'Tank Maze arena',
+    '在迷宫里和人机交锋，小心自己的炮弹弹回来。': 'Duel an AI tank in a maze and watch for your own ricochets.',
+    '在迷宫里和人机交锋，用墙壁反弹炮弹，也要小心自己的回弹。三张地图，三档难度，电脑和手机都能玩。':
+      'Duel an AI tank, bank shots off walls, and dodge your own ricochets. Three maps and three difficulty levels on desktop and mobile.',
+    '炮弹反弹': 'Ricochets',
+    '对局比分': 'Match score',
+    '玩家': 'You',
+    '人机': 'AI',
+    '第 {round} 局': 'Round {round}',
+    '先赢 3 局': 'First to 3',
+    '对局设置': 'Match settings',
+    '地图': 'Map',
+    '长直道': 'Long Lanes',
+    '连续拐角': 'Sharp Turns',
+    '环路': 'Loop',
+    '难度': 'Difficulty',
+    '简单': 'Easy',
+    '普通': 'Normal',
+    '困难': 'Hard',
+    '驾驶': 'Driving',
+    '前进': 'Forward',
+    '向左转': 'Turn left',
+    '向右转': 'Turn right',
+    '倒车': 'Reverse',
+    '开火': 'Fire',
+    '↑ 前进 · ↓ 倒车 · ← / → 转向 · 空格开火 · P 暂停':
+      '↑ Forward · ↓ Reverse · ← / → Turn · Space to fire · P to pause',
+    '左手驾驶，右手开火。小心回弹。': 'Drive with your left thumb, fire with your right. Watch for ricochets.',
+    '当前浏览器无法显示迷宫。': 'This browser cannot display the arena.',
+    '本局平局': 'Round drawn',
+    '双方同时命中，本局不计分。': 'Both tanks were hit at once. The score stays the same.',
+    '你赢了本局': 'You won the round',
+    '人机赢了本局': 'The AI won the round',
+    '你被自己的回弹击中。': 'Your own ricochet hit you.',
+    '人机被自己的回弹击中。': 'The AI was hit by its own ricochet.',
+    '你击中了人机坦克。': 'You hit the AI tank.',
+    '你被人机的炮弹击中。': 'The AI tank hit you.',
+    '下一局': 'Next round',
+    '你赢了比赛': 'You won the match',
+    '人机赢了比赛': 'The AI won the match',
+    '最终比分 {player} 比 {ai}': 'Final score {player}–{ai}',
+    '原图再战': 'Rematch',
+    '换图': 'Change map',
+    '重新开始这场比赛？当前比分会清零。': 'Restart this match? The score will reset.',
+    '选好地图和难度，先赢 3 局就赢下比赛。每局交换出生侧。':
+      'Pick a map and difficulty. Win three rounds to take the match. Tanks swap starting sides each round.',
+    '方向键控制车身，空格开火。手机用左侧方向控制，右侧开火。倒车时炮口保持朝前。':
+      'Use the arrow keys to drive and Space to fire. On a phone, steer on the left and fire on the right. Your turret stays pointed forward when reversing.',
+    '炮弹会从墙上反复弹开，也可能打中发射它的坦克。打一发以后，留好躲避的路线。':
+      'Shots bounce off walls repeatedly and can hit the tank that fired them. Leave yourself a route to dodge after firing.',
 
     // ---- 清数据 / 弹窗 ----
     '将清除本站在此浏览器保存的游戏纪录、存档、外观、模式偏好、音效设置、教学记录和最近打开记录，且无法恢复。语言设置会保留。':
