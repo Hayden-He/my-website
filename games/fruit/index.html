@@ -42,7 +42,7 @@
     .hud { grid-template-columns: repeat(3, 1fr); }
 
     .hud-value.accent { color: var(--accent-text); }
-    .hud-value.danger { color: #ef4444; }
+    .hud-value.danger { color: var(--danger-text); }
     .hud-value.lives {
       display: inline-flex;
       align-items: center;
@@ -62,7 +62,7 @@
     }
 
     .life-dot.lost {
-      background: #cbd5e1;
+      background: var(--border-strong);
       box-shadow: none;
       transform: scale(0.78);
     }
@@ -70,7 +70,7 @@
     .timer-bar-wrap {
       width: 100%;
       height: 7px;
-      background: #e2e8f0;
+      background: var(--track);
       border-radius: 999px;
       overflow: hidden;
     }
@@ -106,7 +106,7 @@
       display: inline-flex;
       align-items: center;
       gap: 4px;
-      background: #f1f5f9;
+      background: var(--surface-muted);
       padding: 3px;
       border-radius: 999px;
       flex-wrap: wrap;
@@ -128,7 +128,7 @@
     }
 
     .skin-pill.active {
-      background: #fff;
+      background: var(--surface);
       color: var(--text);
       box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08);
     }
@@ -273,6 +273,16 @@
       color: #92400e;
       font-variant-numeric: tabular-nums;
     }
+
+    :root[data-theme="dark"] .fever-bar-box.active {
+      background: linear-gradient(90deg, rgba(245, 158, 11, 0.2) 0%, rgba(244, 63, 94, 0.2) 100%);
+      border-color: #f59e0b;
+    }
+
+    :root[data-theme="dark"] .fever-label { color: #fbbf24; }
+    :root[data-theme="dark"] .fever-bar-box.active .fever-label { color: #fda4af; }
+    :root[data-theme="dark"] .fever-track { background: rgba(245, 158, 11, 0.18); }
+    :root[data-theme="dark"] .fever-pct { color: #fde68a; }
 
     .skin-row {
       width: 100%;

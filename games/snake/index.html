@@ -120,6 +120,28 @@
     .slow-status.active { visibility: visible; }
     .slow-status progress { width: 72px; height: 8px; accent-color: #0284c7; }
 
+    :root[data-theme="dark"] .stage-box {
+      background: #0f1f1c;
+      border-color: #166534;
+    }
+
+    :root[data-theme="dark"] .stage-box.wrap-mode {
+      border-color: #38bdf8;
+    }
+
+    :root[data-theme="dark"] .dpad-btn:active {
+      background: var(--primary-soft);
+      border-color: var(--primary);
+    }
+
+    :root[data-theme="dark"] .slow-status {
+      color: #38bdf8;
+    }
+
+    :root[data-theme="dark"] .slow-status progress {
+      accent-color: #38bdf8;
+    }
+
     .hud { grid-template-columns: 1fr 1fr auto auto; max-width: 520px; order: -2; }
     .toolbar { max-width: 520px; order: -1; }
 
@@ -852,10 +874,13 @@
         animTime += dt;
         ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
 
-        // 清爽草地棋盘格
+        // 清爽草地棋盘格（深色主题下仅调整底色网格，保持实体颜色与规则不变）
+        const isDarkTheme = document.documentElement.dataset.theme === 'dark';
+        const evenCellColor = isDarkTheme ? '#0f1f1c' : '#ecfdf5';
+        const oddCellColor = isDarkTheme ? '#132622' : '#e2fbe9';
         for (let r = 0; r < GRID; r++) {
           for (let c = 0; c < GRID; c++) {
-            ctx.fillStyle = (r + c) % 2 === 0 ? '#ecfdf5' : '#e2fbe9';
+            ctx.fillStyle = (r + c) % 2 === 0 ? evenCellColor : oddCellColor;
             ctx.fillRect(c * CELL, r * CELL, CELL, CELL);
           }
         }
@@ -1102,6 +1127,10 @@
       document.addEventListener('i18n:change', () => {
         pauseBtn.textContent = paused ? t('继续') : t('暂停');
         if (gameOver) renderEnd();
+      });
+
+      document.addEventListener('theme:change', () => {
+        draw(0);
       });
 
       // 打开清数据等原生确认框时先暂停，避免蛇在弹窗后面继续走
