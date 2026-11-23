@@ -173,6 +173,7 @@ function updateModePills() {
 
 function updateHud() {
   if (game.mode === 'marathon') {
+    delete hudThirdVal.dataset.state;
     hudPrimaryLabel.textContent = t('得分');
     hudPrimaryVal.textContent = String(game.score);
     hudBestLabel.textContent = t('最高纪录');
@@ -187,15 +188,18 @@ function updateHud() {
     hudBestLabel.textContent = t('最高纪录');
     hudBestVal.textContent = String(Math.max(readPartyBest(), game.score));
     if (game.iceTimerMs > 0) {
+      hudThirdVal.dataset.state = 'ice';
       hudThirdLabel.textContent = t('冰霜');
       hudThirdVal.textContent = Math.ceil(game.iceTimerMs / 1000) + 's';
     } else {
+      delete hudThirdVal.dataset.state;
       hudThirdLabel.textContent = t('涨行');
       hudThirdVal.textContent = Math.max(1, Math.ceil((GARBAGE_INTERVAL_MS - game.garbageTimerMs) / 1000)) + 's';
     }
     hudFourthLabel.textContent = t('消行');
     hudFourthVal.textContent = String(game.lines);
   } else {
+    delete hudThirdVal.dataset.state;
     const remaining = Math.max(0, SPRINT_TARGET - game.lines);
     const bestMs = readSprintBestMs();
     hudPrimaryLabel.textContent = t('剩余行数');
@@ -342,9 +346,7 @@ function renderAll() {
 
 function handleGarbageEvent() {
   audio.playGarbageRise();
-  const label = t('底部涨行！');
-  showCallout(label);
-  renderer.triggerFloatingText(label, 17, '#fbbf24');
+  showCallout(t('底部涨行！'));
   renderer.triggerShake(2.5, 110);
 }
 
@@ -352,32 +354,39 @@ function handleLockEvent(event) {
   if (!event) return;
   if (event.garbageRisen) handleGarbageEvent();
 
+  if (event.lockedCells) {
+    renderer.triggerLockPulse(event.lockedCells, event.lockedType, !!event.hardDropDistance);
+  }
+  if (!event.hardDropDistance && event.type === 'lock') {
+    audio.playLock();
+  }
+
   const p = event.powerupTriggered;
+  const calloutParts = [];
   if (p) {
     if (p.type === 'bomb') {
       renderer.triggerBomb(p.cx, p.cy);
       renderer.triggerShake(4.5, 180);
       audio.playBomb();
-      const text = t('炸弹爆破！');
-      showCallout(text);
-      renderer.triggerFloatingText(text, Math.max(3, p.cy - BUFFER_ROWS), '#fb923c');
+      calloutParts.push(t('炸弹爆破！'));
+      if (event.linesCleared === 0 && event.gained > 0 && game.mode !== 'sprint') {
+        renderer.triggerFloatingText('+' + event.gained, Math.max(3, p.cy - BUFFER_ROWS), '#fb923c');
+      }
     } else if (p.type === 'laser') {
       renderer.triggerLaser(p.row);
       renderer.triggerShake(3.5, 150);
       audio.playLaser();
-      const text = t('激光清行！');
-      showCallout(text);
-      renderer.triggerFloatingText(text, Math.max(3, p.row - BUFFER_ROWS), '#22d3ee');
+      calloutParts.push(t('激光清行！'));
     } else if (p.type === 'ice') {
       audio.playIce();
-      const text = t('冰霜减速 8s');
-      showCallout(text);
-      renderer.triggerFloatingText(text, 6, '#38bdf8');
+      calloutParts.push(t('冰霜减速 8s'));
     }
   }
 
   if (event.linesCleared > 0) {
-    renderer.triggerLineClear(event.clearedRows, event.isTetris || event.isTSpin);
+    renderer.triggerLineClear(event.clearedRows, event.isTetris || event.isTSpin, {
+      withFlash: !game.pendingClear,
+    });
     audio.playClear(event.linesCleared, event.isBackToBack, event.combo);
     if (event.isTSpin) audio.playTSpin();
     if (event.isAllClear) audio.playAllClear();
@@ -385,37 +394,28 @@ function handleLockEvent(event) {
       renderer.triggerShake(event.isAllClear ? 5 : 3.8, 160);
     }
 
-    const parts = [];
-    if (event.isAllClear) parts.push(t('全消！'));
-    if (event.isBackToBack) parts.push(t('连续四消 ×1.5'));
-    if (event.isTSpin) parts.push(t('T-Spin!'));
-    else if (event.isTetris) parts.push(t('四消！'));
-    else if (event.linesCleared === 3) parts.push(t('三消'));
-    else if (event.linesCleared === 2) parts.push(t('双消'));
-    if (event.combo >= 1) parts.push(t('{n} 连击', { n: event.combo }));
+    if (event.isAllClear) calloutParts.push(t('全消！'));
+    if (event.isBackToBack) calloutParts.push(t('连续四消 ×1.5'));
+    if (event.isTSpin) calloutParts.push(t('T-Spin!'));
+    else if (event.isTetris) calloutParts.push(t('四消！'));
+    else if (event.linesCleared === 3) calloutParts.push(t('三消'));
+    else if (event.linesCleared === 2) calloutParts.push(t('双消'));
+    if (event.combo >= 1) calloutParts.push(t('{n} 连击', { n: event.combo }));
 
-    if (parts.length && !p) {
-      showCallout(parts.join(' · '));
-    }
-    const avgRow = event.clearedRows.length
-      ? Math.round(event.clearedRows.reduce((s, r) => s + r, 0) / event.clearedRows.length) - BUFFER_ROWS
-      : 10;
-    const floatText = event.isAllClear
-      ? t('全消！')
-      : event.isTSpin
-        ? t('T-Spin!')
-        : event.isTetris
-          ? t('四消！')
-          : event.gained > 0
-            ? '+' + event.gained
-            : '';
-    if (floatText) {
+    if (event.gained > 0 && game.mode !== 'sprint') {
+      const avgRow = event.clearedRows.length
+        ? Math.round(event.clearedRows.reduce((s, r) => s + r, 0) / event.clearedRows.length) - BUFFER_ROWS
+        : 10;
       renderer.triggerFloatingText(
-        floatText,
+        '+' + event.gained,
         avgRow,
         event.isAllClear ? '#a7f3d0' : event.isTSpin ? '#d8b4fe' : '#fde047'
       );
     }
+  }
+
+  if (calloutParts.length) {
+    showCallout(calloutParts.join(' · '));
   }
 
   if (event.levelUp) audio.playLevelUp();
@@ -546,7 +546,7 @@ function doHardDrop() {
   const event = hardDrop(game);
   if (!event) return;
   renderer.triggerHardDrop(startY, startY + (event.hardDropDistance || 0), snapshot);
-  renderer.triggerShake(2, 90);
+  renderer.triggerBoardBump(2.5, 95);
   audio.playHardDrop();
   handleLockEvent(event);
   renderAll();
@@ -593,7 +593,11 @@ function loop(now) {
     const event = stepGame(game, dtMs);
     if (event) {
       if (event.type === 'garbage') handleGarbageEvent();
-      else handleLockEvent(event);
+      else if (event.type === 'clearComplete') {
+        if (game.mode === 'marathon') writeMarathonSave();
+      } else {
+        handleLockEvent(event);
+      }
     }
     if (event || game.mode !== 'marathon' || game.lines !== prevLines || game.score !== prevScore) {
       updateHud();
@@ -820,6 +824,7 @@ function openTutorial(force) {
 helpBtn.addEventListener('click', () => openTutorial(true));
 
 window.GameKit.bindMobileLayout('tetris', immersiveBtn, () => {
+  pauseGame();
   requestAnimationFrame(renderAll);
 }, { portraitOnly: true });
 

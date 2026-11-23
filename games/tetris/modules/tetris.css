@@ -6,8 +6,20 @@
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
+.hud-label {
+  white-space: nowrap;
+}
+
 .hud-best {
   color: var(--accent-text);
+}
+
+#hud-third-val[data-state="ice"] {
+  color: #0284c7;
+}
+
+:root[data-theme="dark"] #hud-third-val[data-state="ice"] {
+  color: #38bdf8;
 }
 
 .tetris-arena {
@@ -82,7 +94,9 @@
 
 .board-wrap {
   position: relative;
-  width: 100%;
+  width: min(100%, 300px, calc((100vh - 266px) * 0.5));
+  width: min(100%, 300px, calc((100dvh - 266px) * 0.5));
+  min-width: 190px;
   max-width: 300px;
   aspect-ratio: 1 / 2;
   border-radius: 16px;
@@ -164,6 +178,7 @@
   font-size: 1.04rem;
   font-weight: 800;
   color: #ffffff;
+  font-variant-numeric: tabular-nums;
 }
 
 .tetris-pad {

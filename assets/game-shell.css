@@ -46,6 +46,7 @@
 .hud-value {
   font-size: 1.15rem;
   font-weight: 800;
+  font-variant-numeric: tabular-nums;
 }
 
 .hud-sub {

@@ -4,6 +4,7 @@ export const BUFFER_ROWS = 2;
 export const TOTAL_ROWS = ROWS + BUFFER_ROWS;
 export const LOCK_DELAY_MS = 500;
 export const MAX_LOCK_RESETS = 15;
+export const CLEAR_DELAY_MS = 170;
 export const SPRINT_TARGET = 40;
 export const SAVE_VERSION = 1;
 
@@ -207,8 +208,11 @@ function spawnNextPiece(state, rng) {
   return true;
 }
 
-export function createGame({ mode = 'marathon', rng = Math.random } = {}) {
+export function createGame({ mode = 'marathon', rng = Math.random, clearDelayMs } = {}) {
   const normalizedMode = mode === 'sprint' ? 'sprint' : mode === 'party' ? 'party' : 'marathon';
+  const resolvedClearDelayMs = typeof clearDelayMs === 'number'
+    ? Math.max(0, clearDelayMs)
+    : (normalizedMode === 'sprint' ? 0 : CLEAR_DELAY_MS);
   const state = {
     mode: normalizedMode,
     board: createBoard(),
@@ -239,6 +243,8 @@ export function createGame({ mode = 'marathon', rng = Math.random } = {}) {
     lockResets: 0,
     grounded: false,
     gravityAccMs: 0,
+    clearDelayMs: resolvedClearDelayMs,
+    pendingClear: null,
     status: 'ready',
     lastEvent: null,
   };
@@ -435,14 +441,7 @@ export function lockActivePiece(state, rng = Math.random) {
   }
 
   const linesCleared = clearedRows.length;
-  if (linesCleared > 0) {
-    for (let i = clearedRows.length - 1; i >= 0; i--) {
-      state.board.splice(clearedRows[i], 1);
-    }
-    while (state.board.length < TOTAL_ROWS) {
-      state.board.unshift(Array(COLS).fill(null));
-    }
-  }
+  const clearedSet = linesCleared > 0 ? new Set(clearedRows) : null;
 
   const prevLevel = state.level;
   const isTSpin = tSpinDetected && linesCleared > 0;
@@ -467,7 +466,7 @@ export function lockActivePiece(state, rng = Math.random) {
     if (isBackToBack) base = Math.round(base * 1.5);
     const comboBonus = state.combo >= 1 ? state.combo * 50 * state.level : 0;
 
-    isAllClear = state.board.every((row) => row.every((cell) => cell === null));
+    isAllClear = state.board.every((row, idx) => clearedSet.has(idx) || row.every((cell) => cell === null));
     let allClearBonus = 0;
     if (isAllClear) {
       state.allClears += 1;
@@ -485,26 +484,60 @@ export function lockActivePiece(state, rng = Math.random) {
   }
 
   const levelUp = state.mode !== 'sprint' && state.level > prevLevel;
+  const isSprintCleared = state.mode === 'sprint' && state.lines >= SPRINT_TARGET;
+  const isTopOut = allAboveVisible && !powerupTriggered;
+  const deferClear = linesCleared > 0 && state.clearDelayMs > 0 && !isSprintCleared && !isTopOut;
 
-  if (state.mode === 'sprint' && state.lines >= SPRINT_TARGET) {
+  if (linesCleared > 0 && !deferClear) {
+    for (let i = clearedRows.length - 1; i >= 0; i--) {
+      state.board.splice(clearedRows[i], 1);
+    }
+    while (state.board.length < TOTAL_ROWS) {
+      state.board.unshift(Array(COLS).fill(null));
+    }
+  }
+
+  if (isSprintCleared) {
     state.active = null;
     state.grounded = false;
     state.status = 'cleared';
     const event = {
       type: 'cleared', clearedRows, linesCleared, isTetris, isTSpin, isBackToBack, isAllClear,
       combo: state.combo, levelUp: false, gained, powerupTriggered,
+      lockedCells: cells, lockedType: active.type,
     };
     state.lastEvent = event;
     return event;
   }
 
-  if (allAboveVisible && !powerupTriggered) {
+  if (isTopOut) {
     state.active = null;
     state.grounded = false;
     state.status = 'gameover';
     const event = {
       type: 'gameover', clearedRows, linesCleared, isTetris, isTSpin, isBackToBack, isAllClear,
       combo: state.combo, levelUp, gained, powerupTriggered,
+      lockedCells: cells, lockedType: active.type,
+    };
+    state.lastEvent = event;
+    return event;
+  }
+
+  if (deferClear) {
+    state.active = null;
+    state.grounded = false;
+    state.lockTimerMs = 0;
+    state.gravityAccMs = 0;
+    state.pendingClear = {
+      rows: clearedRows,
+      elapsedMs: 0,
+      durationMs: state.clearDelayMs,
+      isSpecial: isTetris || isTSpin || isAllClear,
+    };
+    const event = {
+      type: 'lock', clearedRows, linesCleared, isTetris, isTSpin, isBackToBack, isAllClear,
+      combo: state.combo, levelUp, gained, powerupTriggered,
+      lockedCells: cells, lockedType: active.type,
     };
     state.lastEvent = event;
     return event;
@@ -516,7 +549,25 @@ export function lockActivePiece(state, rng = Math.random) {
   const event = {
     type: 'lock', clearedRows, linesCleared, isTetris, isTSpin, isBackToBack, isAllClear,
     combo: state.combo, levelUp, gained, powerupTriggered,
+    lockedCells: cells, lockedType: active.type,
   };
+  state.lastEvent = event;
+  return event;
+}
+
+export function finishPendingClear(state, rng = Math.random) {
+  if (!state || !state.pendingClear) return null;
+  const rows = state.pendingClear.rows;
+  for (let i = rows.length - 1; i >= 0; i--) {
+    state.board.splice(rows[i], 1);
+  }
+  while (state.board.length < TOTAL_ROWS) {
+    state.board.unshift(Array(COLS).fill(null));
+  }
+  state.pendingClear = null;
+  const spawned = spawnNextPiece(state, rng);
+  if (!spawned) return state.lastEvent;
+  const event = { type: 'clearComplete' };
   state.lastEvent = event;
   return event;
 }
@@ -566,8 +617,18 @@ export function addGarbageRow(state, rng = Math.random) {
 }
 
 export function stepGame(state, dtMs, rng = Math.random) {
-  if (state.status !== 'playing' || !state.active || dtMs <= 0) return null;
+  if (state.status !== 'playing' || dtMs <= 0) return null;
   state.elapsedMs += dtMs;
+
+  if (state.pendingClear) {
+    state.pendingClear.elapsedMs += dtMs;
+    if (state.pendingClear.elapsedMs >= state.pendingClear.durationMs) {
+      return finishPendingClear(state, rng);
+    }
+    return null;
+  }
+
+  if (!state.active) return null;
 
   let garbageEvent = null;
   if (state.mode === 'party') {
@@ -624,16 +685,45 @@ function isValidPieceType(value) {
 export function serializeMarathonSave(state) {
   if (!state || state.mode !== 'marathon') return null;
   if (state.status !== 'playing' && state.status !== 'paused') return null;
-  if (!state.active || (state.piecesPlaced <= 0 && state.score <= 0 && state.lines <= 0)) return null;
+  if (state.piecesPlaced <= 0 && state.score <= 0 && state.lines <= 0) return null;
+  if (!state.active && !state.pendingClear) return null;
+
+  let board = state.board;
+  let bag = state.bag;
+  let queue = state.queue;
+  let active = state.active;
+  let holdUsed = state.holdUsed;
+
+  if (state.pendingClear) {
+    board = state.board.map((row) => [...row]);
+    for (let i = state.pendingClear.rows.length - 1; i >= 0; i--) {
+      board.splice(state.pendingClear.rows[i], 1);
+    }
+    while (board.length < TOTAL_ROWS) {
+      board.unshift(Array(COLS).fill(null));
+    }
+    queue = [...state.queue];
+    bag = [...state.bag];
+    const nextType = queue.shift();
+    if (!nextType) return null;
+    while (queue.length < 3 && bag.length > 0) {
+      queue.push(bag.shift());
+    }
+    if (queue.length < 3) return null;
+    active = spawnPosition(nextType, null);
+    if (!canPlace(board, active.type, active.rot, active.x, active.y)) return null;
+    holdUsed = false;
+  }
+
   return JSON.stringify({
     version: SAVE_VERSION,
     mode: 'marathon',
-    board: state.board,
-    bag: state.bag,
-    queue: state.queue,
-    active: { type: state.active.type, rot: state.active.rot, x: state.active.x, y: state.active.y },
+    board,
+    bag,
+    queue,
+    active: { type: active.type, rot: active.rot, x: active.x, y: active.y },
     hold: state.hold,
-    holdUsed: state.holdUsed,
+    holdUsed,
     score: state.score,
     lines: state.lines,
     level: state.level,
@@ -713,6 +803,8 @@ export function deserializeMarathonSave(raw, rng = Math.random) {
       lockResets: 0,
       grounded: false,
       gravityAccMs: 0,
+      clearDelayMs: CLEAR_DELAY_MS,
+      pendingClear: null,
       status: 'paused',
       lastEvent: null,
     };

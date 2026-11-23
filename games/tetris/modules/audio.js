@@ -1,4 +1,34 @@
 export function createAudio(isSoundEnabled) {
+  const busMap = new WeakMap();
+  let lastMoveAt = 0;
+  let lastSoftDropAt = 0;
+
+  function getOutputNode(ac) {
+    let bus = busMap.get(ac);
+    if (bus) return bus;
+    try {
+      const masterGain = ac.createGain();
+      masterGain.gain.value = 0.75;
+      if (typeof ac.createDynamicsCompressor === 'function') {
+        const compressor = ac.createDynamicsCompressor();
+        compressor.threshold.setValueAtTime(-14, ac.currentTime);
+        compressor.knee.setValueAtTime(12, ac.currentTime);
+        compressor.ratio.setValueAtTime(6, ac.currentTime);
+        compressor.attack.setValueAtTime(0.003, ac.currentTime);
+        compressor.release.setValueAtTime(0.12, ac.currentTime);
+        masterGain.connect(compressor);
+        compressor.connect(ac.destination);
+      } else {
+        masterGain.connect(ac.destination);
+      }
+      bus = masterGain;
+    } catch {
+      bus = ac.destination;
+    }
+    busMap.set(ac, bus);
+    return bus;
+  }
+
   function tone(freqStart, freqEnd, duration, type = 'triangle', volume = 0.04, delay = 0) {
     if (!isSoundEnabled() || !window.SiteData) return;
     window.SiteData.withAudio((ac) => {
@@ -14,7 +44,7 @@ export function createAudio(isSoundEnabled) {
         gain.gain.setValueAtTime(volume, now);
         gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
         osc.connect(gain);
-        gain.connect(ac.destination);
+        gain.connect(getOutputNode(ac));
         osc.start(now);
         osc.stop(now + duration + 0.01);
       } catch {}
@@ -42,7 +72,7 @@ export function createAudio(isSoundEnabled) {
         gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
         src.connect(filter);
         filter.connect(gain);
-        gain.connect(ac.destination);
+        gain.connect(getOutputNode(ac));
         src.start(now);
       } catch {}
     });
@@ -50,17 +80,28 @@ export function createAudio(isSoundEnabled) {
 
   return {
     playMove() {
+      const now = performance.now();
+      if (now - lastMoveAt < 65) return;
+      lastMoveAt = now;
       tone(220, 175, 0.022, 'triangle', 0.022);
     },
     playRotate() {
-      tone(350, 510, 0.036, 'triangle', 0.032);
+      tone(340, 520, 0.036, 'triangle', 0.03);
+      tone(680, 780, 0.024, 'sine', 0.014, 0.008);
     },
     playSoftDrop() {
+      const now = performance.now();
+      if (now - lastSoftDropAt < 75) return;
+      lastSoftDropAt = now;
       tone(160, 130, 0.02, 'sine', 0.018);
     },
+    playLock() {
+      tone(145, 92, 0.045, 'triangle', 0.042);
+    },
     playHardDrop() {
-      tone(165, 52, 0.09, 'triangle', 0.08);
-      noiseBurst(0.045, 750, 0.055);
+      tone(165, 52, 0.095, 'triangle', 0.075);
+      tone(95, 42, 0.07, 'sine', 0.045);
+      noiseBurst(0.045, 780, 0.05);
     },
     playHold() {
       tone(420, 560, 0.055, 'sine', 0.035);
@@ -69,11 +110,20 @@ export function createAudio(isSoundEnabled) {
       const pitchShift = 1 + Math.min(Math.max(0, combo), 8) * 0.045;
       if (lines >= 4) {
         const notes = isBackToBack ? [523, 659, 784, 1046, 1318] : [523, 659, 784, 1046];
-        notes.forEach((f, i) => tone(f * pitchShift, f * pitchShift, 0.11, 'triangle', 0.055, i * 0.045));
+        notes.forEach((f, i) => {
+          tone(f * pitchShift, f * pitchShift, 0.11, 'triangle', 0.052, i * 0.045);
+          tone(f * 2 * pitchShift, f * 2 * pitchShift, 0.075, 'sine', 0.016, i * 0.045 + 0.01);
+        });
       } else if (lines === 3) {
-        [440, 554, 659].forEach((f, i) => tone(f * pitchShift, f * pitchShift, 0.09, 'triangle', 0.05, i * 0.045));
+        [440, 554, 659].forEach((f, i) => {
+          tone(f * pitchShift, f * pitchShift, 0.09, 'triangle', 0.048, i * 0.045);
+          tone(f * 2 * pitchShift, f * 2 * pitchShift, 0.06, 'sine', 0.012, i * 0.045 + 0.01);
+        });
       } else if (lines === 2) {
-        [392, 523].forEach((f, i) => tone(f * pitchShift, f * pitchShift, 0.08, 'triangle', 0.045, i * 0.045));
+        [392, 523].forEach((f, i) => {
+          tone(f * pitchShift, f * pitchShift, 0.08, 'triangle', 0.044, i * 0.045);
+          tone(f * 2 * pitchShift, f * 2 * pitchShift, 0.055, 'sine', 0.012, i * 0.045 + 0.01);
+        });
       } else {
         tone(392 * pitchShift, 494 * pitchShift, 0.075, 'triangle', 0.04);
       }

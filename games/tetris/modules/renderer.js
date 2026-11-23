@@ -7,12 +7,14 @@ export function createRenderer(boardCanvas) {
   const ctx = boardCanvas.getContext('2d');
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
   let flashes = [];
+  let lockPulses = [];
   let particles = [];
   let trails = [];
   let bombs = [];
   let lasers = [];
   let floatingTexts = [];
   let shake = null;
+  let bump = null;
 
   function syncCanvasSize(canvas) {
     const rect = canvas.getBoundingClientRect();
@@ -201,19 +203,21 @@ export function createRenderer(boardCanvas) {
     targetCtx.restore();
   }
 
-  function triggerLineClear(clearedBoardRows, isTetris) {
+  function triggerLineClear(clearedBoardRows, isTetris, { withFlash = true } = {}) {
     if (reducedMotion.matches || !clearedBoardRows.length) return;
     const visibleRows = clearedBoardRows
       .map((r) => r - BUFFER_ROWS)
       .filter((r) => r >= 0 && r < ROWS);
     if (!visibleRows.length) return;
 
-    flashes.push({
-      rows: visibleRows,
-      ageMs: 0,
-      durationMs: isTetris ? 270 : 190,
-      isTetris,
-    });
+    if (withFlash) {
+      flashes.push({
+        rows: visibleRows,
+        ageMs: 0,
+        durationMs: isTetris ? 270 : 190,
+        isTetris,
+      });
+    }
 
     const count = isTetris ? 30 : 14;
     for (let i = 0; i < count; i++) {
@@ -297,6 +301,28 @@ export function createRenderer(boardCanvas) {
     });
   }
 
+  function triggerLockPulse(cells, type, isHardDrop = false) {
+    if (reducedMotion.matches || !cells || !cells.length) return;
+    const visibleCells = [];
+    for (const [cx, cy] of cells) {
+      const vy = cy - BUFFER_ROWS;
+      if (vy >= 0 && vy < ROWS) visibleCells.push([cx, vy]);
+    }
+    if (!visibleCells.length) return;
+    lockPulses.push({
+      cells: visibleCells,
+      color: PIECES[type]?.light || '#e2e8f0',
+      isHardDrop,
+      ageMs: 0,
+      durationMs: isHardDrop ? 140 : 115,
+    });
+  }
+
+  function triggerBoardBump(offsetY = 2.5, durationMs = 95) {
+    if (reducedMotion.matches) return;
+    bump = { offsetY, ageMs: 0, durationMs };
+  }
+
   function triggerShake(intensity = 3, durationMs = 130) {
     if (reducedMotion.matches) return;
     shake = { intensity, ageMs: 0, durationMs };
@@ -306,6 +332,7 @@ export function createRenderer(boardCanvas) {
     if (!dtMs) return;
     const dtSec = dtMs / 1000;
     flashes = flashes.filter((f) => { f.ageMs += dtMs; return f.ageMs < f.durationMs; });
+    lockPulses = lockPulses.filter((lp) => { lp.ageMs += dtMs; return lp.ageMs < lp.durationMs; });
     trails = trails.filter((tr) => { tr.ageMs += dtMs; return tr.ageMs < tr.durationMs; });
     bombs = bombs.filter((b) => { b.ageMs += dtMs; return b.ageMs < b.durationMs; });
     lasers = lasers.filter((l) => { l.ageMs += dtMs; return l.ageMs < l.durationMs; });
@@ -313,6 +340,10 @@ export function createRenderer(boardCanvas) {
     if (shake) {
       shake.ageMs += dtMs;
       if (shake.ageMs >= shake.durationMs) shake = null;
+    }
+    if (bump) {
+      bump.ageMs += dtMs;
+      if (bump.ageMs >= bump.durationMs) bump = null;
     }
     particles = particles.filter((p) => {
       p.ageMs += dtMs;
@@ -334,9 +365,15 @@ export function createRenderer(boardCanvas) {
     let shakeX = 0;
     let shakeY = 0;
     if (shake && !reducedMotion.matches) {
-      const mag = shake.intensity * (1 - shake.ageMs / shake.durationMs);
-      shakeX = (Math.random() - 0.5) * 2 * mag;
-      shakeY = (Math.random() - 0.5) * 2 * mag;
+      const p = shake.ageMs / shake.durationMs;
+      const decay = (1 - p) * (1 - p);
+      const wave = shake.ageMs * 0.085;
+      shakeX = Math.sin(wave * 1.3 + 0.4) * shake.intensity * 0.65 * decay;
+      shakeY = Math.cos(wave * 1.7) * shake.intensity * 0.85 * decay;
+    }
+    if (bump && !reducedMotion.matches) {
+      const p = bump.ageMs / bump.durationMs;
+      shakeY += bump.offsetY * Math.sin(p * Math.PI);
     }
 
     ctx.save();
@@ -407,16 +444,89 @@ export function createRenderer(boardCanvas) {
       }
     }
 
-    // 已锁定方块
+    // 已锁定方块（消行停顿期间在原位播放溶解动画）
+    const pendingSet = state.pendingClear ? new Set(state.pendingClear.rows) : null;
+    const clearProgress = state.pendingClear && state.pendingClear.durationMs > 0
+      ? Math.min(1, Math.max(0, state.pendingClear.elapsedMs / state.pendingClear.durationMs))
+      : 0;
+    const isSpecialClear = !!state.pendingClear?.isSpecial;
+
     for (let r = BUFFER_ROWS; r < BUFFER_ROWS + ROWS; r++) {
       const row = state.board[r];
       const vy = r - BUFFER_ROWS;
+      if (pendingSet && pendingSet.has(r)) {
+        const rowTop = offsetY + vy * cell;
+        if (reducedMotion.matches) {
+          for (let c = 0; c < COLS; c++) {
+            const cellType = row[c];
+            if (cellType) drawBlock(ctx, offsetX + c * cell, rowTop, cell, cellType, 0.72);
+          }
+          ctx.fillStyle = isSpecialClear ? 'rgba(253, 224, 71, 0.36)' : 'rgba(248, 250, 252, 0.28)';
+          ctx.fillRect(offsetX, rowTop, COLS * cell, cell);
+        } else {
+          const flashPhase = clearProgress < 0.45
+            ? clearProgress / 0.45
+            : Math.max(0, 1 - (clearProgress - 0.45) / 0.55);
+          const squashP = clearProgress < 0.45 ? 0 : (clearProgress - 0.45) / 0.55;
+          const scaleY = 1 - squashP * 0.85;
+          const blockAlpha = 1 - squashP * 0.88;
+          const centerY = rowTop + cell / 2;
+
+          ctx.save();
+          ctx.translate(0, centerY);
+          ctx.scale(1, scaleY);
+          ctx.translate(0, -centerY);
+          for (let c = 0; c < COLS; c++) {
+            const cellType = row[c];
+            if (cellType) drawBlock(ctx, offsetX + c * cell, rowTop, cell, cellType, blockAlpha);
+          }
+          ctx.restore();
+
+          const flashAlpha = (isSpecialClear ? 0.68 : 0.46) * (clearProgress < 0.45 ? 0.45 + 0.55 * flashPhase : flashPhase);
+          ctx.fillStyle = isSpecialClear
+            ? `rgba(253, 224, 71, ${flashAlpha.toFixed(3)})`
+            : `rgba(248, 250, 252, ${flashAlpha.toFixed(3)})`;
+          ctx.fillRect(offsetX, rowTop + (cell * (1 - scaleY)) / 2, COLS * cell, cell * scaleY);
+
+          if (clearProgress >= 0.3) {
+            const beamAlpha = Math.max(0, (1 - squashP) * 0.85);
+            ctx.fillStyle = isSpecialClear
+              ? `rgba(254, 240, 138, ${beamAlpha.toFixed(3)})`
+              : `rgba(255, 255, 255, ${beamAlpha.toFixed(3)})`;
+            ctx.fillRect(offsetX, centerY - 1.2, COLS * cell, 2.4);
+          }
+        }
+        continue;
+      }
+
       for (let c = 0; c < COLS; c++) {
         const cellType = row[c];
         if (cellType) {
           drawBlock(ctx, offsetX + c * cell, offsetY + vy * cell, cell, cellType);
         }
       }
+    }
+
+    // 落定脉冲高光
+    for (const lp of lockPulses) {
+      const p = lp.ageMs / lp.durationMs;
+      const alpha = (1 - p) * (lp.isHardDrop ? 0.55 : 0.36);
+      ctx.save();
+      for (const [cx, cy] of lp.cells) {
+        const bx = offsetX + cx * cell + 1;
+        const by = offsetY + cy * cell + 1;
+        const bs = cell - 2;
+        const rad = Math.max(2, bs * 0.14);
+        ctx.beginPath();
+        ctx.roundRect(bx, by, bs, bs, rad);
+        ctx.fillStyle = `rgba(255, 255, 255, ${(alpha * 0.48).toFixed(3)})`;
+        ctx.fill();
+        ctx.lineWidth = Math.max(1.2, cell * 0.06);
+        ctx.strokeStyle = lp.color;
+        ctx.globalAlpha = Math.min(1, alpha * 1.4);
+        ctx.stroke();
+      }
+      ctx.restore();
     }
 
     // 落点虚影 & 当前活动方块
@@ -633,8 +743,8 @@ export function createRenderer(boardCanvas) {
   }
 
   function hasActiveEffects() {
-    return flashes.length > 0 || particles.length > 0 || trails.length > 0
-      || bombs.length > 0 || lasers.length > 0 || floatingTexts.length > 0 || !!shake;
+    return flashes.length > 0 || lockPulses.length > 0 || particles.length > 0 || trails.length > 0
+      || bombs.length > 0 || lasers.length > 0 || floatingTexts.length > 0 || !!shake || !!bump;
   }
 
   return {
@@ -642,6 +752,8 @@ export function createRenderer(boardCanvas) {
     renderMiniPiece,
     triggerLineClear,
     triggerHardDrop,
+    triggerLockPulse,
+    triggerBoardBump,
     triggerBomb,
     triggerLaser,
     triggerFloatingText,

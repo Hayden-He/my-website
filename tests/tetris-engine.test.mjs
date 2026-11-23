@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  BUFFER_ROWS, COLS, GARBAGE_INTERVAL_MS, ICE_DURATION_MS, LOCK_DELAY_MS, MAX_LOCK_RESETS,
+  BUFFER_ROWS, CLEAR_DELAY_MS, COLS, GARBAGE_INTERVAL_MS, ICE_DURATION_MS, LOCK_DELAY_MS, MAX_LOCK_RESETS,
   PIECE_TYPES, POWERUP_EVERY, POWERUP_TYPES, ROWS, SPRINT_TARGET, TOTAL_ROWS,
-  canPlace, createBag, createGame, deserializeMarathonSave, dropIntervalMs, getDangerRatio,
+  canPlace, createBag, createGame, deserializeMarathonSave, dropIntervalMs, finishPendingClear, getDangerRatio,
   getGhostY, hardDrop, holdPiece, lockActivePiece, movePiece, rotatePiece,
   serializeMarathonSave, stepGame,
 } from '../games/tetris/modules/engine.js';
@@ -132,6 +132,10 @@ test('line clear scoring, back-to-back Tetris 1.5x, combo, and level progression
   assert.equal(game.score, 800);
   assert.equal(game.combo, 0);
   assert.equal(game.tetrises, 1);
+  assert.ok(game.pendingClear);
+  const done1 = stepGame(game, CLEAR_DELAY_MS, rng);
+  assert.equal(done1?.type, 'clearComplete');
+  assert.equal(game.pendingClear, null);
 
   // Place a non-clearing piece in the middle of nowhere — B2B stays true, combo resets to -1
   game.active = { type: 'O', rot: 0, x: 4, y: TOTAL_ROWS - 2 };
@@ -154,6 +158,7 @@ test('line clear scoring, back-to-back Tetris 1.5x, combo, and level progression
   assert.equal(game.score, 2000);
   assert.equal(game.lines, 8);
   assert.equal(game.level, 1);
+  stepGame(game, CLEAR_DELAY_MS, rng);
 
   // Next lock clears 2 lines (combo becomes 1 -> +50, level jumps from 1 to 2 at 10 lines, B2B resets)
   fillRow(game.board, TOTAL_ROWS - 2, [4, 5], 'S');
@@ -288,6 +293,7 @@ test('T-Spin Double and All Clear award expected bonuses and counters', () => {
   assert.equal(tSpinEv.gained, 1200);
   assert.equal(game.tSpins, 1);
   assert.equal(game.backToBack, true);
+  stepGame(game, CLEAR_DELAY_MS, rng);
 
   // All Clear: single remaining I-piece completes bottom row leaving board empty (combo = 1 -> +50)
   game.board.forEach((row) => row.fill(null));
@@ -298,6 +304,7 @@ test('T-Spin Double and All Clear award expected bonuses and counters', () => {
   assert.equal(acEv.isAllClear, true);
   assert.equal(acEv.gained, 100 + 50 + 1800);
   assert.equal(game.allClears, 1);
+  stepGame(game, CLEAR_DELAY_MS, rng);
   assert.equal(game.board.every((row) => row.every((cell) => cell === null)), true);
 });
 
@@ -347,6 +354,8 @@ test('party mode spawns powerups every POWERUP_EVERY pieces, preserves on hold, 
   const laserEv = lockActivePiece(game, rng);
   assert.equal(laserEv.powerupTriggered?.type, 'laser');
   assert.equal(laserEv.linesCleared, 1);
+  assert.ok(game.pendingClear);
+  stepGame(game, CLEAR_DELAY_MS, rng);
   assert.equal(game.board[TOTAL_ROWS - 1][0], null);
   assert.equal(game.board[TOTAL_ROWS - 1][9], null);
 
@@ -377,4 +386,97 @@ test('party mode spawns powerups every POWERUP_EVERY pieces, preserves on hold, 
   assert.equal(getDangerRatio(game), 0.25);
   game.board[BUFFER_ROWS][0] = 'J';
   assert.equal(getDangerRatio(game), 1);
+});
+
+test('marathon and party modes pause for CLEAR_DELAY_MS during pendingClear and ignore inputs', () => {
+  for (const mode of ['marathon', 'party']) {
+    const rng = makeSeededRng(808);
+    const game = createGame({ mode, rng });
+    game.status = 'playing';
+    assert.equal(game.clearDelayMs, CLEAR_DELAY_MS);
+
+    game.board[TOTAL_ROWS - 3][9] = 'Z';
+    fillRow(game.board, TOTAL_ROWS - 1, [3, 4, 5, 6], 'J');
+    game.active = { type: 'I', rot: 0, x: 3, y: TOTAL_ROWS - 2, powerup: null };
+
+    const ev = hardDrop(game, rng);
+    assert.equal(ev?.linesCleared, 1);
+    assert.equal(ev?.lockedType, 'I');
+    assert.equal(ev?.lockedCells?.length, 4);
+    assert.ok(game.pendingClear);
+    assert.equal(game.pendingClear.rows.length, 1);
+    assert.equal(game.active, null);
+    // Full row remains visible on board during dissolve delay
+    assert.equal(game.board[TOTAL_ROWS - 1].every((cell) => cell !== null), true);
+
+    // Player inputs are ignored during pendingClear
+    assert.equal(movePiece(game, -1, 0).moved, false);
+    assert.equal(rotatePiece(game, 1).rotated, false);
+    assert.equal(holdPiece(game, rng).held, false);
+    assert.equal(hardDrop(game, rng), null);
+
+    // Partial step advances timer without collapsing
+    const prevGarbageTimer = game.garbageTimerMs;
+    assert.equal(stepGame(game, 100, rng), null);
+    assert.ok(game.pendingClear);
+    assert.equal(game.pendingClear.elapsedMs, 100);
+    assert.equal(game.garbageTimerMs, prevGarbageTimer);
+
+    // Completing CLEAR_DELAY_MS collapses row and spawns next piece
+    const nextQueued = game.queue[0];
+    const done = stepGame(game, CLEAR_DELAY_MS - 100, rng);
+    assert.equal(done?.type, 'clearComplete');
+    assert.equal(game.pendingClear, null);
+    assert.equal(game.active?.type, nextQueued);
+    assert.equal(game.board[TOTAL_ROWS - 1][9], null);
+    assert.equal(game.board[TOTAL_ROWS - 2][9], 'Z');
+  }
+});
+
+test('sprint mode uses zero clear delay and collapses lines immediately', () => {
+  const rng = makeSeededRng(909);
+  const game = createGame({ mode: 'sprint', rng });
+  game.status = 'playing';
+  assert.equal(game.clearDelayMs, 0);
+
+  game.board[TOTAL_ROWS - 3][9] = 'Z';
+  fillRow(game.board, TOTAL_ROWS - 1, [3, 4, 5, 6], 'J');
+  game.active = { type: 'I', rot: 0, x: 3, y: TOTAL_ROWS - 2, powerup: null };
+  const nextQueued = game.queue[0];
+
+  const ev = hardDrop(game, rng);
+  assert.equal(ev?.linesCleared, 1);
+  assert.equal(game.pendingClear, null);
+  assert.equal(game.active?.type, nextQueued);
+  assert.equal(game.board[TOTAL_ROWS - 1][9], null);
+  assert.equal(game.board[TOTAL_ROWS - 2][9], 'Z');
+});
+
+test('serializeMarathonSave during pendingClear collapses a copy cleanly and restores next piece', () => {
+  const rng = makeSeededRng(1010);
+  const game = createGame({ mode: 'marathon', rng });
+  game.status = 'playing';
+
+  game.board[TOTAL_ROWS - 3][8] = 'L';
+  fillRow(game.board, TOTAL_ROWS - 1, [3, 4, 5, 6], 'S');
+  game.active = { type: 'I', rot: 0, x: 3, y: TOTAL_ROWS - 2, powerup: null };
+  const expectedNext = game.queue[0];
+
+  hardDrop(game, rng);
+  assert.ok(game.pendingClear);
+
+  const raw = serializeMarathonSave(game);
+  assert.ok(raw);
+  // Original state remains in pendingClear
+  assert.ok(game.pendingClear);
+  assert.equal(game.board[TOTAL_ROWS - 1].every((c) => c !== null), true);
+
+  const restored = deserializeMarathonSave(raw, rng);
+  assert.ok(restored);
+  assert.equal(restored.pendingClear, null);
+  assert.equal(restored.clearDelayMs, CLEAR_DELAY_MS);
+  assert.equal(restored.active?.type, expectedNext);
+  assert.equal(restored.board[TOTAL_ROWS - 1][8], null);
+  assert.equal(restored.board[TOTAL_ROWS - 2][8], 'L');
+  assert.equal(finishPendingClear(game, rng)?.type, 'clearComplete');
 });
