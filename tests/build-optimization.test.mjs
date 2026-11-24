@@ -21,11 +21,17 @@ function createI18nHarness({ initialLang = null, enSrc = '/assets/v/0123456789ab
   const appendedScripts = [];
   const docListeners = new Map();
   const attrs = new Map();
+  const classes = new Set();
 
   const documentElement = {
     lang: 'zh-CN',
     setAttribute(k, v) { attrs.set(k, v); },
     getAttribute(k) { return attrs.get(k) ?? null; },
+    classList: {
+      add(c) { classes.add(c); },
+      remove(c) { classes.delete(c); },
+      contains(c) { return classes.has(c); },
+    },
   };
 
   const document = {
@@ -140,12 +146,33 @@ test('dist prunes inline icon sprites per page while preserving required icons',
   assert.equal(tankIcons.has('mem-apple'), false, 'tank-maze should exclude mem-apple');
 });
 
-test('dist attaches versioned data-en-src for i18n-en.js and emits hashed asset', () => {
+test('dist attaches versioned data-en-src for theme.js and i18n.js and emits hashed asset', () => {
   const indexHtml = fs.readFileSync(path.join(dist, 'index.html'), 'utf8');
-  const match = indexHtml.match(/<script src="(\/assets\/v\/[0-9a-f]{16}\/i18n\.js)" data-en-src="(\/assets\/v\/[0-9a-f]{16}\/i18n-en\.js)"><\/script>/);
-  assert.ok(match, 'i18n.js script tag should carry hashed data-en-src');
-  assert.equal(fs.existsSync(path.join(dist, match[1].slice(1))), true);
-  assert.equal(fs.existsSync(path.join(dist, match[2].slice(1))), true);
+  const i18nMatch = indexHtml.match(/<script src="(\/assets\/v\/[0-9a-f]{16}\/i18n\.js)" data-en-src="(\/assets\/v\/[0-9a-f]{16}\/i18n-en\.js)"><\/script>/);
+  const themeMatch = indexHtml.match(/<script src="(\/assets\/v\/[0-9a-f]{16}\/theme\.js)" data-en-src="(\/assets\/v\/[0-9a-f]{16}\/i18n-en\.js)"><\/script>/);
+  assert.ok(i18nMatch, 'i18n.js script tag should carry hashed data-en-src');
+  assert.ok(themeMatch, 'theme.js script tag should carry hashed data-en-src');
+  assert.equal(themeMatch[2], i18nMatch[2]);
+  assert.equal(fs.existsSync(path.join(dist, themeMatch[1].slice(1))), true);
+  assert.equal(fs.existsSync(path.join(dist, i18nMatch[1].slice(1))), true);
+  assert.equal(fs.existsSync(path.join(dist, i18nMatch[2].slice(1))), true);
+});
+
+test('dist preserves tutorial icon symbols for updated classic games', () => {
+  const expectedIcons = {
+    'games/2048/index.html': ['game-2048', 'icon-undo'],
+    'games/snake/index.html': ['game-snake', 'art-star'],
+    'games/slide/index.html': ['game-slide', 'art-grid'],
+    'games/memory/index.html': ['game-memory', 'mem-apple'],
+    'games/basketball/index.html': ['art-tap', 'game-basketball'],
+  };
+  for (const [rel, icons] of Object.entries(expectedIcons)) {
+    const html = fs.readFileSync(path.join(dist, rel), 'utf8');
+    const sprite = readSymbolIds(html);
+    for (const id of icons) {
+      assert.equal(sprite.has(id), true, `${rel} must retain tutorial icon ${id}`);
+    }
+  }
 });
 
 test('i18n runtime skips English dictionary in zh mode and loads it on demand for en mode', async () => {
@@ -173,13 +200,17 @@ test('i18n runtime skips English dictionary in zh mode and loads it on demand fo
   assert.equal(zhHarness.appendedScripts.length, 1);
   assert.deepEqual(events, ['en', 'zh']);
 
-  // Booting directly in en mode starts dictionary fetch immediately
+  // Booting directly in en mode starts dictionary fetch immediately and clears i18n-pending after load
   const enBoot = createI18nHarness({ initialLang: 'en' });
+  enBoot.documentElement.classList.add('i18n-pending');
+  enBoot.I18N.init();
+  assert.equal(enBoot.documentElement.classList.contains('i18n-pending'), true);
   assert.equal(enBoot.appendedScripts.length, 1);
   const bootEvents = [];
   enBoot.onLangChange((e) => bootEvents.push(e.detail.lang));
   enBoot.finishLoadLastScript();
   await new Promise((resolve) => setTimeout(resolve, 0));
+  assert.equal(enBoot.documentElement.classList.contains('i18n-pending'), false);
   assert.equal(enBoot.I18N.t('全部游戏'), 'All Games');
   assert.deepEqual(bootEvents, ['en']);
 });

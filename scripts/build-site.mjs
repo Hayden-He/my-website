@@ -295,7 +295,7 @@ for (const file of pages) {
     (_, attribute, asset) => attribute + '="' + versionedAsset(asset) + '"');
   const enAsset = versionedAsset('/assets/i18n-en.js');
   html = html.replace(
-    /<script src="(\/assets\/v\/[0-9a-f]{16}\/i18n\.js)"><\/script>/,
+    /<script src="(\/assets\/v\/[0-9a-f]{16}\/(?:theme|i18n)\.js)"><\/script>/g,
     (_, src) => '<script src="' + src + '" data-en-src="' + enAsset + '"></script>'
   );
   html = html.replace(/\b(src|href)="\.\/modules\/([^"?#]+)([?#][^"]*)?"(?=\s|>)/g,

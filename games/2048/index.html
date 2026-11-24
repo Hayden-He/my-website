@@ -263,6 +263,7 @@
         <button id="size-5" class="mode-pill" data-i18n="5×5 轻松">5×5 轻松</button>
       </div>
       <div class="btn-group">
+        <button id="help-btn" class="btn-small secondary" type="button" title="查看玩法" data-i18n="玩法" data-i18n-attr="title:查看玩法">玩法</button>
         <button id="sound-btn" class="btn-small secondary">音效: 开</button>
         <button id="undo-btn" class="btn-small secondary" disabled data-i18n="撤回">撤回</button>
         <button id="restart-btn" class="btn-small" data-i18n="重开">重开</button>
@@ -764,10 +765,23 @@
         }
       });
 
+      function showTutorial(force) {
+        GameKit.showTutorial({
+          id: '2048',
+          force,
+          steps: [
+            { icon: 'game-2048', title: t('合并相同数字'), text: t('滑动棋盘或按方向键 / WASD，把相同数字撞在一起翻倍，目标合成 2048。') },
+            { icon: 'icon-undo', title: t('撤回与双尺寸'), text: t('支持 4×4 经典与 5×5 轻松棋盘，进度会自动保存，走错时还可单步撤回。') },
+          ],
+        });
+      }
+
+      document.getElementById('help-btn').addEventListener('click', () => showTutorial(true));
       size = readProgress(MODE_KEY) === '5' ? 5 : 4;
       migrateLegacyBest(size);
       openGame();
       GameKit.mountMoreGames('2048', document.getElementById('more-games'));
+      showTutorial(false);
     })();
   </script>
 </body>

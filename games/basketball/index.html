@@ -304,6 +304,7 @@
         <span class="hint-text" data-i18n="机制：进球重置倒计时 · 连续空心触发火焰连击 · 每 5 球金球 ×2 · 25/50/80 分护盾进阶">机制：进球重置倒计时 · 连续空心触发火焰连击 · 每 5 球金球 ×2 · 25/50/80 分护盾进阶</span>
       </div>
       <div class="btn-group">
+        <button id="help-btn" class="btn-small secondary" type="button" title="查看玩法" data-i18n="玩法" data-i18n-attr="title:查看玩法">玩法</button>
         <button id="skin-btn" class="btn-small secondary">用球: 经典篮球</button>
         <button id="sound-btn" class="btn-small secondary">音效: 开</button>
         <button id="restart-btn" class="btn-small" data-i18n="重开">重开</button>
@@ -2120,16 +2121,22 @@
       document.getElementById('restart-btn').addEventListener('click', () => resetRound());
       document.getElementById('overlay-restart').addEventListener('click', initGame);
 
+      function showTutorial(force) {
+        GameKit.showTutorial({
+          id: 'basketball',
+          force,
+          steps: [
+            { icon: 'art-tap', title: t('连点升空'), text: t('连续点击球场，或连按空格键，让球持续升高。') },
+            { icon: 'game-basketball', title: t('停手落网'), text: t('在篮筐上方停止点击，让球自然下落；空心入网得分最高。') },
+          ],
+        });
+      }
+
+      document.getElementById('help-btn').addEventListener('click', () => showTutorial(true));
       initGame();
       GameKit.bindMobileLayout('basketball', document.getElementById('immersive-btn'), () => setPaused(true));
       GameKit.mountMoreGames('basketball', document.getElementById('more-games'));
-      GameKit.showTutorial({
-        id: 'basketball',
-        steps: [
-          { icon: 'art-tap', title: t('连点升空'), text: t('连续点击球场，或连按空格键，让球持续升高。') },
-          { icon: 'game-basketball', title: t('停手落网'), text: t('在篮筐上方停止点击，让球自然下落；空心入网得分最高。') },
-        ],
-      });
+      showTutorial(false);
       requestAnimationFrame(loop);
     })();
   </script>

@@ -136,12 +136,13 @@
       accent-color: #38bdf8;
     }
 
+    .game-wrap { --mobile-stage-ratio: 1; }
     .hud { grid-template-columns: 1fr 1fr auto auto; max-width: 520px; order: -2; }
     .toolbar { max-width: 520px; order: -1; }
 
     @media (any-pointer: coarse), (max-width: 600px) {
       .game-wrap { margin-top: 8px; gap: 8px; }
-      .toolbar { order: 0; }
+      .toolbar { order: 1; }
       .dpad { display: grid; }
       .stage-box { max-width: clamp(160px, 100svh - 268px, 520px); }
     }
@@ -149,10 +150,47 @@
     @media (any-pointer: coarse) and (orientation: landscape),
            (orientation: landscape) and (max-height: 450px) and (max-width: 900px) {
       .game-wrap { --game-width: 660px; margin-top: 8px; gap: 8px; }
-      .toolbar { order: 0; }
+      .toolbar { order: 1; }
       .play-area { grid-template-columns: minmax(0, 1fr) auto; align-items: center; }
       .dpad { display: grid; }
       .stage-box { max-width: clamp(120px, 100svh - 178px, 520px); }
+    }
+
+    .mobile-game-immersive .hint-text,
+    .mobile-game-immersive #help-btn,
+    .mobile-game-immersive .mode-pills { display: none; }
+    .mobile-game-immersive .toolbar { order: 0; justify-content: center; }
+    .mobile-game-immersive .play-area { height: 100%; align-content: start; }
+
+    @media (orientation: portrait) {
+      .mobile-game-immersive .stage-box {
+        max-width: clamp(160px, min(100%, 100cqh - 116px), 520px);
+      }
+    }
+
+    @media (orientation: landscape) {
+      .mobile-game-immersive .mobile-game-controls {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .mobile-game-immersive :is(.hud, .toolbar, .btn-group) { display: contents; }
+      .mobile-game-immersive .hud-box { min-width: 0; }
+      .mobile-game-immersive .hud-box:nth-child(-n + 2) { order: -3; }
+      .mobile-game-immersive .slow-status { order: -2; }
+      .mobile-game-immersive #pause-btn,
+      .mobile-game-immersive #immersive-btn { order: -1; }
+      .mobile-game-immersive #restart-btn,
+      .mobile-game-immersive #sound-btn { order: 0; }
+      .mobile-game-immersive .play-area {
+        width: 100%;
+        height: 100%;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+        justify-items: center;
+      }
+      .mobile-game-immersive .stage-box {
+        width: min(100%, calc((100cqh - 4px) * var(--mobile-stage-ratio)));
+        max-width: none;
+      }
     }
 
   </style>
@@ -176,48 +214,56 @@
   </header>
 
   <main class="game-wrap">
-    <div class="hud">
-      <div class="hud-box">
-        <div class="hud-label" data-i18n="当前得分">当前得分</div>
-        <div id="score-el" class="hud-value">0</div>
-      </div>
-      <div class="hud-box">
-        <div class="hud-label" data-i18n="模式最高">模式最高</div>
-        <div id="best-el" class="hud-value" style="color: var(--accent-text);">0</div>
-      </div>
-      <button id="pause-btn" class="btn-small secondary">暂停</button>
-      <button id="restart-btn" class="btn-small" data-i18n="重开">重开</button>
-      <div class="slow-status" id="slow-status">
-        <span id="slow-label" data-i18n="减速中">减速中</span>
-        <progress id="slow-progress" aria-labelledby="slow-label" value="0"></progress>
-      </div>
-    </div>
-
-    <div class="play-area">
-      <div id="stage-box" class="stage-box">
-        <canvas id="board" width="560" height="560" role="img" aria-label="贪吃蛇游戏棋盘" data-i18n-attr="aria-label:贪吃蛇游戏棋盘"></canvas>
-        <div id="overlay" class="overlay" role="status" aria-live="polite">
-          <h2 id="overlay-title">游戏结束</h2>
-          <p id="overlay-desc">得分：0</p>
-          <button id="overlay-btn" class="overlay-btn" data-i18n="再来一局">再来一局</button>
+    <div class="mobile-game-controls">
+      <div class="hud">
+        <div class="hud-box">
+          <div class="hud-label" data-i18n="当前得分">当前得分</div>
+          <div id="score-el" class="hud-value">0</div>
+        </div>
+        <div class="hud-box">
+          <div class="hud-label" data-i18n="模式最高">模式最高</div>
+          <div id="best-el" class="hud-value" style="color: var(--accent-text);">0</div>
+        </div>
+        <button id="pause-btn" class="btn-small secondary">暂停</button>
+        <button id="restart-btn" class="btn-small" data-i18n="重开">重开</button>
+        <div class="slow-status" id="slow-status">
+          <span id="slow-label" data-i18n="减速中">减速中</span>
+          <progress id="slow-progress" aria-labelledby="slow-label" value="0"></progress>
         </div>
       </div>
-      <div class="dpad" role="group" aria-label="方向控制" data-i18n-attr="aria-label:方向控制">
-        <div class="dpad-empty"></div>
-        <button class="dpad-btn" data-dir="up" type="button" aria-label="向上" data-i18n-attr="aria-label:向上">↑</button>
-        <div class="dpad-empty"></div>
-        <button class="dpad-btn" data-dir="left" type="button" aria-label="向左" data-i18n-attr="aria-label:向左">←</button>
-        <button class="dpad-btn" data-dir="down" type="button" aria-label="向下" data-i18n-attr="aria-label:向下">↓</button>
-        <button class="dpad-btn" data-dir="right" type="button" aria-label="向右" data-i18n-attr="aria-label:向右">→</button>
+
+      <div class="toolbar">
+        <div class="mode-pills" role="group" aria-label="游戏模式" data-i18n-attr="aria-label:游戏模式">
+          <button id="mode-classic" class="mode-pill active" data-i18n="经典撞墙">经典撞墙</button>
+          <button id="mode-wrap" class="mode-pill" data-i18n="自由穿墙">自由穿墙</button>
+        </div>
+        <div class="btn-group">
+          <button id="help-btn" class="btn-small secondary" type="button" title="查看玩法" data-i18n="玩法" data-i18n-attr="title:查看玩法">玩法</button>
+          <button id="immersive-btn" class="btn-small secondary" type="button" data-i18n="沉浸模式" hidden>沉浸模式</button>
+          <button id="sound-btn" class="btn-small secondary">音效: 开</button>
+        </div>
       </div>
     </div>
 
-    <div class="toolbar">
-      <div class="mode-pills" role="group" aria-label="游戏模式" data-i18n-attr="aria-label:游戏模式">
-        <button id="mode-classic" class="mode-pill active" data-i18n="经典撞墙">经典撞墙</button>
-        <button id="mode-wrap" class="mode-pill" data-i18n="自由穿墙">自由穿墙</button>
+    <div class="mobile-game-stage">
+      <div class="play-area">
+        <div id="stage-box" class="stage-box">
+          <canvas id="board" width="560" height="560" role="img" aria-label="贪吃蛇游戏棋盘" data-i18n-attr="aria-label:贪吃蛇游戏棋盘"></canvas>
+          <div id="overlay" class="overlay" role="status" aria-live="polite">
+            <h2 id="overlay-title">游戏结束</h2>
+            <p id="overlay-desc">得分：0</p>
+            <button id="overlay-btn" class="overlay-btn" data-i18n="再来一局">再来一局</button>
+          </div>
+        </div>
+        <div class="dpad" role="group" aria-label="方向控制" data-i18n-attr="aria-label:方向控制">
+          <div class="dpad-empty"></div>
+          <button class="dpad-btn" data-dir="up" type="button" aria-label="向上" data-i18n-attr="aria-label:向上">↑</button>
+          <div class="dpad-empty"></div>
+          <button class="dpad-btn" data-dir="left" type="button" aria-label="向左" data-i18n-attr="aria-label:向左">←</button>
+          <button class="dpad-btn" data-dir="down" type="button" aria-label="向下" data-i18n-attr="aria-label:向下">↓</button>
+          <button class="dpad-btn" data-dir="right" type="button" aria-label="向右" data-i18n-attr="aria-label:向右">→</button>
+        </div>
       </div>
-      <button id="sound-btn" class="btn-small secondary">音效: 开</button>
     </div>
 
     <p class="hint-text hint-with-icons">
@@ -836,21 +882,35 @@
         draw(0);
       });
 
-      // 打开清数据等原生确认框时先暂停，避免蛇在弹窗后面继续走
-      document.addEventListener('site:dialogopen', () => {
+      function pauseIfRunning() {
         if (started && !paused && !gameOver) togglePause();
-      });
+      }
+
+      // 打开清数据等原生确认框时先暂停，避免蛇在弹窗后面继续走
+      document.addEventListener('site:dialogopen', pauseIfRunning);
 
       // 切到后台时自动暂停，避免蛇在后台继续移动
-      GameKit.onHidden(() => {
-        if (started && !paused && !gameOver) togglePause();
-      });
+      GameKit.onHidden(pauseIfRunning);
       document.getElementById('restart-btn').addEventListener('click', initGame);
       document.getElementById('overlay-btn').addEventListener('click', initGame);
 
+      function showTutorial(force) {
+        GameKit.showTutorial({
+          id: 'snake',
+          force,
+          steps: [
+            { icon: 'game-snake', title: t('灵活转向躲避'), text: t('电脑用方向键 / WASD，手机可划屏或点按方向键；支持经典撞墙与自由穿墙双模式。') },
+            { icon: 'art-star', title: t('吃果子与特殊道具'), text: t('红苹果 +10 分，限时金星 +30 分，冰果可短暂减速。') },
+          ],
+        });
+      }
+
+      document.getElementById('help-btn').addEventListener('click', () => showTutorial(true));
       applyModeChrome(wrapMode);
       initGame();
+      GameKit.bindMobileLayout('snake', document.getElementById('immersive-btn'), pauseIfRunning);
       GameKit.mountMoreGames('snake', document.getElementById('more-games'));
+      showTutorial(false);
       requestAnimationFrame(frameLoop);
     })();
   </script>

@@ -217,6 +217,33 @@
   }
   document.addEventListener('i18n:change', refreshToggles);
 
+  function prepareEnglishBoot() {
+    let savedLang = null;
+    try {
+      savedLang = localStorage.getItem('site_lang');
+    } catch {}
+    if (savedLang !== 'en') return;
+
+    root.lang = 'en';
+    root.dataset.lang = 'en';
+    root.classList?.add('i18n-pending');
+
+    const script = document.currentScript;
+    const enSrc = (script && typeof script.getAttribute === 'function' && script.getAttribute('data-en-src')) || '/assets/i18n-en.js';
+    if (typeof document.createElement === 'function' && document.head?.appendChild) {
+      const link = document.createElement('link');
+      link.rel = 'preload';
+      link.as = 'script';
+      link.href = enSrc;
+      document.head.appendChild(link);
+    }
+    if (typeof setTimeout === 'function') {
+      const timer = setTimeout(() => root.classList?.remove('i18n-pending'), 600);
+      if (timer && typeof timer.unref === 'function') timer.unref();
+    }
+  }
+
+  prepareEnglishBoot();
   apply();
 
   window.SiteTheme = {

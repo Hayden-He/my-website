@@ -109,6 +109,10 @@
     refreshToggles();
   }
 
+  function clearPending() {
+    document.documentElement.classList?.remove('i18n-pending');
+  }
+
   function notifyLangChange() {
     document.dispatchEvent(new CustomEvent('i18n:change', { detail: { lang } }));
   }
@@ -117,6 +121,7 @@
     if (enDict || window.I18N_EN) {
       enDict = enDict || window.I18N_EN;
       apply();
+      clearPending();
       notifyLangChange();
       return;
     }
@@ -127,7 +132,10 @@
       pendingEnglishApply = false;
       if (lang === 'en') {
         apply();
+        clearPending();
         notifyLangChange();
+      } else {
+        clearPending();
       }
     }).catch(() => {
       pendingEnglishApply = false;
@@ -135,7 +143,10 @@
         lang = 'zh';
         try { localStorage.setItem(STORAGE_KEY, 'zh'); } catch {}
         apply();
+        clearPending();
         notifyLangChange();
+      } else {
+        clearPending();
       }
     });
   }
@@ -147,6 +158,7 @@
     try { localStorage.setItem(STORAGE_KEY, lang); } catch {}
     if (lang === 'zh') {
       apply();
+      clearPending();
       notifyLangChange();
       return;
     }
@@ -165,6 +177,7 @@
       ensureEnglishApplied();
     } else {
       apply();
+      clearPending();
     }
     document.addEventListener('click', (event) => {
       const btn = event.target.closest('[data-lang-toggle]');

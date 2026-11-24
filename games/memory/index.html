@@ -212,6 +212,7 @@
         <button id="mode-5" class="mode-pill" data-i18n="5×4 标准">5×4 标准</button>
       </div>
       <div class="btn-group">
+        <button id="help-btn" class="btn-small secondary" type="button" title="查看玩法" data-i18n="玩法" data-i18n-attr="title:查看玩法">玩法</button>
         <button id="preview-btn" class="btn-small secondary" data-i18n="预览牌面">预览牌面</button>
         <button id="sound-btn" class="btn-small secondary">音效: 开</button>
         <button id="restart-btn" class="btn-small" data-i18n="重开">重开</button>
@@ -584,8 +585,21 @@
         dialogOpen = false;
       });
 
+      function showTutorial(force) {
+        GameKit.showTutorial({
+          id: 'memory',
+          force,
+          steps: [
+            { icon: 'game-memory', title: t('翻牌找相同图案'), text: t('每次翻开两张牌，图案相同即可配对消除；用更少尝试次数完成全盘。') },
+            { icon: 'mem-apple', title: t('牌面预览与尺寸'), text: t('支持 4×4 与 5×4 牌桌。开局前可点「预览牌面」偷看 2 秒，使用预览的纪录单独计算。') },
+          ],
+        });
+      }
+
+      document.getElementById('help-btn').addEventListener('click', () => showTutorial(true));
       initGame();
       GameKit.mountMoreGames('memory', document.getElementById('more-games'));
+      showTutorial(false);
     })();
   </script>
 </body>

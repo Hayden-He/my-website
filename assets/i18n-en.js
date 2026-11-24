@@ -213,6 +213,12 @@ window.I18N_EN = {
   '重开 {size}×{size} 棋局？当前进度将被清除。':
     'Restart the {size}×{size} board? Current progress will be lost.',
   '棋盘尺寸': 'Board size',
+  '合并相同数字': 'Merge Matching Numbers',
+  '滑动棋盘或按方向键 / WASD，把相同数字撞在一起翻倍，目标合成 2048。':
+    'Swipe the board or use Arrow keys / WASD to collide and double matching tiles toward 2048.',
+  '撤回与双尺寸': 'Undo & Two Board Sizes',
+  '支持 4×4 经典与 5×5 轻松棋盘，进度会自动保存，走错时还可单步撤回。':
+    'Play 4×4 Classic or 5×5 Relaxed with autosave and one-step undo.',
 
   // ---- 贪吃蛇 ----
   '经典撞墙': 'Walls',
@@ -237,6 +243,12 @@ window.I18N_EN = {
   '方向控制': 'Direction controls',
   '贪吃蛇游戏棋盘': 'Snake game board',
   '游戏模式': 'Game mode',
+  '灵活转向躲避': 'Steer & Dodge',
+  '电脑用方向键 / WASD，手机可划屏或点按方向键；支持经典撞墙与自由穿墙双模式。':
+    'Use Arrow keys / WASD on desktop, or swipe / tap the D-pad on mobile. Try Walls or Wrap mode.',
+  '吃果子与特殊道具': 'Fruit & Special Pickups',
+  '红苹果 +10 分，限时金星 +30 分，冰果可短暂减速。':
+    'Apples award +10 pts, timed Stars +30 pts, and Ice slows speed briefly.',
 
   // ---- 扫雷 ----
   '剩余地雷': 'Mines',
@@ -355,6 +367,12 @@ window.I18N_EN = {
   '完成！': 'Solved!',
   '步数：0 · 用时：0s': 'Moves: 0 · Time: 0s',
   '同盘重试': 'Retry board',
+  '按序还原数字': 'Sort the Tiles',
+  '点击空位旁的方块，或用方向键把数字按顺序排好，把空位留在右下角。':
+    'Tap a tile next to the empty space—or use Arrow keys—to order all numbers with the gap at bottom-right.',
+  '多种难度与重试': 'Difficulties & Retry',
+  '新手可先试 3×3 入门，进阶挑战 4×4；不满意步数时可点「同盘重试」刷新纪录。':
+    'Start with 3×3 Intro or tackle 4×4; use Retry board to beat your move count on the same shuffle.',
   '点空位旁的方块，按顺序排好数字。空位留在右下角。':
     'Tap a tile beside the gap. Order the numbers, leaving the gap at bottom right.',
   '键盘也可用方向键移动。初次玩可选 3×3 入门。': 'Arrow keys also work. New to the game? Try 3×3 Intro.',
@@ -376,6 +394,12 @@ window.I18N_EN = {
   '翻两张算一次尝试。找齐所有相同图案即可通关。': 'Each pair you flip counts as one attempt. Match every card to win.',
   ' 次': ' attempts',
   '记住牌面，预览即将结束。': 'Memorize the cards before they turn over.',
+  '翻牌找相同图案': 'Flip & Match Pairs',
+  '每次翻开两张牌，图案相同即可配对消除；用更少尝试次数完成全盘。':
+    'Flip two cards each turn to match identical icons and clear the board in fewer attempts.',
+  '牌面预览与尺寸': 'Board Sizes & Preview',
+  '支持 4×4 与 5×4 牌桌。开局前可点「预览牌面」偷看 2 秒，使用预览的纪录单独计算。':
+    'Choose 4×4 or 5×4. Peek for 2s before starting with Preview (tracked separately).',
   '这两张牌不同。': 'These cards do not match.',
   '本局使用了预览，纪录单独计算。': 'Rounds with a preview have their own record.',
   '尝试 {moves} 次 · 用时 {elapsed}s · 新纪录！': '{moves} attempts · {elapsed}s · New record!',

@@ -326,3 +326,59 @@ test('refreshToggles updates .theme-label on .nav-theme-btn and keeps .theme-btn
   assert.equal(navBtn.querySelector('.theme-label')?.textContent, '深色');
   assert.equal(gameBtn.querySelector('.theme-label'), null);
 });
+
+test('prepareEnglishBoot marks i18n-pending and preloads dictionary only when site_lang is en', () => {
+  function runWithLang(lang) {
+    const storage = new Map();
+    if (lang) storage.set('site_lang', lang);
+    const classes = new Set();
+    const headChildren = [];
+    const documentElement = {
+      lang: 'zh-CN',
+      dataset: {},
+      classList: {
+        add(c) { classes.add(c); },
+        remove(c) { classes.delete(c); },
+        contains(c) { return classes.has(c); },
+      },
+    };
+    const document = {
+      readyState: 'complete',
+      documentElement,
+      currentScript: { getAttribute: (name) => (name === 'data-en-src' ? '/assets/v/abc123/i18n-en.js' : null) },
+      head: { appendChild(el) { headChildren.push(el); return el; } },
+      createElement(tag) { return { tagName: tag.toUpperCase(), rel: '', as: '', href: '' }; },
+      querySelector: () => null,
+      querySelectorAll: () => [],
+      addEventListener() {},
+    };
+    const sandbox = {
+      document,
+      localStorage: {
+        getItem: (k) => storage.get(k) ?? null,
+        setItem: (k, v) => storage.set(k, String(v)),
+      },
+      CustomEvent: class {},
+      setTimeout,
+      clearTimeout,
+      matchMedia: () => ({ matches: false, addEventListener() {} }),
+      addEventListener() {},
+    };
+    sandbox.window = sandbox;
+    vm.runInNewContext(themeSource, sandbox, { filename: 'assets/theme.js' });
+    return { documentElement, headChildren };
+  }
+
+  const zh = runWithLang(null);
+  assert.equal(zh.documentElement.classList.contains('i18n-pending'), false);
+  assert.equal(zh.headChildren.length, 0);
+
+  const en = runWithLang('en');
+  assert.equal(en.documentElement.classList.contains('i18n-pending'), true);
+  assert.equal(en.documentElement.lang, 'en');
+  assert.equal(en.documentElement.dataset.lang, 'en');
+  assert.equal(en.headChildren.length, 1);
+  assert.equal(en.headChildren[0].rel, 'preload');
+  assert.equal(en.headChildren[0].as, 'script');
+  assert.equal(en.headChildren[0].href, '/assets/v/abc123/i18n-en.js');
+});
