@@ -176,7 +176,6 @@ for (const game of games) {
     }
   }
   if (!game.description || game.description.length < 8) fail(`游戏 ${label} 的 description 太短`);
-  if (!Array.isArray(game.tags) || game.tags.length === 0) fail(`游戏 ${label} 缺少 tags`);
 
   const category = categoryById.get(game.category);
   if (!category) fail(`游戏 ${label} 的 category 不存在：${game.category}`);

@@ -302,7 +302,7 @@
     btn.addEventListener('click', async () => {
       const ok = await confirmDialog({
         title: t('清除本地数据'),
-        message: t('将清除本站在此浏览器保存的游戏纪录、存档、外观、模式偏好、音效设置、教学记录和最近打开记录，且无法恢复。语言设置会保留。'),
+        message: t('将清除本站在此浏览器保存的游戏纪录、存档、外观、模式偏好、音效设置、教学记录和最近打开记录，且无法恢复。语言与主题设置会保留。'),
         confirmText: t('清除'),
         cancelText: t('取消'),
         danger: true,

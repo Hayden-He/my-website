@@ -30,7 +30,6 @@ window.SITE_CONFIG = {
       url: '/games/basketball/',
       storageKey: 'game_best_basketball',
       bestPrefix: '最高分: ',
-      tags: ['连点升空', '连击挑战'],
     },
     {
       id: 'snake',
@@ -43,7 +42,6 @@ window.SITE_CONFIG = {
       url: '/games/snake/',
       storageKey: 'game_best_snake_classic',
       bestPrefix: '经典模式最高: ',
-      tags: ['键盘/划屏', '双模式'],
     },
     {
       id: 'fruit',
@@ -56,7 +54,6 @@ window.SITE_CONFIG = {
       url: '/games/fruit/',
       storageKey: 'game_best_fruit_classic',
       bestPrefix: '经典模式最高: ',
-      tags: ['划屏/鼠标', '双模式'],
     },
     {
       id: 'space',
@@ -69,7 +66,6 @@ window.SITE_CONFIG = {
       url: '/games/space/',
       storageKey: 'game_best_space_standard',
       bestPrefix: '标准模式最高: ',
-      tags: ['拖动/键盘', '双模式'],
     },
     {
       id: 'tank-maze',
@@ -80,7 +76,6 @@ window.SITE_CONFIG = {
       categoryName: '动作街机',
       description: '驾驶自选外观的坦克，在五张迷宫地图中绕行、打回弹，先赢两局。',
       url: '/games/tank-maze/',
-      tags: ['炮弹反弹', '三档难度'],
     },
     {
       id: '2048',
@@ -93,7 +88,6 @@ window.SITE_CONFIG = {
       url: '/games/2048/',
       storageKey: 'game_best_2048_4',
       bestPrefix: '4×4 最高: ',
-      tags: ['滑动/方向键', '可撤回'],
     },
     {
       id: 'minesweeper',
@@ -107,7 +101,6 @@ window.SITE_CONFIG = {
       storageKey: 'game_best_minesweeper_easy',
       bestPrefix: '9×9 最快: ',
       bestSuffix: 's',
-      tags: ['推理排雷', '三档难度'],
     },
     {
       id: 'slide',
@@ -121,7 +114,6 @@ window.SITE_CONFIG = {
       storageKey: 'game_best_slide_3',
       bestPrefix: '3×3 最少步: ',
       bestSuffix: ' 步',
-      tags: ['滑动拼图', '双尺寸'],
     },
     {
       id: 'memory',
@@ -135,7 +127,6 @@ window.SITE_CONFIG = {
       storageKey: 'game_best_memory_4',
       bestPrefix: '4×4 最少尝试: ',
       bestSuffix: ' 次',
-      tags: ['记忆配对', '双尺寸'],
     },
     {
       id: 'block-workshop',
@@ -146,7 +137,6 @@ window.SITE_CONFIG = {
       categoryName: '益智休闲',
       description: '用不同材质的方块自由搭建 3D 作品，保存后随时回来继续。',
       url: '/games/block-workshop/',
-      tags: ['自由搭建', '本地作品'],
     },
     {
       id: 'tetris',
@@ -159,7 +149,6 @@ window.SITE_CONFIG = {
       url: '/games/tetris/',
       storageKey: 'game_best_tetris_marathon',
       bestPrefix: '马拉松最高: ',
-      tags: ['经典方块', '三模式'],
     },
   ],
 };

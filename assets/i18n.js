@@ -79,12 +79,12 @@
 
     // ---- 分类页 ----
     '动作街机 🏀': 'Arcade 🏀',
-    '考验反应与手感的街机挑战，投篮、贪吃蛇、切水果与太空战机各有玩法，随时刷新自己的纪录。':
-      'Fast-paced arcade challenges—hoops, snake, fruit slicing and starfighter action to beat your personal best.',
+    '考验反应与手感的街机挑战，投篮、贪吃蛇、切水果、太空战机与坦克迷宫各有玩法，随时刷新自己的纪录。':
+      'Fast-paced arcade challenges—hoops, snake, fruit slicing, starfighter and tank maze action to beat your personal best.',
     '动作街机游戏': 'Arcade games',
     '益智休闲 🧩': 'Puzzle 🧩',
-    '轻松动脑、节奏自在的数字、逻辑、记忆与 3D 方块搭建游戏，适合碎片时间放松一下。':
-      'Relaxed brain-teasers and 3D block building—numbers, logic, memory and sandbox creation for a quick break.',
+    '轻松动脑、节奏自在的数字、逻辑、记忆、3D 方块搭建与俄罗斯方块游戏，适合碎片时间放松一下。':
+      'Relaxed brain-teasers, 3D block building and falling blocks—numbers, logic, memory and sandbox creation for a quick break.',
     '益智休闲游戏': 'Puzzle games',
 
     // ---- 404 ----
@@ -120,18 +120,8 @@
       'Flip two cards to find a match. Try to clear the board in fewer attempts.',
     '滑动数字方块，把 1–8 / 1–15 按顺序排好；支持 3×3 与 4×4 棋盘，步数越少越好。':
       'Slide the numbered tiles back into order (1–8 or 1–15); 3×3 and 4×4 boards, fewer moves is better.',
-    '连击挑战': 'Combo challenge',
-    '键盘/划屏': 'Keys / swipe',
-    '双模式': 'Two modes',
     '9×9 最快: ': '9×9 fastest: ',
     '4×4 最少尝试: ': '4×4 fewest attempts: ',
-    '滑动/方向键': 'Swipe / arrows',
-    '可撤回': 'Undo',
-    '推理排雷': 'Deduction',
-    '三档难度': '3 difficulties',
-    '记忆配对': 'Memory match',
-    '双尺寸': 'Two sizes',
-    '滑动拼图': 'Slide puzzle',
     '3×3 最少步: ': '3×3 fewest: ',
     '最高分: ': 'Best: ',
     '经典模式最高: ': 'Classic best: ',
@@ -394,7 +384,6 @@
     '继续游戏': 'Resume',
     '划屏或移动鼠标切开飞起的水果，连击爆汁、躲避炸弹，支持经典与 60 秒狂热双模式。':
       'Swipe or move your mouse to slice flying fruit, chain combos, dodge bombs, and play Classic or 60s Frenzy.',
-    '划屏/鼠标': 'Swipe / Mouse',
     '剩余生命': 'Lives',
     '{n} 条命': '{n} lives',
     '经典 3 命': 'Classic 3 Lives',
@@ -474,7 +463,6 @@
     '操控战机躲避弹幕、升级主炮火力、释放清屏脉冲并挑战每 5 波的星际 Boss。':
       'Pilot your starfighter, dodge bullet waves, upgrade cannons, fire EMP blasts, and battle bosses every 5 waves.',
     '标准模式最高: ': 'Standard best: ',
-    '拖动/键盘': 'Drag / Keys',
     '当前波次': 'Wave',
     'Boss 练习': 'Boss practice',
     '练习波次': 'Practice wave',
@@ -617,8 +605,6 @@
     '删除': 'Delete',
     '方向键选格 · Shift + 方向键旋转 · +/− 缩放 · 回车确认': 'Arrows aim · Shift + arrows orbit · +/− zoom · Enter edits',
     '用不同材质的方块自由搭建 3D 作品，保存后随时回来继续。': 'Build freely in 3D with different materials. Save your work and come back anytime.',
-    '自由搭建': 'Free building',
-    '本地作品': 'Local projects',
     '教学': 'Guide',
     '沉浸': 'Expand',
     '退出': 'Exit',
@@ -669,8 +655,6 @@
     '旋转与拼接下落方块消行得分，支持经典马拉松、40 行竞速与道具狂热三模式。':
       'Rotate and stack falling blocks to clear lines across Marathon, 40-Line Sprint and Party modes.',
     '马拉松最高: ': 'Marathon best: ',
-    '经典方块': 'Classic blocks',
-    '三模式': '3 modes',
     '模式切换': 'Game mode',
     '经典马拉松': 'Marathon',
     '40 行竞速': '40-Line Sprint',
@@ -841,8 +825,8 @@
       'A hit costs 1 HP and grants brief protection. Your own shots can hit you after bouncing.',
 
     // ---- 清数据 / 弹窗 ----
-    '将清除本站在此浏览器保存的游戏纪录、存档、外观、模式偏好、音效设置、教学记录和最近打开记录，且无法恢复。语言设置会保留。':
-      'This will permanently clear game records, saves, skins, mode preferences, sound settings, tutorial history and the recently opened game in this browser. Your language setting will be kept.',
+    '将清除本站在此浏览器保存的游戏纪录、存档、外观、模式偏好、音效设置、教学记录和最近打开记录，且无法恢复。语言与主题设置会保留。':
+      'This will permanently clear game records, saves, skins, mode preferences, sound settings, tutorial history and the recently opened game in this browser. Your language and theme settings will be kept.',
     '本地数据已清除': 'Local data cleared',
     '清除失败': "Couldn't clear local data",
     '浏览器禁止访问本地存储，请检查浏览器的隐私设置后重试。':

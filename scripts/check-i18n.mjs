@@ -8,7 +8,7 @@
  * - 页面静态 data-i18n / data-i18n-attr 的 key
  * - 页面 <title> / meta description（运行时按原文查词典）
  * - JS 里 I18N.t('...') / t('...') 的字面量 key
- * - games.js 里会渲染到卡片上的游戏名/简介/标签/分类/最高分前后缀
+ * - games.js 里会渲染到卡片上的游戏名/简介/分类/最高分前后缀
  * - 以上 key 是否都在英文词典里
  *
  * 说明：通过变量或三元表达式传入的 key（如 t(step.title)）不会被静态扫描到，
@@ -116,7 +116,6 @@ for (const game of config.games || []) {
   addKey(game.title);
   addKey(game.description);
   addKey(game.categoryName);
-  (game.tags || []).forEach(addKey);
   if (game.bestPrefix) addKey(game.bestPrefix);
   if (game.bestSuffix) addKey(game.bestSuffix);
 }
