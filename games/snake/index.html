@@ -281,6 +281,7 @@
   <script src="/assets/games.js"></script>
   <script src="/assets/game-kit.js"></script>
   <script src="/assets/game-art.js"></script>
+  <script src="/assets/game-rules.js"></script>
   <script>
     (function () {
       const t = (key, params) => (window.I18N ? I18N.t(key, params) : key);
@@ -373,20 +374,7 @@
 
       // 枚举所有空格后随机选取，避免蛇接近占满棋盘时随机撞格造成死循环；无空格时返回 null
       function randomEmptyCell({ preferInterior = false } = {}) {
-        const empty = [];
-        for (let y = 0; y < GRID; y++) {
-          for (let x = 0; x < GRID; x++) {
-            const onSnake = snake.some((s) => s.x === x && s.y === y);
-            const onFood = food && food.x === x && food.y === y;
-            const onBonus = bonusItem && bonusItem.x === x && bonusItem.y === y;
-            if (!onSnake && !onFood && !onBonus) empty.push({ x, y });
-          }
-        }
-        const interior = preferInterior
-          ? empty.filter(({ x, y }) => x > 0 && x < GRID - 1 && y > 0 && y < GRID - 1)
-          : empty;
-        const pool = interior.length ? interior : empty;
-        return pool.length ? pool[Math.floor(Math.random() * pool.length)] : null;
+        return GameRules.snakeRandomEmptyCell(GRID, snake, food, bonusItem, { preferInterior });
       }
 
       function randomAppleCell() {
@@ -496,32 +484,17 @@
         if (!started || paused || gameOver) return;
         if (nextDirs.length > 0) dir = nextDirs.shift();
 
-        let nx = snake[0].x + dir.x;
-        let ny = snake[0].y + dir.y;
-
-        if (wrapMode) {
-          nx = (nx + GRID) % GRID;
-          ny = (ny + GRID) % GRID;
-        } else if (nx < 0 || nx >= GRID || ny < 0 || ny >= GRID) {
+        const step = GameRules.snakeNextStep(GRID, snake, dir, wrapMode, food, bonusItem);
+        if (step.collision) {
           endGame();
           return;
         }
 
-        // 不吃果子时尾巴本步会移开，允许蛇头进入尾巴当前所在格（经典规则）
-        const willGrow =
-          (food && nx === food.x && ny === food.y) ||
-          (bonusItem && nx === bonusItem.x && ny === bonusItem.y);
-        const bodyToCheck = willGrow ? snake : snake.slice(0, -1);
-        if (bodyToCheck.some((s) => s.x === nx && s.y === ny)) {
-          endGame();
-          return;
-        }
-
-        const head = { x: nx, y: ny };
+        const head = step.head;
         snake.unshift(head);
 
         let grew = false;
-        if (food && head.x === food.x && head.y === food.y) {
+        if (step.ateFood) {
           grew = true;
           eatenCount += 1;
           score += 10;
@@ -548,7 +521,7 @@
               };
             }
           }
-        } else if (bonusItem && head.x === bonusItem.x && head.y === bonusItem.y) {
+        } else if (step.ateBonus) {
           grew = true;
           if (bonusItem.type === 'star') {
             score += 30;
@@ -592,7 +565,7 @@
         }
 
         updateSlowStatus();
-        const delay = Math.max(82, 185 - Math.floor(score / 25) * 6) + speedOffset;
+        const delay = GameRules.snakeTickDelay(score, speedOffset);
         if (speedOffset > 0) speedOffset = Math.max(0, speedOffset - 0.6);
         timer = setTimeout(tick, delay);
       }

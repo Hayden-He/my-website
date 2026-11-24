@@ -240,6 +240,7 @@
   <script src="/assets/i18n.js"></script>
   <script src="/assets/games.js"></script>
   <script src="/assets/game-kit.js"></script>
+  <script src="/assets/game-rules.js"></script>
   <script>
     (function () {
       const t = (key, params) => (window.I18N ? I18N.t(key, params) : key);
@@ -355,22 +356,8 @@
         }, 1000);
       }
 
-      function shuffle(items) {
-        for (let i = items.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [items[i], items[j]] = [items[j], items[i]];
-        }
-        return items;
-      }
-
       function buildDeck(size) {
-        const pairs = MODES[size].pairs;
-        const items = [];
-        for (let i = 0; i < pairs; i++) {
-          items.push({ icon: ICONS[i].id, name: ICONS[i].name });
-          items.push({ icon: ICONS[i].id, name: ICONS[i].name });
-        }
-        return shuffle(items);
+        return GameRules.buildMemoryDeck(ICONS, MODES[size].pairs);
       }
 
       function renderBoard() {
@@ -519,7 +506,7 @@
         moves += 1;
         updateHud();
 
-        if (first.dataset.icon === second.dataset.icon) {
+        if (GameRules.isMemoryPairMatch(first.dataset.icon, second.dataset.icon)) {
           const a = first;
           const b = second;
           first = null;

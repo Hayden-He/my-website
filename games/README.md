@@ -11,7 +11,7 @@
 
 - `assets/style.css` 管理大厅、导航、卡片、页脚和通用弹窗。游戏页共用 `assets/game-shell.css` 提供的 HUD、工具栏、结算遮罩和教学。
 - `GameKit` 提供纪录、音效按钮、滑动识别、键盘守卫、切后台处理及推荐。使用 `GameKit.bindSwipe()` 时，将 `touch-action: none` 限定在滑动游戏的操作区域。
-- `assets/game-rules.js` 提供投篮计分与碰撞、2048 合并和数字华容道洗牌。规则可用固定输入单独校验。
+- `assets/game-rules.js` 提供投篮计分与碰撞、2048 合并、数字华容道洗牌，以及扫雷、贪吃蛇与记忆翻牌核心规则。规则可用固定输入单独校验。
 - 重开等会丢失进度的操作使用 `SiteData.confirmDialog`。结算应停止棋盘输入，键盘操作时保留可见焦点，切到后台应暂停实时游戏。
 - 静态双语文案用 `data-i18n`，属性用 `data-i18n-attr`。动态文案用 `I18N.t()`，并在 `i18n:change` 时重绘。通过变量传入的词条需要额外核对。
 - 动态颜色（如 Canvas 背景或网格）需读取 `document.documentElement.dataset.theme` 并在 `theme:change` 时重绘。
@@ -32,7 +32,7 @@
 
 ## Cloudflare Pages
 
-- 构建命令为 `node scripts/build-site.mjs`，输出目录为 `dist`。构建先执行结构和双语校验，产物只包含正式页面、站点资源和响应头配置。
+- 构建命令为 `node scripts/build-site.mjs`，输出目录为 `dist`。构建先执行结构和双语校验，产物只包含正式页面、站点资源和响应头配置；构建后可运行 `node scripts/smoke-browser.mjs` 对 `dist` 执行无头 Chrome 全站冒烟校验。
 - 分类链接与 canonical 使用 `/categories/<id>`。构建保留 `categories/<id>.html` 文件，由 Pages 处理无扩展名路由。首页、两个分类和游戏清单中的正式游戏进入站点地图，404 和模板除外。
 - 用 `node scripts/sync-site.mjs [已更新页面的 URL 路径…]` 从游戏清单同步 canonical、分享标签、站点地图及内联图标。参数仅用于更新指定页面的 `lastmod`。
 - 构建按资源内容生成带指纹的 URL，并写入供「检查更新」使用的构建编号 `site-build`。固定 URL 的分享图可重新验证。页脚与游戏底栏提供基于受管存储前缀的 JSON 备份导出与导入恢复。

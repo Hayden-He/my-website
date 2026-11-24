@@ -159,3 +159,98 @@ test('hoopBounce handles misses, separating motion, reflection, and vx clamping'
   const clamped = GameRules.hoopBounce({ x: 5, y: 0, vx: -100, vy: 0 }, 0, 0, 10);
   assert.equal(clamped.vx, 65);
 });
+
+test('minesweeper board generation keeps 3x3 start zone safe, computes adj, and flood-fills safely', () => {
+  assert.deepEqual(GameRules.mineNeighbors(9, 0, 0), [[0, 1], [1, 0], [1, 1]]);
+  assert.equal(GameRules.mineNeighbors(9, 4, 4).length, 8);
+
+  const board = GameRules.createMineBoard(9);
+  assert.equal(board.length, 9);
+  assert.equal(board[0].length, 9);
+
+  const rng = makeSeededRng(20261124);
+  GameRules.placeMinesOnBoard(board, 10, 4, 4, rng);
+
+  let mines = 0;
+  for (let r = 0; r < 9; r += 1) {
+    for (let c = 0; c < 9; c += 1) {
+      if (Math.abs(r - 4) <= 1 && Math.abs(c - 4) <= 1) {
+        assert.equal(board[r][c].mine, false, 'start 3x3 neighborhood must stay mine-free');
+      }
+      if (board[r][c].mine) mines += 1;
+    }
+  }
+  assert.equal(mines, 10);
+
+  // Spot check adj accuracy
+  const checkCell = board.flat().find((cell) => !cell.mine && cell.adj > 0);
+  assert.ok(checkCell);
+
+  // Flood fill stops at flagged/mine/numbered cells
+  const floodBoard = GameRules.createMineBoard(4);
+  floodBoard[3][3].mine = true;
+  floodBoard[2][2].adj = 1;
+  floodBoard[2][3].adj = 1;
+  floodBoard[3][2].adj = 1;
+  floodBoard[0][1].flag = true;
+  const opened = GameRules.revealMineSafeArea(floodBoard, 0, 0);
+  assert.equal(floodBoard[0][0].open, true);
+  assert.equal(floodBoard[0][1].open, false); // skipped flagged cell
+  assert.equal(floodBoard[3][3].open, false); // skipped mine cell
+  assert.equal(floodBoard[2][2].open, true);  // numbered border cell opens and stops cascade
+  assert.equal(opened, 14);
+});
+
+test('snake helpers pick valid empty cells, detect wall/self/tail movement, and scale tick delay', () => {
+  const rng = makeSeededRng(12345);
+  const snake = [{ x: 2, y: 2 }, { x: 1, y: 2 }, { x: 0, y: 2 }];
+  const pos = GameRules.snakeRandomEmptyCell(5, snake, { x: 3, y: 3 }, null, { preferInterior: true }, rng);
+  assert.ok(pos && pos.x > 0 && pos.x < 4 && pos.y > 0 && pos.y < 4);
+
+  // Full board returns null
+  const fullSnake = [];
+  for (let y = 0; y < 2; y += 1) {
+    for (let x = 0; x < 2; x += 1) fullSnake.push({ x, y });
+  }
+  assert.equal(GameRules.snakeRandomEmptyCell(2, fullSnake, null, null, {}, rng), null);
+
+  // Wall collision in classic mode vs wrap in wrap mode
+  const edgeSnake = [{ x: 0, y: 2 }, { x: 1, y: 2 }];
+  assert.equal(GameRules.snakeNextStep(5, edgeSnake, { x: -1, y: 0 }, false, null, null).collision, 'wall');
+  const wrapped = GameRules.snakeNextStep(5, edgeSnake, { x: -1, y: 0 }, true, null, null);
+  assert.equal(wrapped.collision, null);
+  assert.deepEqual(wrapped.head, { x: 4, y: 2 });
+
+  // Moving into departing tail cell is legal when not growing, illegal when growing or hitting mid-body
+  const loopSnake = [{ x: 1, y: 1 }, { x: 2, y: 1 }, { x: 2, y: 2 }, { x: 1, y: 2 }];
+  assert.equal(GameRules.snakeNextStep(5, loopSnake, { x: 0, y: 1 }, false, null, null).collision, null);
+  assert.equal(GameRules.snakeNextStep(5, loopSnake, { x: 0, y: 1 }, false, { x: 1, y: 2 }, null).collision, 'self');
+  assert.equal(GameRules.snakeNextStep(5, loopSnake, { x: 1, y: 0 }, false, null, null).collision, 'self');
+
+  // Growth detection and speed delay floor
+  const growStep = GameRules.snakeNextStep(5, edgeSnake, { x: 0, y: -1 }, false, { x: 0, y: 1 }, null);
+  assert.equal(growStep.ateFood, true);
+  assert.equal(growStep.willGrow, true);
+
+  assert.equal(GameRules.snakeTickDelay(0, 0), 185);
+  assert.equal(GameRules.snakeTickDelay(100, 0), 161);
+  assert.equal(GameRules.snakeTickDelay(1000, 28), 110);
+});
+
+test('memory deck builder creates balanced shuffled pairs and match helper checks pairs', () => {
+  const icons = [
+    { id: 'apple', name: '苹果' },
+    { id: 'orange', name: '橙子' },
+    { id: 'lemon', name: '柠檬' },
+    { id: 'grape', name: '葡萄' },
+  ];
+  const deck = GameRules.buildMemoryDeck(icons, 3, makeSeededRng(77));
+  assert.equal(deck.length, 6);
+  const counts = {};
+  for (const card of deck) counts[card.icon] = (counts[card.icon] || 0) + 1;
+  assert.deepEqual(counts, { apple: 2, orange: 2, lemon: 2 });
+
+  assert.equal(GameRules.isMemoryPairMatch('apple', 'apple'), true);
+  assert.equal(GameRules.isMemoryPairMatch('apple', 'orange'), false);
+  assert.equal(GameRules.isMemoryPairMatch('', ''), false);
+});

@@ -290,6 +290,7 @@
   <script src="/assets/i18n.js"></script>
   <script src="/assets/games.js"></script>
   <script src="/assets/game-kit.js"></script>
+  <script src="/assets/game-rules.js"></script>
   <script>
     (function () {
       const t = (key, params) => (window.I18N ? I18N.t(key, params) : key);
@@ -420,40 +421,11 @@
       }
 
       function neighbors(r, c) {
-        const res = [];
-        for (let dr = -1; dr <= 1; dr++) {
-          for (let dc = -1; dc <= 1; dc++) {
-            if (dr === 0 && dc === 0) continue;
-            const nr = r + dr;
-            const nc = c + dc;
-            if (nr >= 0 && nr < size && nc >= 0 && nc < size) res.push([nr, nc]);
-          }
-        }
-        return res;
+        return GameRules.mineNeighbors(size, r, c);
       }
 
       function placeMines(safeR, safeC) {
-        const candidates = [];
-        for (let r = 0; r < size; r++) {
-          for (let c = 0; c < size; c++) {
-            if (Math.abs(r - safeR) <= 1 && Math.abs(c - safeC) <= 1) continue;
-            candidates.push([r, c]);
-          }
-        }
-        for (let i = candidates.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [candidates[i], candidates[j]] = [candidates[j], candidates[i]];
-        }
-        for (let i = 0; i < totalMines; i++) {
-          const [mr, mc] = candidates[i];
-          board[mr][mc].mine = true;
-        }
-        for (let r = 0; r < size; r++) {
-          for (let c = 0; c < size; c++) {
-            if (board[r][c].mine) continue;
-            board[r][c].adj = neighbors(r, c).filter(([nr, nc]) => board[nr][nc].mine).length;
-          }
-        }
+        GameRules.placeMinesOnBoard(board, totalMines, safeR, safeC);
       }
 
       function initGame() {
@@ -474,14 +446,7 @@
         endSec = 0;
         endBest = 0;
 
-        board = Array.from({ length: size }, () =>
-          Array.from({ length: size }, () => ({
-            mine: false,
-            open: false,
-            flag: false,
-            adj: 0,
-          }))
-        );
+        board = GameRules.createMineBoard(size);
 
         diffBtns.forEach((button) => {
           const active = button.dataset.diff === diff;
@@ -496,21 +461,8 @@
       }
 
       function revealSafeArea(startR, startC) {
-        const queue = [[startR, startC]];
-        let opened = 0;
-        while (queue.length > 0) {
-          const [r, c] = queue.shift();
-          const cell = board[r][c];
-          if (cell.open || cell.flag || cell.mine) continue;
-          cell.open = true;
-          opened += 1;
-          openedCount += 1;
-          if (cell.adj === 0) {
-            neighbors(r, c).forEach(([nr, nc]) => {
-              if (!board[nr][nc].open && !board[nr][nc].flag) queue.push([nr, nc]);
-            });
-          }
-        }
+        const opened = GameRules.revealMineSafeArea(board, startR, startC);
+        openedCount += opened;
         return opened;
       }
 

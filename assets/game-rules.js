@@ -109,9 +109,141 @@
     return { x, y, vx: Math.min(65, ball.vx - impulse * nx), vy: ball.vy - impulse * ny };
   }
 
+  function mineNeighbors(size, r, c) {
+    const res = [];
+    for (let dr = -1; dr <= 1; dr += 1) {
+      for (let dc = -1; dc <= 1; dc += 1) {
+        if (dr === 0 && dc === 0) continue;
+        const nr = r + dr;
+        const nc = c + dc;
+        if (nr >= 0 && nr < size && nc >= 0 && nc < size) res.push([nr, nc]);
+      }
+    }
+    return res;
+  }
+
+  function createMineBoard(size) {
+    return Array.from({ length: size }, () =>
+      Array.from({ length: size }, () => ({
+        mine: false,
+        open: false,
+        flag: false,
+        adj: 0,
+      }))
+    );
+  }
+
+  function placeMinesOnBoard(board, totalMines, safeR, safeC, random = Math.random) {
+    const size = board.length;
+    const candidates = [];
+    for (let r = 0; r < size; r += 1) {
+      for (let c = 0; c < size; c += 1) {
+        if (Math.abs(r - safeR) <= 1 && Math.abs(c - safeC) <= 1) continue;
+        candidates.push([r, c]);
+      }
+    }
+    for (let i = candidates.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(random() * (i + 1));
+      [candidates[i], candidates[j]] = [candidates[j], candidates[i]];
+    }
+    const count = Math.min(totalMines, candidates.length);
+    for (let i = 0; i < count; i += 1) {
+      const [mr, mc] = candidates[i];
+      board[mr][mc].mine = true;
+    }
+    for (let r = 0; r < size; r += 1) {
+      for (let c = 0; c < size; c += 1) {
+        if (board[r][c].mine) continue;
+        board[r][c].adj = mineNeighbors(size, r, c).filter(([nr, nc]) => board[nr][nc].mine).length;
+      }
+    }
+    return board;
+  }
+
+  function revealMineSafeArea(board, startR, startC) {
+    const size = board.length;
+    const queue = [[startR, startC]];
+    let opened = 0;
+    while (queue.length > 0) {
+      const [r, c] = queue.shift();
+      const cell = board[r][c];
+      if (cell.open || cell.flag || cell.mine) continue;
+      cell.open = true;
+      opened += 1;
+      if (cell.adj === 0) {
+        mineNeighbors(size, r, c).forEach(([nr, nc]) => {
+          if (!board[nr][nc].open && !board[nr][nc].flag) queue.push([nr, nc]);
+        });
+      }
+    }
+    return opened;
+  }
+
+  function snakeRandomEmptyCell(gridSize, snake, food, bonusItem, options, random = Math.random) {
+    const preferInterior = !!(options && options.preferInterior);
+    const empty = [];
+    for (let y = 0; y < gridSize; y += 1) {
+      for (let x = 0; x < gridSize; x += 1) {
+        const onSnake = snake.some((s) => s.x === x && s.y === y);
+        const onFood = food && food.x === x && food.y === y;
+        const onBonus = bonusItem && bonusItem.x === x && bonusItem.y === y;
+        if (!onSnake && !onFood && !onBonus) empty.push({ x, y });
+      }
+    }
+    const interior = preferInterior
+      ? empty.filter(({ x, y }) => x > 0 && x < gridSize - 1 && y > 0 && y < gridSize - 1)
+      : empty;
+    const pool = interior.length ? interior : empty;
+    return pool.length ? pool[Math.floor(random() * pool.length)] : null;
+  }
+
+  function snakeNextStep(gridSize, snake, dir, wrapMode, food, bonusItem) {
+    let nx = snake[0].x + dir.x;
+    let ny = snake[0].y + dir.y;
+    if (wrapMode) {
+      nx = (nx + gridSize) % gridSize;
+      ny = (ny + gridSize) % gridSize;
+    } else if (nx < 0 || nx >= gridSize || ny < 0 || ny >= gridSize) {
+      return { collision: 'wall', head: { x: nx, y: ny }, ateFood: false, ateBonus: false, willGrow: false };
+    }
+
+    const ateFood = !!(food && nx === food.x && ny === food.y);
+    const ateBonus = !!(bonusItem && nx === bonusItem.x && ny === bonusItem.y);
+    const willGrow = ateFood || ateBonus;
+    const bodyToCheck = willGrow ? snake : snake.slice(0, -1);
+    if (bodyToCheck.some((s) => s.x === nx && s.y === ny)) {
+      return { collision: 'self', head: { x: nx, y: ny }, ateFood, ateBonus, willGrow };
+    }
+    return { collision: null, head: { x: nx, y: ny }, ateFood, ateBonus, willGrow };
+  }
+
+  function snakeTickDelay(score, speedOffset) {
+    return Math.max(82, 185 - Math.floor(score / 25) * 6) + speedOffset;
+  }
+
+  function buildMemoryDeck(icons, pairs, random = Math.random) {
+    const items = [];
+    for (let i = 0; i < pairs; i += 1) {
+      items.push({ icon: icons[i].id, name: icons[i].name });
+      items.push({ icon: icons[i].id, name: icons[i].name });
+    }
+    for (let i = items.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(random() * (i + 1));
+      [items[i], items[j]] = [items[j], items[i]];
+    }
+    return items;
+  }
+
+  function isMemoryPairMatch(firstIcon, secondIcon) {
+    return !!firstIcon && firstIcon === secondIcon;
+  }
+
   window.GameRules = {
     merge2048Line, canMove2048,
     solvedSlideBoard, slideNeighbors, shuffleSlideBoard,
     scoreHoop, hoopBounce,
+    mineNeighbors, createMineBoard, placeMinesOnBoard, revealMineSafeArea,
+    snakeRandomEmptyCell, snakeNextStep, snakeTickDelay,
+    buildMemoryDeck, isMemoryPairMatch,
   };
 })();
