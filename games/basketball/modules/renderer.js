@@ -960,8 +960,8 @@ export function createBasketballRenderer({ ctx, dpr, getState, getPractice, getS
         ctx.stroke();
         if (badgeIcon && window.GameArt) {
           const iconX = W - tw - 14 + 15;
-          if (badgeIcon === 'star') GameArt.drawStar(ctx, iconX, 28, 7);
-          else GameArt.drawFire(ctx, iconX, 28, 7);
+          if (badgeIcon === 'star') window.GameArt.drawStar(ctx, iconX, 28, 7);
+          else window.GameArt.drawFire(ctx, iconX, 28, 7);
         }
         ctx.fillStyle = badgeColor;
         ctx.textAlign = 'center';

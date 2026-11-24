@@ -1,7 +1,7 @@
 import { W, H, SKINS } from './rules.js';
 
 export function createFruitRenderer({ ctx, getState }) {
-  let skin, freezeTimer, feverActiveTimer, items, pendingBombs, halves, particles;
+  let skin, hasShield, freezeTimer, feverActiveTimer, items, pendingBombs, halves, particles;
   let splatters, floatTexts, bolts, shockwaves, slashes, trail, bombBlast;
   let shakeTimer, shakeMag, flashAlpha, flashColor;
 
@@ -1238,7 +1238,7 @@ export function createFruitRenderer({ ctx, getState }) {
   return {
     draw() {
       ({
-        skin, freezeTimer, feverActiveTimer, items, pendingBombs, halves, particles,
+        skin, hasShield, freezeTimer, feverActiveTimer, items, pendingBombs, halves, particles,
         splatters, floatTexts, bolts, shockwaves, slashes, trail, bombBlast,
         shakeTimer, shakeMag, flashAlpha, flashColor,
       } = getState());

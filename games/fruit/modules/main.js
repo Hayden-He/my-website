@@ -148,7 +148,7 @@ window.addEventListener('resize', syncCanvasDpr);
 const renderer = createFruitRenderer({
   ctx,
   getState: () => ({
-    skin, freezeTimer, feverActiveTimer, items, pendingBombs, halves, particles,
+    skin, hasShield, freezeTimer, feverActiveTimer, items, pendingBombs, halves, particles,
     splatters, floatTexts, bolts, shockwaves, slashes, trail, bombBlast,
     shakeTimer, shakeMag, flashAlpha, flashColor,
   }),
@@ -1324,6 +1324,7 @@ helpBtn.addEventListener('click', () => openTutorial(true));
 
 document.addEventListener('keydown', (event) => {
   if (window.GameKit.shouldIgnoreGameKey(event, { ignoreOnControl: true })) return;
+  if (window.SiteData?.isDialogOpen?.()) return;
   if (window.GameKit.isTutorialOpen()) return;
   if (event.code === 'Space' || event.code === 'Enter') {
     event.preventDefault();
