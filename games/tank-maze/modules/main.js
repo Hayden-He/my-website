@@ -6,6 +6,7 @@ const { GameKit, SiteData, I18N } = window;
 const t = (key, params) => I18N.t(key, params);
 const byId = (id) => document.getElementById(id);
 const SETTINGS_KEY = 'game_mode_tank-maze';
+const WINS_KEY = 'game_best_tank-maze_wins';
 const MAP_COPY = {
   lanes: ['长直道', '沿长廊对射，也可以从侧门绕过去。'],
   corners: ['连续拐角', '从多个入口穿过交叉区，利用墙角反弹。'],
@@ -238,7 +239,13 @@ function renderState() {
     primaryButton.textContent = t('下一局');
   } else if (phase === 'finished') {
     overlayTitle.textContent = match.winner === 0 ? t('你赢了比赛') : t('人机赢了比赛');
-    overlayNote.textContent = t('最终比分 {player} 比 {ai}', { player: match.scores[0], ai: match.scores[1] });
+    overlayNote.textContent = match.winner === 0
+      ? t('最终比分 {player} 比 {ai} · 累计胜场 {wins} 局', {
+          player: match.scores[0],
+          ai: match.scores[1],
+          wins: GameKit.readBest(WINS_KEY),
+        })
+      : t('最终比分 {player} 比 {ai}', { player: match.scores[0], ai: match.scores[1] });
     primaryButton.textContent = t('原图再战');
   }
 }
@@ -258,7 +265,10 @@ function frame(timestamp) {
       stepMatch(match, [getPlayerInput(), ai(match, STEP)], STEP);
       renderer.addEvents(match.events);
       playEventSound(match.events);
-      if (match.result) setPhase(match.winner === null ? 'round-end' : 'finished', primaryButton);
+      if (match.result) {
+        if (match.winner === 0) GameKit.writeBest(WINS_KEY, GameKit.readBest(WINS_KEY) + 1);
+        setPhase(match.winner === null ? 'round-end' : 'finished', primaryButton);
+      }
       else if (match.events.length) {
         if (match.events.some(({ type }) => type === 'hit' || type === 'repair')) renderHealth();
         if (match.events.some(({ type }) => type === 'repair-spawn' || type === 'repair')) renderRoundNote();

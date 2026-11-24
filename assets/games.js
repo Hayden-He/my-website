@@ -76,6 +76,9 @@ window.SITE_CONFIG = {
       categoryName: '动作街机',
       description: '驾驶自选外观的坦克，在五张迷宫地图中绕行、打回弹，先赢两局。',
       url: '/games/tank-maze/',
+      storageKey: 'game_best_tank-maze_wins',
+      bestPrefix: '胜场: ',
+      bestSuffix: ' 局',
     },
     {
       id: '2048',

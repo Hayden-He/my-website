@@ -59,6 +59,93 @@
     }
   }
 
+  function getTetrisResume() {
+    try {
+      const savedMode = localStorage.getItem('game_mode_tetris');
+      if (savedMode === 'sprint' || savedMode === 'party') return null;
+      const raw = localStorage.getItem('game_save_tetris_marathon');
+      if (!raw) return null;
+      const data = JSON.parse(raw);
+      if (!data || data.version !== 1 || data.mode !== 'marathon') return null;
+      if (!Array.isArray(data.board) || data.board.length !== 22 ||
+        !data.board.every((row) => Array.isArray(row) && row.length === 10)) return null;
+      if (!data.active || typeof data.active.type !== 'string' ||
+        !Number.isInteger(data.active.rot) || data.active.rot < 0 || data.active.rot > 3 ||
+        !Number.isInteger(data.active.x) || !Number.isInteger(data.active.y)) return null;
+      if (!Array.isArray(data.queue) || data.queue.length < 3) return null;
+      if (!Number.isSafeInteger(data.score) || data.score < 0 ||
+        !Number.isSafeInteger(data.lines) || data.lines < 0) return null;
+      if (!((Number.isSafeInteger(data.piecesPlaced) && data.piecesPlaced > 0) ||
+        data.score > 0 || data.lines > 0)) return null;
+      return { score: data.score, lines: data.lines };
+    } catch {
+      return null;
+    }
+  }
+
+  function getBlockWorkshopProjectCount() {
+    let count = 0;
+    try {
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (!key || !key.startsWith('game_save_block-workshop_')) continue;
+        try {
+          const raw = localStorage.getItem(key);
+          if (!raw) continue;
+          const record = JSON.parse(raw);
+          if (record && (record.version === 1 || record.version === 2) &&
+            Array.isArray(record.cells) && typeof record.name === 'string') {
+            count += 1;
+          }
+        } catch {}
+      }
+    } catch {
+      return 0;
+    }
+    return count;
+  }
+
+  function getResumeInfo(game) {
+    if (!game) return null;
+    if (game.id === '2048') {
+      const resume = get2048Resume();
+      if (!resume) return null;
+      const board = resume.size + '×' + resume.size;
+      return {
+        label: resume.score > 0
+          ? t('继续上局 · {board} {score} 分 →', { board, score: resume.score })
+          : t('继续上局 · {board} →', { board }),
+        title: t('继续上次未完成的棋局'),
+      };
+    }
+    if (game.id === 'tetris') {
+      const resume = getTetrisResume();
+      if (!resume) return null;
+      return {
+        label: resume.score > 0
+          ? t('继续上局 · 马拉松 {score} 分 →', { score: resume.score })
+          : t('继续上局 · 马拉松 →'),
+        title: t('继续上次未完成的棋局'),
+      };
+    }
+    return null;
+  }
+
+  function getCardMetaText(game) {
+    if (!game) return null;
+    const best = getBestScore(game.storageKey);
+    if (best !== null) {
+      const prefix = t(game.bestPrefix !== undefined ? game.bestPrefix : '最高分: ');
+      const suffix = game.bestSuffix ? t(game.bestSuffix) : '';
+      return prefix + best + suffix;
+    }
+    if (game.id === 'block-workshop') {
+      const count = getBlockWorkshopProjectCount();
+      if (count > 0) return t('已保存 {n} 个作品', { n: count });
+    }
+    return null;
+  }
+
   function createEl(tag, className, text) {
     const el = document.createElement(tag);
     if (className) el.className = className;
@@ -185,26 +272,18 @@
 
     card.querySelector('.game-meta')?.remove();
     const btn = card.querySelector('.play-btn');
-    const best = getBestScore(game.storageKey);
-    if (best !== null) {
-      const prefix = t(game.bestPrefix !== undefined ? game.bestPrefix : '最高分: ');
-      const suffix = game.bestSuffix ? t(game.bestSuffix) : '';
+    const metaText = getCardMetaText(game);
+    if (metaText !== null) {
       const meta = createEl('div', 'game-meta');
-      meta.appendChild(createEl('span', 'best-score', prefix + best + suffix));
+      meta.appendChild(createEl('span', 'best-score', metaText));
       card.insertBefore(meta, btn);
     }
 
-    const resume = game.id === '2048' ? get2048Resume() : null;
-    let btnLabel = t('开始游戏 →');
-    if (resume) {
-      const board = resume.size + '×' + resume.size;
-      btnLabel = resume.score > 0
-        ? t('继续上局 · {board} {score} 分 →', { board, score: resume.score })
-        : t('继续上局 · {board} →', { board });
-    }
+    const resume = getResumeInfo(game);
+    const btnLabel = resume ? resume.label : t('开始游戏 →');
     btn.textContent = btnLabel;
     btn.setAttribute('aria-label', t('{game}：{action}', { game: t(game.title), action: btnLabel }));
-    if (resume) btn.title = t('继续上次未完成的棋局');
+    if (resume) btn.title = resume.title;
     else btn.removeAttribute('title');
 
     if (!card.dataset.bound) {
@@ -245,7 +324,7 @@
     );
 
     if (countEl) {
-      const recorded = games.filter((g) => getBestScore(g.storageKey) !== null).length;
+      const recorded = games.filter((g) => getCardMetaText(g) !== null).length;
       countEl.textContent = recorded > 0
         ? t('共 {n} 款 · 已留纪录 {recorded} 款', { n: games.length, recorded })
         : t('共 {n} 款', { n: games.length });
@@ -281,7 +360,7 @@
     }
     const title = t(game.title);
     link.href = game.url;
-    link.textContent = game.id === '2048' && get2048Resume()
+    link.textContent = getResumeInfo(game)
       ? t('{game} · 继续上局 →', { game: title })
       : title + ' →';
   }
@@ -341,5 +420,13 @@
         renderRecentGame();
       }
     });
+  };
+
+  window.SiteLobby = {
+    getResumeInfo,
+    getCardMetaText,
+    get2048Resume,
+    getTetrisResume,
+    getBlockWorkshopProjectCount,
   };
 })();
