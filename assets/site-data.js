@@ -119,17 +119,103 @@
     } catch {}
   }
 
+  function isManagedKey(key) {
+    return typeof key === 'string' &&
+      (EXACT_KEYS.includes(key) || PREFIXES.some((p) => key.startsWith(p)));
+  }
+
   function clearAll() {
     try {
       const keys = [];
       for (let i = 0; i < localStorage.length; i++) {
         const k = localStorage.key(i);
-        if (k && (EXACT_KEYS.includes(k) || PREFIXES.some((p) => k.startsWith(p)))) keys.push(k);
+        if (isManagedKey(k)) keys.push(k);
       }
       keys.forEach((k) => localStorage.removeItem(k));
       return true;
     } catch {
       return false;
+    }
+  }
+
+  function exportData() {
+    const data = {};
+    let count = 0;
+    try {
+      const keys = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (isManagedKey(k)) keys.push(k);
+      }
+      keys.sort();
+      keys.forEach((k) => {
+        const val = localStorage.getItem(k);
+        if (typeof val === 'string') {
+          data[k] = val;
+          count += 1;
+        }
+      });
+    } catch {}
+    const payload = {
+      app: 'little-playground',
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      data,
+    };
+    return { payload, json: JSON.stringify(payload, null, 2), count };
+  }
+
+  function parseBackup(text) {
+    if (typeof text !== 'string' || !text.trim()) {
+      return { ok: false, error: t('备份文件格式无效，请选择有效的 JSON 备份文件') };
+    }
+    let parsed;
+    try {
+      parsed = JSON.parse(text);
+    } catch {
+      return { ok: false, error: t('备份文件格式无效，请选择有效的 JSON 备份文件') };
+    }
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed) ||
+      parsed.app !== 'little-playground' || parsed.version !== 1 ||
+      !parsed.data || typeof parsed.data !== 'object' || Array.isArray(parsed.data)) {
+      return { ok: false, error: t('无法识别的备份文件或版本不受支持') };
+    }
+    const entries = [];
+    Object.keys(parsed.data).sort().forEach((k) => {
+      const val = parsed.data[k];
+      if (isManagedKey(k) && typeof val === 'string') {
+        entries.push([k, val]);
+      }
+    });
+    if (entries.length === 0) {
+      return { ok: false, error: t('备份文件中没有可恢复的游戏数据') };
+    }
+    return { ok: true, entries, count: entries.length };
+  }
+
+  function importData(text) {
+    const parsed = parseBackup(text);
+    if (!parsed.ok) return parsed;
+    const snapshot = [];
+    try {
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (isManagedKey(k)) {
+          const prev = localStorage.getItem(k);
+          if (typeof prev === 'string') snapshot.push([k, prev]);
+        }
+      }
+      if (!clearAll()) {
+        return { ok: false, error: t('浏览器禁止访问本地存储，请检查浏览器的隐私设置后重试。') };
+      }
+      parsed.entries.forEach(([k, val]) => localStorage.setItem(k, val));
+      return { ok: true, count: parsed.count };
+    } catch {
+      try {
+        clearAll();
+        snapshot.forEach(([k, val]) => localStorage.setItem(k, val));
+      } catch {}
+      return { ok: false, error: t('写入本地存储失败，可能是存储空间不足') };
     }
   }
 
@@ -189,17 +275,8 @@
 
       dialog.appendChild(title);
       dialog.appendChild(message);
-      dialog.appendChild(actions);
-      mask.appendChild(dialog);
-      document.body.appendChild(mask);
-
-      const focusTargets = (hasCancel ? [cancelBtn, confirmBtn] : [confirmBtn]);
-      const first = focusTargets[0];
-      const last = focusTargets[focusTargets.length - 1];
-
-      activeDialog = { mask };
-
-      function close(result) {
+      let closeRef = null;
+      const close = (result) => {
         if (!activeDialog) return;
         activeDialog = null;
         document.body.style.overflow = prevOverflow;
@@ -209,7 +286,21 @@
           try { lastFocus.focus(); } catch {}
         }
         resolve(result);
+      };
+      closeRef = close;
+      if (typeof opts.renderExtra === 'function') {
+        const extra = opts.renderExtra(closeRef);
+        if (extra) dialog.appendChild(extra);
       }
+      dialog.appendChild(actions);
+      mask.appendChild(dialog);
+      document.body.appendChild(mask);
+
+      const focusTargets = Array.from(dialog.querySelectorAll('button:not([disabled])'));
+      const first = focusTargets[0] || confirmBtn;
+      const last = focusTargets[focusTargets.length - 1] || confirmBtn;
+
+      activeDialog = { mask };
 
       mask.addEventListener('keydown', (e) => {
         e.stopPropagation();
@@ -235,7 +326,10 @@
       confirmBtn.addEventListener('click', () => close(true));
 
       document.dispatchEvent(new CustomEvent('site:dialogopen'));
-      requestAnimationFrame(() => (opts.danger ? (hasCancel ? cancelBtn : confirmBtn) : confirmBtn).focus());
+      const initialFocusEl = opts.initialFocus === 'first'
+        ? first
+        : (opts.danger ? (hasCancel ? cancelBtn : confirmBtn) : confirmBtn);
+      requestAnimationFrame(() => initialFocusEl.focus());
     });
   }
 
@@ -293,6 +387,138 @@
       });
     }
   });
+
+  function readFileText(file) {
+    if (typeof file.text === 'function') return file.text();
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result || ''));
+      reader.onerror = () => reject(reader.error || new Error('Read failed'));
+      reader.readAsText(file);
+    });
+  }
+
+  function downloadBackupFile(json) {
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'little-playground-backup-' + new Date().toISOString().slice(0, 10) + '.json';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  function openBackupDialog() {
+    const { count } = exportData();
+    const message = count > 0
+      ? t('当前浏览器保存了 {n} 项本地数据，可导出为 JSON 文件，或从备份文件恢复（语言与主题设置会保留）。', { n: count })
+      : t('当前暂无可导出的本地数据，你仍可以从之前的备份文件恢复（语言与主题设置会保留）。');
+
+    return openDialog({
+      title: t('备份与恢复'),
+      message,
+      cancelText: null,
+      confirmText: t('关闭'),
+      initialFocus: 'first',
+      renderExtra(close) {
+        const stack = document.createElement('div');
+        stack.className = 'site-dialog-stack';
+
+        const exportBtn = document.createElement('button');
+        exportBtn.type = 'button';
+        exportBtn.className = 'site-dialog-btn primary';
+        exportBtn.textContent = t('导出备份 (.json)');
+        exportBtn.addEventListener('click', () => {
+          const current = exportData();
+          if (current.count === 0) {
+            toast(t('暂无可导出的本地数据'));
+            return;
+          }
+          downloadBackupFile(current.json);
+          close(false);
+          toast(t('已导出 {n} 项本地数据', { n: current.count }));
+        });
+
+        const fileInput = document.createElement('input');
+        fileInput.type = 'file';
+        fileInput.accept = '.json,application/json';
+        fileInput.hidden = true;
+
+        const importBtn = document.createElement('button');
+        importBtn.type = 'button';
+        importBtn.className = 'site-dialog-btn';
+        importBtn.textContent = t('从文件恢复');
+        importBtn.addEventListener('click', () => {
+          fileInput.value = '';
+          fileInput.click();
+        });
+
+        fileInput.addEventListener('change', async () => {
+          const file = fileInput.files && fileInput.files[0];
+          if (!file) return;
+          let text;
+          try {
+            text = await readFileText(file);
+          } catch {
+            close(false);
+            await alertDialog({
+              title: t('恢复失败'),
+              message: t('无法读取所选文件，请重试。'),
+              confirmText: t('知道了'),
+            });
+            return;
+          }
+          const parsed = parseBackup(text);
+          close(false);
+          if (!parsed.ok) {
+            await alertDialog({
+              title: t('恢复失败'),
+              message: parsed.error,
+              confirmText: t('知道了'),
+            });
+            return;
+          }
+          const ok = await confirmDialog({
+            title: t('确认恢复备份'),
+            message: t('将用备份中的 {n} 项数据覆盖当前浏览器的游戏纪录、存档与偏好，当前进度将被替换且无法撤销。语言与主题设置会保留。', { n: parsed.count }),
+            confirmText: t('恢复'),
+            cancelText: t('取消'),
+            danger: true,
+          });
+          if (!ok) return;
+          const res = importData(text);
+          if (res.ok) {
+            toast(t('已恢复 {n} 项本地数据', { n: res.count }));
+            setTimeout(() => location.reload(), 500);
+          } else {
+            await alertDialog({
+              title: t('恢复失败'),
+              message: res.error,
+              confirmText: t('知道了'),
+            });
+          }
+        });
+
+        stack.appendChild(exportBtn);
+        stack.appendChild(importBtn);
+        stack.appendChild(fileInput);
+        return stack;
+      },
+    });
+  }
+
+  function createBackupButton() {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'data-backup-btn';
+    btn.textContent = t('备份 / 恢复');
+    btn.addEventListener('click', () => {
+      openBackupDialog();
+    });
+    return btn;
+  }
 
   function createClearButton() {
     const btn = document.createElement('button');
@@ -370,8 +596,7 @@
   }
 
   function readBuildVersion(page) {
-    return page.querySelector('meta[name="site-build"]')?.content ||
-      page.querySelector('link[href*="/assets/style.css?v="]')?.getAttribute('href')?.match(/[?&]v=(\d{11})/)?.[1];
+    return page.querySelector('meta[name="site-build"]')?.content || null;
   }
 
   // 作者标识：© 年份 站点名 · by Hayden-He（链接至作者仓库）
@@ -397,7 +622,8 @@
   }
 
   window.SiteData = {
-    getSound, setSound, clearAll, createClearButton, createUpdateButton, createCopyLinkButton, createCredit,
+    getSound, setSound, isManagedKey, clearAll, exportData, parseBackup, importData,
+    createBackupButton, createClearButton, createUpdateButton, createCopyLinkButton, createCredit,
     getRecentGameId, recordRecentGame,
     getAudioContext, unlockAudio, withAudio,
     isDialogOpen, confirmDialog, alertDialog, toast,
@@ -408,6 +634,9 @@
     const title = (window.SITE_CONFIG && window.SITE_CONFIG.siteTitle) || '小游乐场';
     document.querySelectorAll('.credit-site').forEach((el) => {
       el.textContent = t(title);
+    });
+    document.querySelectorAll('.data-backup-btn').forEach((el) => {
+      el.textContent = t('备份 / 恢复');
     });
     document.querySelectorAll('.data-clear-btn').forEach((el) => {
       el.textContent = t('清除本地数据');
@@ -442,6 +671,7 @@
     const box = document.createElement('div');
     box.className = 'data-clear-wrap';
     box.appendChild(createCredit());
+    box.appendChild(createBackupButton());
     box.appendChild(createClearButton());
     box.appendChild(createUpdateButton());
     wrap.appendChild(box);

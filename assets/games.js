@@ -42,6 +42,11 @@ window.SITE_CONFIG = {
       url: '/games/snake/',
       storageKey: 'game_best_snake_classic',
       bestPrefix: '经典模式最高: ',
+      modeKey: 'game_mode_snake',
+      records: [
+        { mode: 'classic', key: 'game_best_snake_classic', prefix: '经典模式最高: ' },
+        { mode: 'wrap', key: 'game_best_snake_wrap', prefix: '自由穿墙最高: ' },
+      ],
     },
     {
       id: 'fruit',
@@ -54,6 +59,11 @@ window.SITE_CONFIG = {
       url: '/games/fruit/',
       storageKey: 'game_best_fruit_classic',
       bestPrefix: '经典模式最高: ',
+      modeKey: 'game_mode_fruit',
+      records: [
+        { mode: 'classic', key: 'game_best_fruit_classic', prefix: '经典模式最高: ' },
+        { mode: 'arcade', key: 'game_best_fruit_arcade', prefix: '60 秒狂热最高: ' },
+      ],
     },
     {
       id: 'space',
@@ -66,6 +76,11 @@ window.SITE_CONFIG = {
       url: '/games/space/',
       storageKey: 'game_best_space_standard',
       bestPrefix: '标准模式最高: ',
+      modeKey: 'game_mode_space',
+      records: [
+        { mode: 'standard', key: 'game_best_space_standard', prefix: '标准模式最高: ' },
+        { mode: 'ace', key: 'game_best_space_ace', prefix: '王牌极速最高: ' },
+      ],
     },
     {
       id: 'tank-maze',
@@ -91,6 +106,11 @@ window.SITE_CONFIG = {
       url: '/games/2048/',
       storageKey: 'game_best_2048_4',
       bestPrefix: '4×4 最高: ',
+      modeKey: 'game_save_2048_mode',
+      records: [
+        { mode: '4', key: 'game_best_2048_4', prefix: '4×4 最高: ' },
+        { mode: '5', key: 'game_best_2048_5', prefix: '5×5 最高: ' },
+      ],
     },
     {
       id: 'minesweeper',
@@ -104,6 +124,13 @@ window.SITE_CONFIG = {
       storageKey: 'game_best_minesweeper_easy',
       bestPrefix: '9×9 最快: ',
       bestSuffix: 's',
+      modeKey: 'game_mode_minesweeper',
+      records: [
+        { mode: 'easy', key: 'game_best_minesweeper_easy', prefix: '9×9 最快: ', suffix: 's' },
+        { mode: 'medium', key: 'game_best_minesweeper_medium', prefix: '12×12 最快: ', suffix: 's' },
+        { mode: 'hard', key: 'game_best_minesweeper_hard', prefix: '16×16 最快: ', suffix: 's' },
+        { mode: 'global', key: 'game_best_minesweeper', prefix: '任意难度最快: ', suffix: 's' },
+      ],
     },
     {
       id: 'slide',
@@ -117,6 +144,12 @@ window.SITE_CONFIG = {
       storageKey: 'game_best_slide_3',
       bestPrefix: '3×3 最少步: ',
       bestSuffix: ' 步',
+      modeKey: 'game_mode_slide',
+      records: [
+        { mode: '3', key: 'game_best_slide_3', prefix: '3×3 最少步: ', suffix: ' 步' },
+        { mode: '4', key: 'game_best_slide_4', prefix: '4×4 最少步: ', suffix: ' 步' },
+        { mode: 'beginner', key: 'game_best_slide_beginner', prefix: '3×3 入门最少步: ', suffix: ' 步' },
+      ],
     },
     {
       id: 'memory',
@@ -130,6 +163,13 @@ window.SITE_CONFIG = {
       storageKey: 'game_best_memory_4',
       bestPrefix: '4×4 最少尝试: ',
       bestSuffix: ' 次',
+      modeKey: 'game_mode_memory',
+      records: [
+        { mode: '4', key: 'game_best_memory_4', prefix: '4×4 最少尝试: ', suffix: ' 次' },
+        { mode: '5', key: 'game_best_memory_5', prefix: '5×4 最少尝试: ', suffix: ' 次' },
+        { mode: '4', key: 'game_best_memory_4_preview', prefix: '4×4 预览最少: ', suffix: ' 次' },
+        { mode: '5', key: 'game_best_memory_5_preview', prefix: '5×4 预览最少: ', suffix: ' 次' },
+      ],
     },
     {
       id: 'block-workshop',
@@ -152,6 +192,12 @@ window.SITE_CONFIG = {
       url: '/games/tetris/',
       storageKey: 'game_best_tetris_marathon',
       bestPrefix: '马拉松最高: ',
+      modeKey: 'game_mode_tetris',
+      records: [
+        { mode: 'marathon', key: 'game_best_tetris_marathon', prefix: '马拉松最高: ' },
+        { mode: 'sprint', key: 'game_best_tetris_sprint', prefix: '40 行最快: ', format: 'durationMs' },
+        { mode: 'party', key: 'game_best_tetris_party', prefix: '道具狂热最高: ' },
+      ],
     },
   ],
 };

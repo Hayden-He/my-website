@@ -162,6 +162,7 @@ function footerHtml(activeKey) {
       ? '<button type="button" class="copy-link-btn" data-copy-link="/" data-i18n="复制网站链接">复制网站链接</button>'
       : '') +
     '</div><div class="container data-clear-wrap">' +
+    '<button type="button" class="data-backup-btn">备份 / 恢复</button>' +
     '<button type="button" class="data-clear-btn">清除本地数据</button>' +
     '<button type="button" class="update-check-btn">检查更新</button></div>';
 }
@@ -290,8 +291,7 @@ for (const file of pages) {
   html = injectShell(file, html);
   html = injectIcons(file, html, pageModuleTexts.get(file));
   verifyShell(file, html);
-  const legacyVersion = html.match(/\/assets\/style\.css\?v=(\d{11})/)?.[1];
-  html = html.replace(/\b(src|href)="(\/assets\/[^"?]+)(?:\?v=\d+)?"(?=\s|>)/g,
+  html = html.replace(/\b(src|href)="(\/assets\/[^"?]+)"(?=\s|>)/g,
     (_, attribute, asset) => attribute + '="' + versionedAsset(asset) + '"');
   const enAsset = versionedAsset('/assets/i18n-en.js');
   html = html.replace(
@@ -308,11 +308,7 @@ for (const file of pages) {
       if (!relative || !content.has(relative)) throw new Error(file + '：模块资源不存在 ./modules/' + fileName);
       return attribute + '="/' + relative + suffix + '"';
     });
-  html = html.replace('</head>', [
-    '  <meta name="site-build" content="' + buildId + '" />',
-    '  <!-- 旧版检查更新脚本兼容：/assets/style.css?v=' + legacyVersion + ' -->',
-    '</head>',
-  ].join('\n'));
+  html = html.replace('</head>', '  <meta name="site-build" content="' + buildId + '" />\n</head>');
   content.set(file, html);
 }
 

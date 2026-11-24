@@ -108,6 +108,10 @@ for (const game of config.games || []) {
   addKey(game.categoryName);
   if (game.bestPrefix) addKey(game.bestPrefix);
   if (game.bestSuffix) addKey(game.bestSuffix);
+  for (const record of game.records || []) {
+    if (record.prefix) addKey(record.prefix);
+    if (record.suffix) addKey(record.suffix);
+  }
 }
 
 const missing = used.filter((key) => !englishKeys.has(key));

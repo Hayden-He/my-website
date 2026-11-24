@@ -2,7 +2,7 @@
 
 ## 新增游戏
 
-1. 在 `assets/games.js` 登记游戏。沿用现有条目的字段，给出小写短横线 `id`、标题、图标、分类、简介和 `/games/<id>/` 地址。有最高分的游戏填写独立的 `storageKey`。分类名称须与分类定义一致。大厅、分类页与游戏间推荐会使用这份清单。
+1. 在 `assets/games.js` 登记游戏。沿用现有条目的字段，给出小写短横线 `id`、标题、图标、分类、简介和 `/games/<id>/` 地址。有最高分的游戏填写独立的 `storageKey`；多模式游戏同时填写 `modeKey` 和 `records` 数组以便大厅优先展示对应模式纪录。分类名称须与分类定义一致。大厅、分类页与游戏间推荐会使用这份清单。
 2. 计分游戏可运行 `node scripts/new-game.mjs <id>`。脚本复制 `games/_template/index.html`，填入游戏资料、分类链接和纪录键，再同步站点元数据。已有同名页面时会拒绝覆盖。
 3. 在新页面实现棋盘、规则和操作，补齐 `assets/icons.svg` 中的 `game-<icon>` 图标，以及 `assets/i18n-en.js` 中的英文。新增游戏后，按需更新 `scripts/og-image.html` 并用 `node scripts/make-og-image.mjs` 导出共享分享图，该脚本需要本机 Chrome。
 4. 运行 `node scripts/sync-site.mjs /games/<id>/` 更新该页修改日期、SEO 与站点地图（图标会在构建时按页面裁剪并内联）。运行 `node scripts/build-site.mjs`，在 320px 窄屏、键盘和触屏上试玩。
@@ -35,4 +35,4 @@
 - 构建命令为 `node scripts/build-site.mjs`，输出目录为 `dist`。构建先执行结构和双语校验，产物只包含正式页面、站点资源和响应头配置。
 - 分类链接与 canonical 使用 `/categories/<id>`。构建保留 `categories/<id>.html` 文件，由 Pages 处理无扩展名路由。首页、两个分类和游戏清单中的正式游戏进入站点地图，404 和模板除外。
 - 用 `node scripts/sync-site.mjs [已更新页面的 URL 路径…]` 从游戏清单同步 canonical、分享标签、站点地图及内联图标。参数仅用于更新指定页面的 `lastmod`。
-- 构建按资源内容生成带指纹的 URL，并写入供「检查更新」使用的构建编号。固定 URL 的分享图可重新验证。`node scripts/bump-assets.mjs` 保留给仍依赖旧版查询参数的页面兼容使用。
+- 构建按资源内容生成带指纹的 URL，并写入供「检查更新」使用的构建编号 `site-build`。固定 URL 的分享图可重新验证。页脚与游戏底栏提供基于受管存储前缀的 JSON 备份导出与导入恢复。

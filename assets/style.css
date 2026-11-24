@@ -591,19 +591,22 @@ textarea {
   padding: 6px 0 18px;
 }
 
+.data-backup-btn,
+.data-clear-btn,
 .update-check-btn {
   background: none;
   border: none;
   padding: 4px 8px;
+  font: inherit;
   font-size: 0.8rem;
   color: var(--text-muted);
   text-decoration: underline;
   cursor: pointer;
-  font: inherit;
   -webkit-appearance: none;
   appearance: none;
 }
 
+.data-backup-btn:hover,
 .update-check-btn:hover {
   color: var(--primary);
 }
@@ -611,16 +614,6 @@ textarea {
 .update-check-btn:disabled {
   opacity: 0.6;
   cursor: default;
-}
-
-.data-clear-btn {
-  background: none;
-  border: none;
-  padding: 4px 8px;
-  font-size: 0.8rem;
-  color: var(--text-muted);
-  text-decoration: underline;
-  cursor: pointer;
 }
 
 .data-clear-btn:hover {
@@ -717,6 +710,18 @@ body:has(#site-footer) > main {
   overflow-wrap: anywhere;
   -webkit-user-select: text;
   user-select: text;
+}
+
+.site-dialog-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.site-dialog-stack .site-dialog-btn {
+  width: 100%;
+  min-height: 44px;
 }
 
 .site-dialog-actions {

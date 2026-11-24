@@ -56,8 +56,6 @@ function checkContains(content, needle, label) {
   if (!content || !content.includes(needle)) fail(`${label} 缺少 ${needle}`);
 }
 
-const assetVersionPattern = /\?v=\d{11}/;
-const assetVersions = new Set();
 const OG_IMAGE = SITE_URL + '/assets/og-image.jpg';
 
 // 每个可索引页面：canonical + OG/Twitter 必须齐全，且 og:title 为“页面名 · Little Playground”
@@ -140,9 +138,9 @@ for (const category of categories) {
     checkContains(categoryPage, 'assets/i18n.js', `分类页 ${category.url}`);
     checkContains(categoryPage, '<!-- inline-icons:start -->', `分类页 ${category.url}`);
     checkContains(categoryPage, '<!-- inline-icons:end -->', `分类页 ${category.url}`);
-    checkContains(categoryPage, 'assets/style.css?v=', `分类页 ${category.url}`);
-    checkContains(categoryPage, 'assets/theme.js?v=', `分类页 ${category.url}`);
-    checkContains(categoryPage, 'assets/i18n.js?v=', `分类页 ${category.url}`);
+    checkContains(categoryPage, 'assets/style.css', `分类页 ${category.url}`);
+    checkContains(categoryPage, 'assets/theme.js', `分类页 ${category.url}`);
+    checkContains(categoryPage, 'assets/i18n.js', `分类页 ${category.url}`);
     checkContains(categoryPage, 'site.webmanifest', `分类页 ${category.url}`);
     checkContains(categoryPage, 'assets/icon.svg', `分类页 ${category.url}`);
     checkContains(categoryPage, 'apple-touch-icon.png', `分类页 ${category.url}`);
@@ -187,12 +185,51 @@ for (const game of games) {
   const expectedUrl = `/games/${game.id}/`;
   if (game.url !== expectedUrl) fail(`游戏 ${label} 的 url 应为 ${expectedUrl}，实际为 ${game.url}`);
 
+  const gameBestKeys = new Set();
   if (game.storageKey !== undefined) {
     if (typeof game.storageKey !== 'string' || !game.storageKey.startsWith('game_best_')) {
       fail(`游戏 ${label} 的 storageKey 应以 game_best_ 开头`);
     } else {
       if (storageKeys.has(game.storageKey)) fail(`storageKey 重复：${game.storageKey}`);
       storageKeys.add(game.storageKey);
+      gameBestKeys.add(game.storageKey);
+    }
+  }
+
+  if (game.modeKey !== undefined) {
+    if (typeof game.modeKey !== 'string' || !/^game_(mode|save)_/.test(game.modeKey)) {
+      fail(`游戏 ${label} 的 modeKey 格式不合法：${game.modeKey}`);
+    }
+  }
+
+  if (game.records !== undefined) {
+    if (!Array.isArray(game.records) || game.records.length === 0) {
+      fail(`游戏 ${label} 的 records 应为非空数组`);
+    } else {
+      const seenRecordKeys = new Set();
+      for (const record of game.records) {
+        if (!record || typeof record !== 'object') {
+          fail(`游戏 ${label} 的 records 存在空项`);
+          continue;
+        }
+        if (!record.mode || typeof record.mode !== 'string') fail(`游戏 ${label} 的 records 项缺少 mode`);
+        if (typeof record.key !== 'string' || !record.key.startsWith('game_best_')) {
+          fail(`游戏 ${label} 的 records key 应以 game_best_ 开头：${record.key}`);
+        } else {
+          if (seenRecordKeys.has(record.key)) fail(`游戏 ${label} 的 records key 重复：${record.key}`);
+          seenRecordKeys.add(record.key);
+          if (!gameBestKeys.has(record.key) && storageKeys.has(record.key)) {
+            fail(`游戏 ${label} 的 records key 与其他游戏冲突：${record.key}`);
+          }
+          storageKeys.add(record.key);
+        }
+        if (typeof record.prefix !== 'string' || !record.prefix) {
+          fail(`游戏 ${label} 的 records 项缺少 prefix`);
+        }
+        if (record.format !== undefined && record.format !== 'durationMs') {
+          fail(`游戏 ${label} 的 records format 不支持：${record.format}`);
+        }
+      }
     }
   }
 
@@ -220,13 +257,26 @@ for (const game of games) {
   checkContains(page, 'assets/i18n.js', pagePath);
   checkContains(page, '<!-- inline-icons:start -->', pagePath);
   checkContains(page, '<!-- inline-icons:end -->', pagePath);
-  checkContains(page, 'assets/style.css?v=', pagePath);
-  checkContains(page, 'assets/theme.js?v=', pagePath);
-  checkContains(page, 'assets/i18n.js?v=', pagePath);
+  checkContains(page, 'assets/style.css', pagePath);
+  checkContains(page, 'assets/theme.js', pagePath);
+  checkContains(page, 'assets/i18n.js', pagePath);
+  checkContains(page, '<meta name="theme-color"', pagePath);
+  const headEnd = page.indexOf('</head>');
+  const headHtml = headEnd >= 0 ? page.slice(0, headEnd) : '';
+  for (const blocked of [
+    'assets/site-data.js',
+    'assets/i18n.js',
+    'assets/games.js',
+    'assets/game-kit.js',
+    'assets/game-rules.js',
+    'assets/game-art.js',
+  ]) {
+    if (headHtml.includes(blocked)) fail(`${pagePath} 的 <head> 不应同步加载 ${blocked}，请放到 <body> 底部`);
+  }
   checkContains(page, 'game-' + game.icon, pagePath);
   if (game.id === 'snake' || game.id === 'basketball') {
     checkContains(page, 'role="img"', pagePath);
-    checkContains(page, 'assets/game-art.js?v=', pagePath);
+    checkContains(page, 'assets/game-art.js', pagePath);
   }
   checkSeoPage(page, {
     label: pagePath,
@@ -265,8 +315,8 @@ try {
 // ---------- 首页 / 404 / 公共资源 ----------
 checkContains(read('index.html'), "initSitePage('all')", 'index.html');
 checkContains(read('index.html'), 'id="games-grid"', 'index.html');
-checkContains(read('index.html'), 'assets/theme.js?v=', 'index.html');
-checkContains(read('index.html'), 'assets/i18n.js?v=', 'index.html');
+checkContains(read('index.html'), 'assets/theme.js', 'index.html');
+checkContains(read('index.html'), 'assets/i18n.js', 'index.html');
 checkContains(read('index.html'), '<!-- inline-icons:start -->', 'index.html');
 checkContains(read('index.html'), '<!-- inline-icons:end -->', 'index.html');
 checkSeoPage(read('index.html'), {
@@ -275,14 +325,14 @@ checkSeoPage(read('index.html'), {
   ogTitle: config.siteTitle + ' · Little Playground',
 });
 checkContains(read('index.html'), 'site.webmanifest', 'index.html');
-checkContains(read('index.html'), 'assets/icon.svg?v=', 'index.html');
+checkContains(read('index.html'), 'assets/icon.svg', 'index.html');
 checkContains(read('index.html'), 'apple-touch-icon.png', 'index.html');
-checkContains(read('404.html'), 'assets/theme.js?v=', '404.html');
-checkContains(read('404.html'), 'assets/i18n.js?v=', '404.html');
+checkContains(read('404.html'), 'assets/theme.js', '404.html');
+checkContains(read('404.html'), 'assets/i18n.js', '404.html');
 checkContains(read('404.html'), '<!-- inline-icons:start -->', '404.html');
 checkContains(read('404.html'), '<!-- inline-icons:end -->', '404.html');
 checkContains(read('404.html'), 'site.webmanifest', '404.html');
-checkContains(read('404.html'), 'assets/icon.svg?v=', '404.html');
+checkContains(read('404.html'), 'assets/icon.svg', '404.html');
 checkContains(read('404.html'), 'apple-touch-icon.png', '404.html');
 checkFile('404.html', '404.html');
 const notFoundPage = read('404.html');
@@ -345,17 +395,12 @@ for (const asset of [
   checkFile(asset, asset);
 }
 
-// ---------- 资源版本号一致性 ----------
+// ---------- 旧版 ?v= 参数清理与模板基线校验 ----------
 for (const { file: relative } of sitePages({ ...config, games, categories })) {
   const html = read(relative) || '';
-  if (!assetVersionPattern.test(html)) {
-    fail(`${relative} 缺少 ?v=YYYYMMDDNNN 资源版本号`);
-    continue;
+  if (/\?v=\d+/.test(html)) {
+    fail(`${relative} 仍残留 ?v= 旧版资源查询参数`);
   }
-  for (const match of html.matchAll(/\?v=(\d{11})/g)) assetVersions.add(match[1]);
-}
-if (assetVersions.size > 1) {
-  fail('各页面资源版本号不一致：' + [...assetVersions].join(', '));
 }
 
 // ---------- 图标与 manifest ----------
@@ -381,12 +426,18 @@ if (!exists(templatePath)) {
   warn('games/_template/index.html 不存在，后续新增游戏没有模板可复制');
 } else {
   const template = read(templatePath);
+  checkContains(template, '<meta name="theme-color"', templatePath);
   checkContains(template, 'assets/game-shell.css', templatePath);
   checkContains(template, 'assets/theme.js', templatePath);
   checkContains(template, 'data-theme-toggle', templatePath);
   checkContains(template, 'assets/game-kit.js', templatePath);
   checkContains(template, 'id="more-games"', templatePath);
   checkContains(template, '<h1', templatePath);
+  if (/\?v=\d+/.test(template || '')) fail(`${templatePath} 仍残留 ?v= 旧版资源查询参数`);
+  const tplHead = template ? template.slice(0, template.indexOf('</head>')) : '';
+  for (const blocked of ['assets/site-data.js', 'assets/i18n.js', 'assets/games.js', 'assets/game-kit.js']) {
+    if (tplHead.includes(blocked)) fail(`${templatePath} 的 <head> 不应同步加载 ${blocked}，请放到 <body> 底部`);
+  }
 }
 
 // ---------- 输出 ----------

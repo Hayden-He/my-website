@@ -18,6 +18,62 @@
     }
   }
 
+  function formatDurationMs(ms) {
+    const tenths = Math.floor(Math.max(0, ms) / 100);
+    const sec = Math.floor(tenths / 10);
+    const min = Math.floor(sec / 60);
+    const remSec = String(sec % 60).padStart(2, '0');
+    const remTenth = tenths % 10;
+    return min > 0 ? `${min}:${remSec}.${remTenth}` : `${sec}.${remTenth}s`;
+  }
+
+  function getGameRecords(game) {
+    if (!game) return [];
+    if (Array.isArray(game.records) && game.records.length > 0) return game.records;
+    if (!game.storageKey) return [];
+    return [{
+      key: game.storageKey,
+      prefix: game.bestPrefix !== undefined ? game.bestPrefix : '最高分: ',
+      suffix: game.bestSuffix,
+    }];
+  }
+
+  function getBestRecord(game) {
+    const records = getGameRecords(game);
+    if (records.length === 0) return null;
+
+    let preferredMode = null;
+    if (game.modeKey) {
+      try {
+        preferredMode = localStorage.getItem(game.modeKey);
+      } catch {}
+    }
+
+    const ordered = preferredMode
+      ? [
+          ...records.filter((r) => r.mode === preferredMode),
+          ...records.filter((r) => r.mode !== preferredMode),
+        ]
+      : records;
+
+    for (const record of ordered) {
+      const val = getBestScore(record.key);
+      if (val === null) continue;
+      const formatted = record.format === 'durationMs'
+        ? formatDurationMs(Number(val))
+        : val;
+      return {
+        mode: record.mode || null,
+        key: record.key,
+        value: val,
+        formatted,
+        prefix: record.prefix !== undefined ? record.prefix : '最高分: ',
+        suffix: record.suffix || '',
+      };
+    }
+    return null;
+  }
+
   // 与 2048 游戏页的存档读取条件一致。
   function isValid2048Position(position, size) {
     return position && Number.isSafeInteger(position.score) && position.score >= 0 &&
@@ -105,9 +161,8 @@
     return count;
   }
 
-  function getResumeInfo(game) {
-    if (!game) return null;
-    if (game.id === '2048') {
+  const RESUME_READERS = {
+    2048: () => {
       const resume = get2048Resume();
       if (!resume) return null;
       const board = resume.size + '×' + resume.size;
@@ -117,8 +172,8 @@
           : t('继续上局 · {board} →', { board }),
         title: t('继续上次未完成的棋局'),
       };
-    }
-    if (game.id === 'tetris') {
+    },
+    tetris: () => {
       const resume = getTetrisResume();
       if (!resume) return null;
       return {
@@ -127,23 +182,32 @@
           : t('继续上局 · 马拉松 →'),
         title: t('继续上次未完成的棋局'),
       };
-    }
-    return null;
+    },
+  };
+
+  const CUSTOM_META_READERS = {
+    'block-workshop': () => {
+      const count = getBlockWorkshopProjectCount();
+      return count > 0 ? t('已保存 {n} 个作品', { n: count }) : null;
+    },
+  };
+
+  function getResumeInfo(game) {
+    if (!game) return null;
+    const reader = RESUME_READERS[game.id];
+    return reader ? reader(game) : null;
   }
 
   function getCardMetaText(game) {
     if (!game) return null;
-    const best = getBestScore(game.storageKey);
-    if (best !== null) {
-      const prefix = t(game.bestPrefix !== undefined ? game.bestPrefix : '最高分: ');
-      const suffix = game.bestSuffix ? t(game.bestSuffix) : '';
-      return prefix + best + suffix;
+    const record = getBestRecord(game);
+    if (record !== null) {
+      const prefix = t(record.prefix);
+      const suffix = record.suffix ? t(record.suffix) : '';
+      return prefix + record.formatted + suffix;
     }
-    if (game.id === 'block-workshop') {
-      const count = getBlockWorkshopProjectCount();
-      if (count > 0) return t('已保存 {n} 个作品', { n: count });
-    }
-    return null;
+    const customReader = CUSTOM_META_READERS[game.id];
+    return customReader ? customReader(game) : null;
   }
 
   function createEl(tag, className, text) {
@@ -382,6 +446,7 @@
     footer.appendChild(container);
     if (window.SiteData) {
       const wrap = createEl('div', 'container data-clear-wrap');
+      wrap.appendChild(window.SiteData.createBackupButton());
       wrap.appendChild(window.SiteData.createClearButton());
       wrap.appendChild(window.SiteData.createUpdateButton());
       footer.appendChild(wrap);
@@ -425,6 +490,7 @@
   window.SiteLobby = {
     getResumeInfo,
     getCardMetaText,
+    getBestRecord,
     get2048Resume,
     getTetrisResume,
     getBlockWorkshopProjectCount,

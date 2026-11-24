@@ -7,16 +7,12 @@
   <meta name="description" content="新增游戏模板：包含公共游戏外壳、HUD、音效、最高分、更多游戏与自定义确认弹窗。" />
   <meta name="author" content="Hayden-He" />
   <meta name="theme-color" content="#2563eb" />
-  <link rel="icon" type="image/svg+xml" href="/assets/icon.svg?v=20261118001" />
+  <link rel="icon" type="image/svg+xml" href="/assets/icon.svg" />
   <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png" />
   <link rel="manifest" href="/site.webmanifest" />
-  <script src="/assets/theme.js?v=20261118001"></script>
-  <link rel="stylesheet" href="/assets/style.css?v=20261118001" />
-  <link rel="stylesheet" href="/assets/game-shell.css?v=20261118001" />
-  <script src="/assets/site-data.js?v=20261118001"></script>
-  <script src="/assets/i18n.js?v=20261118001"></script>
-  <script src="/assets/games.js?v=20261118001"></script>
-  <script src="/assets/game-kit.js?v=20261118001"></script>
+  <script src="/assets/theme.js"></script>
+  <link rel="stylesheet" href="/assets/style.css" />
+  <link rel="stylesheet" href="/assets/game-shell.css" />
   <style>
     /* 只放这个游戏自己的棋盘/场地样式；HUD、按钮、遮罩等见 game-shell.css */
     .game-wrap { --game-width: 520px; }
@@ -112,6 +108,10 @@
     <div id="more-games" class="more-games"></div>
   </main>
 
+  <script src="/assets/site-data.js"></script>
+  <script src="/assets/i18n.js"></script>
+  <script src="/assets/games.js"></script>
+  <script src="/assets/game-kit.js"></script>
   <script>
     (function () {
       const t = (key, params) => I18N.t(key, params);

@@ -117,6 +117,7 @@ function createLobbyHarness({ lang = 'zh', initialStorage = {} } = {}) {
     SiteLobby: {
       getResumeInfo: (g) => clone(sandbox.window.SiteLobby.getResumeInfo(g)),
       getCardMetaText: (g) => sandbox.window.SiteLobby.getCardMetaText(g),
+      getBestRecord: (g) => clone(sandbox.window.SiteLobby.getBestRecord(g)),
       get2048Resume: () => clone(sandbox.window.SiteLobby.get2048Resume()),
       getTetrisResume: () => clone(sandbox.window.SiteLobby.getTetrisResume()),
       getBlockWorkshopProjectCount: () => sandbox.window.SiteLobby.getBlockWorkshopProjectCount(),
@@ -258,4 +259,48 @@ test('initSitePage recent game shortcut supports unified resume prompt for tetri
   harness.localStorage.removeItem('game_save_tetris_marathon');
   harness.I18N.setLang('zh');
   assert.equal(harness.recentLink.textContent, '俄罗斯方块 →');
+});
+
+test('getCardMetaText prefers active mode record and falls back to other modes across games', () => {
+  const harness = createLobbyHarness({
+    initialStorage: {
+      game_save_2048_mode: '5',
+      game_best_2048_4: '1024',
+      game_best_2048_5: '4096',
+      game_mode_tetris: 'sprint',
+      game_best_tetris_marathon: '8800',
+      game_best_tetris_sprint: '42500',
+      game_mode_minesweeper: 'hard',
+      game_best_minesweeper_hard: '95',
+      game_mode_memory: '5',
+      game_best_memory_5_preview: '14',
+      game_mode_slide: 'beginner',
+      game_best_slide_beginner: '12',
+      game_mode_snake: 'wrap',
+      game_best_snake_classic: '320',
+    },
+  });
+
+  const byId = (id) => harness.SITE_CONFIG.games.find((g) => g.id === id);
+
+  assert.equal(harness.SiteLobby.getCardMetaText(byId('2048')), '5×5 最高: 4096');
+  assert.equal(harness.SiteLobby.getCardMetaText(byId('tetris')), '40 行最快: 42.5s');
+  assert.equal(harness.SiteLobby.getCardMetaText(byId('minesweeper')), '16×16 最快: 95s');
+  assert.equal(harness.SiteLobby.getCardMetaText(byId('memory')), '5×4 预览最少: 14 次');
+  assert.equal(harness.SiteLobby.getCardMetaText(byId('slide')), '3×3 入门最少步: 12 步');
+  // Current mode (wrap) has no record, falls back to classic
+  assert.equal(harness.SiteLobby.getCardMetaText(byId('snake')), '经典模式最高: 320');
+
+  // Duration >= 60s formats as m:ss.t
+  harness.localStorage.setItem('game_best_tetris_sprint', '65400');
+  assert.equal(harness.SiteLobby.getCardMetaText(byId('tetris')), '40 行最快: 1:05.4');
+
+  // English localization
+  harness.I18N.setLang('en');
+  assert.equal(harness.SiteLobby.getCardMetaText(byId('2048')), '5×5 best: 4096');
+  assert.equal(harness.SiteLobby.getCardMetaText(byId('tetris')), '40-Line fastest: 1:05.4');
+  assert.equal(harness.SiteLobby.getCardMetaText(byId('minesweeper')), '16×16 fastest: 95s');
+  assert.equal(harness.SiteLobby.getCardMetaText(byId('memory')), '5×4 preview fewest: 14 attempts');
+  assert.equal(harness.SiteLobby.getCardMetaText(byId('slide')), '3×3 Intro fewest: 12 moves');
+  assert.equal(harness.SiteLobby.getCardMetaText(byId('snake')), 'Classic best: 320');
 });

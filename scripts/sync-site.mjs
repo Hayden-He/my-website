@@ -6,7 +6,6 @@ const config = readSiteConfig();
 const pages = sitePages(config);
 const ogImage = siteUrl + '/assets/og-image.jpg';
 const ogAlt = '小游乐场 · Little Playground：' + config.games.length + ' 款即开即玩的小游戏';
-const version = fs.readFileSync(path.join(root, 'index.html'), 'utf8').match(/\/assets\/style\.css\?v=(\d{11})/)[1];
 const output = new Map();
 
 for (const { file, url, title } of pages) {
@@ -34,8 +33,7 @@ for (const { file, url, title } of pages) {
 
   const html = source
     .replace(/^[ \t]*<(?:link rel="canonical"|meta property="og:[^"]+"|meta name="twitter:[^"]+")[^\n]*\n/gm, '')
-    .replace(descriptionTag, (tag) => [tag, ...tags].join('\n'))
-    .replace(/(\/assets\/[^"?]+)\?v=\d{11}(?=")/g, '$1?v=' + version);
+    .replace(descriptionTag, (tag) => [tag, ...tags].join('\n'));
   output.set(file, html);
 }
 
