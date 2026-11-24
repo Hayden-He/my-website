@@ -118,6 +118,23 @@ function createLobbyHarness({ lang = 'zh', initialStorage = {} } = {}) {
       getResumeInfo: (g) => clone(sandbox.window.SiteLobby.getResumeInfo(g)),
       getCardMetaText: (g) => sandbox.window.SiteLobby.getCardMetaText(g),
       getBestRecord: (g) => clone(sandbox.window.SiteLobby.getBestRecord(g)),
+      getAllGameRecords: (g) => Array.from(sandbox.window.SiteLobby.getAllGameRecords(g)),
+      getOverviewStats: (games) => {
+        const stats = sandbox.window.SiteLobby.getOverviewStats(games);
+        return {
+          totalGames: stats.totalGames,
+          recordedGames: stats.recordedGames,
+          totalRecords: stats.totalRecords,
+          resumeCount: stats.resumeCount,
+          items: stats.items.map((item) => ({
+            game: item.game,
+            records: Array.from(item.records),
+            resume: clone(item.resume),
+            hasProgress: item.hasProgress,
+          })),
+        };
+      },
+      pickRandomGame: (games, excludeId, rng) => clone(sandbox.window.SiteLobby.pickRandomGame(games, excludeId, rng)),
       get2048Resume: () => clone(sandbox.window.SiteLobby.get2048Resume()),
       getTetrisResume: () => clone(sandbox.window.SiteLobby.getTetrisResume()),
       getBlockWorkshopProjectCount: () => sandbox.window.SiteLobby.getBlockWorkshopProjectCount(),
@@ -303,4 +320,84 @@ test('getCardMetaText prefers active mode record and falls back to other modes a
   assert.equal(harness.SiteLobby.getCardMetaText(byId('memory')), '5×4 preview fewest: 14 attempts');
   assert.equal(harness.SiteLobby.getCardMetaText(byId('slide')), '3×3 Intro fewest: 12 moves');
   assert.equal(harness.SiteLobby.getCardMetaText(byId('snake')), 'Classic best: 320');
+});
+
+test('getAllGameRecords lists all populated mode records and block-workshop projects in zh and en', () => {
+  const harness = createLobbyHarness({
+    initialStorage: {
+      game_best_tetris_marathon: '9200',
+      game_best_tetris_sprint: '41200',
+      game_best_tetris_party: '6400',
+      'game_save_block-workshop_p1': JSON.stringify({ version: 2, name: 'Tower', cells: [{ x: 0, y: 0, z: 0, material: 'stone' }] }),
+    },
+  });
+  const tetris = harness.SITE_CONFIG.games.find((g) => g.id === 'tetris');
+  const workshop = harness.SITE_CONFIG.games.find((g) => g.id === 'block-workshop');
+  const basketball = harness.SITE_CONFIG.games.find((g) => g.id === 'basketball');
+
+  assert.deepEqual(harness.SiteLobby.getAllGameRecords(tetris), [
+    '马拉松最高: 9200',
+    '40 行最快: 41.2s',
+    '道具狂热最高: 6400',
+  ]);
+  assert.deepEqual(harness.SiteLobby.getAllGameRecords(workshop), ['已保存 1 个作品']);
+  assert.deepEqual(harness.SiteLobby.getAllGameRecords(basketball), []);
+
+  harness.I18N.setLang('en');
+  assert.deepEqual(harness.SiteLobby.getAllGameRecords(tetris), [
+    'Marathon best: 9200',
+    '40-Line fastest: 41.2s',
+    'Party Mode best: 6400',
+  ]);
+  assert.deepEqual(harness.SiteLobby.getAllGameRecords(workshop), ['Saved projects: 1']);
+});
+
+test('getOverviewStats aggregates recorded games, total mode records, and active resume saves', () => {
+  const harness = createLobbyHarness({
+    initialStorage: {
+      game_best_snake_classic: '150',
+      game_best_snake_wrap: '240',
+      game_best_basketball: '42',
+      game_save_tetris_marathon: makeTetrisMarathonSave({ score: 300, lines: 2 }),
+      game_save_2048_4: JSON.stringify({
+        score: 64,
+        board: [[2, 4, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]],
+        played: true,
+      }),
+    },
+  });
+
+  const stats = harness.SiteLobby.getOverviewStats();
+  assert.equal(stats.totalGames, 11);
+  assert.equal(stats.recordedGames, 2);
+  assert.equal(stats.totalRecords, 3);
+  assert.equal(stats.resumeCount, 2);
+
+  const snakeItem = stats.items.find((item) => item.game.id === 'snake');
+  const tetrisItem = stats.items.find((item) => item.game.id === 'tetris');
+  const slideItem = stats.items.find((item) => item.game.id === 'slide');
+
+  assert.equal(snakeItem.records.length, 2);
+  assert.equal(snakeItem.resume, null);
+  assert.equal(snakeItem.hasProgress, true);
+
+  assert.equal(tetrisItem.records.length, 0);
+  assert.ok(tetrisItem.resume);
+  assert.equal(tetrisItem.hasProgress, true);
+
+  assert.equal(slideItem.records.length, 0);
+  assert.equal(slideItem.resume, null);
+  assert.equal(slideItem.hasProgress, false);
+});
+
+test('pickRandomGame avoids excluded recent game, handles single/empty pools, and supports deterministic rng', () => {
+  const harness = createLobbyHarness();
+  const games = harness.SITE_CONFIG.games.slice(0, 3);
+
+  assert.equal(harness.SiteLobby.pickRandomGame([], 'basketball'), null);
+  assert.equal(harness.SiteLobby.pickRandomGame([games[0]], 'basketball').id, games[0].id);
+
+  assert.equal(harness.SiteLobby.pickRandomGame(games, games[0].id, () => 0).id, games[1].id);
+  assert.equal(harness.SiteLobby.pickRandomGame(games, games[0].id, () => 0.99).id, games[2].id);
+  assert.equal(harness.SiteLobby.pickRandomGame(games, 'missing-id', () => 0).id, games[0].id);
 });

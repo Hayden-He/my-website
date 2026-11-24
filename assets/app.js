@@ -59,19 +59,28 @@
     for (const record of ordered) {
       const val = getBestScore(record.key);
       if (val === null) continue;
-      const formatted = record.format === 'durationMs'
-        ? formatDurationMs(Number(val))
-        : val;
       return {
         mode: record.mode || null,
         key: record.key,
         value: val,
-        formatted,
+        formatted: formatRecordValue(record, val),
         prefix: record.prefix !== undefined ? record.prefix : '最高分: ',
         suffix: record.suffix || '',
       };
     }
     return null;
+  }
+
+  function formatRecordValue(record, val) {
+    return record.format === 'durationMs'
+      ? formatDurationMs(Number(val))
+      : val;
+  }
+
+  function formatRecordText(record, val) {
+    const prefix = t(record.prefix !== undefined ? record.prefix : '最高分: ');
+    const suffix = record.suffix ? t(record.suffix) : '';
+    return prefix + formatRecordValue(record, val) + suffix;
   }
 
   // 与 2048 游戏页的存档读取条件一致。
@@ -208,6 +217,62 @@
     }
     const customReader = CUSTOM_META_READERS[game.id];
     return customReader ? customReader(game) : null;
+  }
+
+  function getAllGameRecords(game) {
+    if (!game) return [];
+    const items = [];
+    for (const record of getGameRecords(game)) {
+      const val = getBestScore(record.key);
+      if (val !== null) items.push(formatRecordText(record, val));
+    }
+    const customReader = CUSTOM_META_READERS[game.id];
+    const customText = customReader ? customReader(game) : null;
+    if (customText !== null) items.push(customText);
+    return items;
+  }
+
+  function getOverviewStats(games) {
+    const list = Array.isArray(games) ? games : (window.SITE_CONFIG?.games || []);
+    let recordedGames = 0;
+    let totalRecords = 0;
+    let resumeCount = 0;
+    const items = list.map((game) => {
+      const records = getAllGameRecords(game);
+      const resume = getResumeInfo(game);
+      if (records.length > 0) recordedGames += 1;
+      totalRecords += records.length;
+      if (resume) resumeCount += 1;
+      return {
+        game,
+        records,
+        resume,
+        hasProgress: records.length > 0 || resume !== null,
+      };
+    });
+    return {
+      totalGames: list.length,
+      recordedGames,
+      totalRecords,
+      resumeCount,
+      items,
+    };
+  }
+
+  function pickRandomGame(games, excludeId, rng = Math.random) {
+    if (!Array.isArray(games) || games.length === 0) return null;
+    if (games.length === 1) return games[0];
+    const filtered = excludeId ? games.filter((g) => g.id !== excludeId) : games;
+    const pool = filtered.length > 0 ? filtered : games;
+    const index = Math.min(pool.length - 1, Math.floor(Math.max(0, rng()) * pool.length));
+    return pool[index];
+  }
+
+  function getPageGames(activeKey) {
+    if (!window.SITE_CONFIG) return [];
+    return window.SITE_CONFIG.games.filter(
+      (g) => !activeKey || activeKey === 'all' || g.category === activeKey
+    );
   }
 
   function createEl(tag, className, text) {
@@ -453,44 +518,272 @@
     }
   }
 
-  let i18nBound = false;
+  let activeRecordsModal = null;
+
+  function launchRandomGame(games) {
+    const picked = pickRandomGame(games, window.SiteData?.getRecentGameId?.());
+    if (picked) location.href = picked.url;
+  }
+
+  function renderHeroActions(activeKey) {
+    const container = document.getElementById('hero-actions');
+    if (!container || !window.SITE_CONFIG) return;
+
+    const pageGames = getPageGames(activeKey);
+    const stats = getOverviewStats(window.SITE_CONFIG.games);
+
+    container.textContent = '';
+
+    const randomBtn = createEl('button', 'hero-action-btn primary', t('随机来一局'));
+    randomBtn.type = 'button';
+    randomBtn.id = 'random-game-btn';
+    randomBtn.title = t('从当前列表中随机挑一款游戏开始');
+    randomBtn.setAttribute('aria-label', t('从当前列表中随机挑一款游戏开始'));
+    randomBtn.addEventListener('click', () => launchRandomGame(pageGames));
+    container.appendChild(randomBtn);
+
+    const overviewBtn = createEl('button', 'hero-action-btn');
+    overviewBtn.type = 'button';
+    overviewBtn.id = 'records-overview-btn';
+    overviewBtn.appendChild(createEl('span', '', t('个人战绩')));
+    const badge = createEl(
+      'span',
+      'hero-action-badge',
+      `${stats.recordedGames}/${stats.totalGames}`
+    );
+    badge.hidden = stats.recordedGames === 0;
+    overviewBtn.appendChild(badge);
+    overviewBtn.addEventListener('click', () => openRecordsOverview(activeKey));
+    container.appendChild(overviewBtn);
+  }
+
+  function openRecordsOverview(activeKey) {
+    if (activeRecordsModal || window.SiteData?.isDialogOpen?.() || !window.SITE_CONFIG) return;
+
+    const lastFocus = document.activeElement;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    const mask = createEl('div', 'site-dialog-mask');
+    const dialog = createEl('div', 'site-dialog records-dialog');
+    dialog.setAttribute('role', 'dialog');
+    dialog.setAttribute('aria-modal', 'true');
+    dialog.setAttribute('aria-labelledby', 'records-dialog-title');
+
+    let filter = 'all';
+
+    const close = () => {
+      if (!activeRecordsModal) return;
+      activeRecordsModal = null;
+      document.body.style.overflow = prevOverflow;
+      mask.remove();
+      document.dispatchEvent(new CustomEvent('site:dialogclose'));
+      if (lastFocus && typeof lastFocus.focus === 'function') {
+        try { lastFocus.focus({ preventScroll: true }); } catch {}
+      }
+    };
+
+    const render = (focusFilterBtn = false) => {
+      const stats = getOverviewStats(window.SITE_CONFIG.games);
+      const recordedItems = stats.items.filter((item) => item.records.length > 0);
+      const unplayedItems = stats.items.filter((item) => item.records.length === 0);
+      const visibleItems = filter === 'recorded'
+        ? recordedItems
+        : (filter === 'unplayed' ? unplayedItems : stats.items);
+
+      dialog.textContent = '';
+
+      const head = createEl('div', 'records-dialog-head');
+      const title = createEl('h2', 'site-dialog-title', t('个人战绩总览'));
+      title.id = 'records-dialog-title';
+      head.appendChild(title);
+
+      const closeIconBtn = createEl('button', 'records-close-btn', '×');
+      closeIconBtn.type = 'button';
+      closeIconBtn.setAttribute('aria-label', t('关闭'));
+      closeIconBtn.title = t('关闭');
+      closeIconBtn.addEventListener('click', close);
+      head.appendChild(closeIconBtn);
+      dialog.appendChild(head);
+
+      const summaryGrid = createEl('div', 'records-summary-grid');
+      const summaryData = [
+        { val: `${stats.recordedGames}/${stats.totalGames}`, label: t('已留纪录') },
+        { val: String(stats.totalRecords), label: t('模式纪录') },
+        { val: String(stats.resumeCount), label: t('进行中存档') },
+      ];
+      for (const boxData of summaryData) {
+        const box = createEl('div', 'records-summary-box');
+        box.appendChild(createEl('div', 'records-summary-val', boxData.val));
+        box.appendChild(createEl('div', 'records-summary-lbl', boxData.label));
+        summaryGrid.appendChild(box);
+      }
+      dialog.appendChild(summaryGrid);
+
+      const filtersEl = createEl('div', 'records-filters');
+      const filterDefs = [
+        { id: 'all', label: t('全部'), count: stats.totalGames },
+        { id: 'recorded', label: t('已留纪录'), count: recordedItems.length },
+        { id: 'unplayed', label: t('待探索'), count: unplayedItems.length },
+      ];
+      for (const def of filterDefs) {
+        const btn = createEl(
+          'button',
+          'records-filter-btn' + (filter === def.id ? ' active' : ''),
+          `${def.label} (${def.count})`
+        );
+        btn.type = 'button';
+        btn.dataset.filter = def.id;
+        btn.setAttribute('aria-pressed', filter === def.id ? 'true' : 'false');
+        btn.addEventListener('click', () => {
+          filter = def.id;
+          render(true);
+        });
+        filtersEl.appendChild(btn);
+      }
+      dialog.appendChild(filtersEl);
+
+      const listEl = createEl('div', 'records-list');
+      if (visibleItems.length === 0) {
+        const emptyMsg = filter === 'recorded'
+          ? t('还没有留下任何纪录，挑一款开始玩吧！')
+          : t('全部游戏都已留下纪录，继续刷新更高成绩吧！');
+        listEl.appendChild(createEl('div', 'records-empty', emptyMsg));
+      } else {
+        for (const item of visibleItems) {
+          const row = createEl('div', 'records-row');
+          const rowHead = createEl('div', 'records-row-head');
+          const gameLink = createEl('a', 'records-game-link', t(item.game.title));
+          gameLink.href = item.game.url;
+          rowHead.appendChild(gameLink);
+          rowHead.appendChild(createEl(
+            'span',
+            'game-category-pill ' + item.game.category,
+            t(item.game.categoryName)
+          ));
+          if (item.resume) {
+            const resumeLink = createEl('a', 'records-resume-link', t('继续上局 →'));
+            resumeLink.href = item.game.url;
+            resumeLink.title = item.resume.title;
+            rowHead.appendChild(resumeLink);
+          }
+          row.appendChild(rowHead);
+
+          const tagsEl = createEl('div', 'records-tags');
+          if (item.records.length > 0) {
+            for (const rec of item.records) {
+              tagsEl.appendChild(createEl('span', 'records-tag', rec));
+            }
+          } else {
+            tagsEl.appendChild(createEl('span', 'records-empty-note', t('暂无纪录')));
+          }
+          row.appendChild(tagsEl);
+          listEl.appendChild(row);
+        }
+      }
+      dialog.appendChild(listEl);
+
+      const footer = createEl('div', 'site-dialog-actions');
+      const randomFooterBtn = createEl('button', 'site-dialog-btn', t('随机来一局'));
+      randomFooterBtn.type = 'button';
+      randomFooterBtn.addEventListener('click', () => {
+        const pool = filter === 'unplayed' && unplayedItems.length > 0
+          ? unplayedItems.map((item) => item.game)
+          : getPageGames(activeKey);
+        launchRandomGame(pool);
+      });
+      footer.appendChild(randomFooterBtn);
+
+      const closeFooterBtn = createEl('button', 'site-dialog-btn primary', t('关闭'));
+      closeFooterBtn.type = 'button';
+      closeFooterBtn.addEventListener('click', close);
+      footer.appendChild(closeFooterBtn);
+      dialog.appendChild(footer);
+
+      if (focusFilterBtn) {
+        dialog.querySelector(`.records-filter-btn[data-filter="${filter}"]`)?.focus({ preventScroll: true });
+      }
+    };
+
+    mask.addEventListener('keydown', (e) => {
+      e.stopPropagation();
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        close();
+        return;
+      }
+      if (e.key !== 'Tab') return;
+      const focusables = Array.from(
+        dialog.querySelectorAll('a[href], button:not([disabled])')
+      );
+      if (focusables.length === 0) return;
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    });
+
+    mask.addEventListener('click', (e) => {
+      if (e.target === mask) close();
+    });
+
+    activeRecordsModal = { render: () => render(false) };
+    render(false);
+    mask.appendChild(dialog);
+    document.body.appendChild(mask);
+    document.dispatchEvent(new CustomEvent('site:dialogopen'));
+    requestAnimationFrame(() => dialog.querySelector('.records-close-btn')?.focus());
+  }
+
+  let currentActiveKey = 'all';
+  let listenersBound = false;
+
+  function refreshLobby(includeChrome) {
+    if (includeChrome) {
+      renderHeader(currentActiveKey);
+      renderFooter(currentActiveKey);
+    }
+    renderHeroActions(currentActiveKey);
+    renderGamesGrid(currentActiveKey);
+    renderRecentGame();
+    if (activeRecordsModal) activeRecordsModal.render();
+  }
 
   window.initSitePage = function (activeKey) {
-    renderHeader(activeKey);
-    renderGamesGrid(activeKey);
-    renderRecentGame();
-    renderFooter(activeKey);
+    currentActiveKey = activeKey;
+    refreshLobby(true);
 
-    if (activeKey === 'all') window.addEventListener('storage', renderRecentGame);
+    if (!listenersBound) {
+      listenersBound = true;
+      window.addEventListener('storage', () => refreshLobby(false));
 
-    if (!i18nBound) {
-      i18nBound = true;
       document.addEventListener('i18n:change', () => {
         const languageButtonFocused = document.activeElement?.matches('#site-header [data-lang-toggle]');
-        renderHeader(activeKey);
-        renderGamesGrid(activeKey);
-        renderRecentGame();
-        renderFooter(activeKey);
+        refreshLobby(true);
         if (languageButtonFocused) {
           document.querySelector('#site-header [data-lang-toggle]')?.focus({ preventScroll: true });
         }
       });
-    }
 
-    // 从游戏页后退（bfcache 恢复）时同步首页状态。
-    window.addEventListener('pageshow', (e) => {
-      if (e.persisted) {
-        renderHeader(activeKey);
-        renderGamesGrid(activeKey);
-        renderRecentGame();
-      }
-    });
+      // 从游戏页后退（bfcache 恢复）时同步首页状态。
+      window.addEventListener('pageshow', (e) => {
+        if (e.persisted) refreshLobby(true);
+      });
+    }
   };
 
   window.SiteLobby = {
     getResumeInfo,
     getCardMetaText,
     getBestRecord,
+    getAllGameRecords,
+    getOverviewStats,
+    pickRandomGame,
     get2048Resume,
     getTetrisResume,
     getBlockWorkshopProjectCount,

@@ -250,6 +250,73 @@ textarea {
   text-underline-offset: 3px;
 }
 
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.hero-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 9px 16px;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+
+.hero-action-btn:hover {
+  background: var(--surface-muted);
+  border-color: var(--border-strong);
+}
+
+.hero-action-btn:active {
+  transform: translateY(1px);
+}
+
+.hero-action-btn:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.hero-action-btn.primary {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: #ffffff;
+}
+
+.hero-action-btn.primary:hover {
+  border-color: var(--primary-hover);
+  background: var(--primary-hover);
+  color: #ffffff;
+}
+
+.hero-action-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--primary-soft);
+  color: var(--primary-hover);
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.hero-action-badge[hidden] {
+  display: none;
+}
+
 /* 分类与游戏卡片区 */
 .section-head {
   display: flex;
@@ -759,6 +826,215 @@ body:has(#site-footer) > main {
 .site-dialog-btn:focus-visible {
   outline: 2px solid var(--primary);
   outline-offset: 2px;
+}
+
+/* 个人战绩总览弹窗 */
+.site-dialog.records-dialog {
+  width: min(640px, 100%);
+  max-height: min(86vh, 720px);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.records-dialog-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.records-dialog-head .site-dialog-title {
+  margin-bottom: 0;
+}
+
+.records-close-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-muted);
+  color: var(--text-muted);
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.records-close-btn:hover {
+  color: var(--text);
+  border-color: var(--border-strong);
+}
+
+.records-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.records-summary-box {
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-muted);
+  text-align: center;
+}
+
+.records-summary-val {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--text);
+  line-height: 1.25;
+}
+
+.records-summary-lbl {
+  margin-top: 2px;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.records-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.records-filter-btn {
+  min-height: 36px;
+  padding: 5px 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.records-filter-btn:hover {
+  background: var(--surface-muted);
+  color: var(--text);
+}
+
+.records-filter-btn.active {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: #ffffff;
+}
+
+.records-close-btn:focus-visible,
+.records-filter-btn:focus-visible,
+.records-game-link:focus-visible,
+.records-resume-link:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.records-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+  padding-right: 2px;
+  min-height: 140px;
+}
+
+.records-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-muted);
+}
+
+.records-row-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.records-game-link {
+  font-weight: 700;
+  font-size: 0.96rem;
+  color: var(--text);
+}
+
+.records-game-link:hover {
+  color: var(--primary-hover);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.records-resume-link {
+  margin-left: auto;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--primary-hover);
+}
+
+.records-resume-link:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.records-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.records-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 9px;
+  border-radius: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--accent-text);
+}
+
+.records-empty-note {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.records-empty {
+  padding: 28px 12px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.records-dialog .site-dialog-actions {
+  margin-top: 2px;
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+
+@media (max-width: 600px) {
+  .hero-action-btn {
+    flex: 1 1 auto;
+  }
+
+  .site-dialog.records-dialog {
+    padding: 16px;
+    max-height: 90vh;
+  }
+
+  .records-summary-val {
+    font-size: 1rem;
+  }
+
+  .records-resume-link {
+    margin-left: 0;
+  }
 }
 
 @keyframes dialog-fade {
