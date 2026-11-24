@@ -381,8 +381,26 @@ async function verifyGamePage(session, gameId) {
   } else if (gameId === 'block-workshop') {
     await session.evaluate('document.getElementById("workshop-dismiss-tip")?.click()');
     await sleep(250);
-    const ready = await session.evaluate('Boolean(document.getElementById("world") || document.getElementById("graphics-error"))');
-    if (!ready) throw new Error('block-workshop 页面容器缺失');
+    const uiCheck = await session.evaluate(`(() => {
+      const ready = Boolean(document.getElementById("world") || document.getElementById("graphics-error"));
+      const mats = document.querySelectorAll("[data-material]").length;
+      const tools = Boolean(
+        document.querySelector('[data-tool="pick"]') &&
+        document.getElementById("workshop-undo") &&
+        document.getElementById("workshop-redo") &&
+        document.getElementById("workshop-symmetry") &&
+        document.getElementById("workshop-export")
+      );
+      return { ready, mats, tools };
+    })()`);
+    if (!uiCheck.ready) throw new Error('block-workshop 页面容器缺失');
+    if (uiCheck.mats !== 12) throw new Error('block-workshop 材质数量异常：' + uiCheck.mats);
+    if (!uiCheck.tools) throw new Error('block-workshop 缺少吸管/撤销/重做/对称/导出控件');
+    // Test theme toggle & starter template library modal
+    await session.evaluate('document.querySelector("[data-theme-toggle]")?.click()');
+    await session.evaluate('document.getElementById("workshop-works")?.click()');
+    await session.waitUntil('document.querySelectorAll("#workshop-templates .workshop-template").length === 3', 3000, 'block-workshop starter templates rendered');
+    await session.evaluate('document.getElementById("workshop-close-library")?.click()');
   }
 }
 

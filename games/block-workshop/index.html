@@ -63,16 +63,26 @@
     <div class="workshop-actions">
       <button id="workshop-works" type="button" data-i18n="作品">作品</button>
       <button id="workshop-save" type="button" aria-label="保存并返回作品列表" data-i18n-attr="aria-label:保存并返回作品列表" data-i18n="保存">保存</button>
+      <button id="workshop-export" type="button" aria-label="导出当前视角 PNG 图片" data-i18n-attr="aria-label:导出当前视角 PNG 图片" data-i18n="导出图片">导出图片</button>
       <button id="workshop-help" type="button" aria-pressed="false" aria-label="小桥教学" data-i18n-attr="aria-label:小桥教学" data-i18n="教学">教学</button>
       <button id="workshop-sound" type="button"></button>
       <button id="workshop-immersive" type="button" data-i18n="沉浸模式" hidden>沉浸模式</button>
     </div>
     <p id="workshop-save-status" role="status" aria-live="polite"></p>
-    <p id="workshop-blueprint" hidden class="workshop-blueprint" role="status"></p>
+    <div class="workshop-blueprint-row">
+      <p id="workshop-blueprint" hidden class="workshop-blueprint" role="status"></p>
+      <button id="workshop-finish-tutorial" class="workshop-finish-tutorial" type="button" hidden data-i18n="完成并退出教学">完成并退出教学</button>
+    </div>
     <div class="workshop-tools">
       <div class="workshop-group" role="group" aria-label="搭建工具" data-i18n-attr="aria-label:搭建工具">
         <button type="button" data-tool="place" aria-pressed="true" data-i18n="放置">放置</button>
         <button type="button" data-tool="remove" aria-pressed="false" data-i18n="拆除">拆除</button>
+        <button type="button" data-tool="pick" aria-pressed="false" data-i18n="吸管">吸管</button>
+      </div>
+      <div class="workshop-group" role="group" aria-label="编辑操作" data-i18n-attr="aria-label:编辑操作">
+        <button type="button" id="workshop-undo" aria-label="撤销" data-i18n-attr="aria-label:撤销" data-i18n="撤销" disabled>撤销</button>
+        <button type="button" id="workshop-redo" aria-label="重做" data-i18n-attr="aria-label:重做" data-i18n="重做" disabled>重做</button>
+        <button type="button" id="workshop-symmetry" aria-pressed="false" aria-label="切换对称搭建" data-i18n-attr="aria-label:切换对称搭建" data-i18n="对称: 关">对称: 关</button>
       </div>
       <div class="workshop-group workshop-materials" role="group" aria-label="方块材料" data-i18n-attr="aria-label:方块材料">
         <button type="button" data-material="grass" aria-pressed="true" aria-label="草地" data-i18n-attr="aria-label:草地"><span data-i18n="草地">草地</span></button>
@@ -83,6 +93,10 @@
         <button type="button" data-material="copper" aria-pressed="false" aria-label="铜" data-i18n-attr="aria-label:铜"><span data-i18n="铜">铜</span></button>
         <button type="button" data-material="gold" aria-pressed="false" aria-label="金" data-i18n-attr="aria-label:金"><span data-i18n="金">金</span></button>
         <button type="button" data-material="diamond" aria-pressed="false" aria-label="钻石" data-i18n-attr="aria-label:钻石"><span data-i18n="钻石">钻石</span></button>
+        <button type="button" data-material="brick" aria-pressed="false" aria-label="红砖" data-i18n-attr="aria-label:红砖"><span data-i18n="红砖">红砖</span></button>
+        <button type="button" data-material="leaves" aria-pressed="false" aria-label="树叶" data-i18n-attr="aria-label:树叶"><span data-i18n="树叶">树叶</span></button>
+        <button type="button" data-material="glass" aria-pressed="false" aria-label="玻璃" data-i18n-attr="aria-label:玻璃"><span data-i18n="玻璃">玻璃</span></button>
+        <button type="button" data-material="snow" aria-pressed="false" aria-label="白雪" data-i18n-attr="aria-label:白雪"><span data-i18n="白雪">白雪</span></button>
       </div>
       <div class="workshop-group" role="group" aria-label="视角" data-i18n-attr="aria-label:视角">
         <button type="button" data-turn="-1" aria-label="左转 90°" data-i18n-attr="aria-label:左转 90°">↶ 90°</button>
@@ -90,7 +104,7 @@
         <button type="button" id="workshop-overview" aria-label="回到全景" data-i18n-attr="aria-label:回到全景" data-i18n="全景">全景</button>
       </div>
     </div>
-    <p id="workshop-keys" class="workshop-keys" data-i18n="方向键选格 · Shift + 方向键旋转 · +/− 缩放 · 回车确认">方向键选格 · Shift + 方向键旋转 · +/− 缩放 · 回车确认</p>
+    <p id="workshop-keys" class="workshop-keys" data-i18n="左键放置 · 右键拆除 · 拖右键/Shift平移 · Ctrl+Z 撤销 · B/X/I 切工具 · M 对称 · R 全景 · 1-0 选材 · 方向键选格">左键放置 · 右键拆除 · 拖右键/Shift平移 · Ctrl+Z 撤销 · B/X/I 切工具 · M 对称 · R 全景 · 1-0 选材 · 方向键选格</p>
     <p id="workshop-status" class="workshop-status" role="status" data-i18n="点地面或方块表面放置。">点地面或方块表面放置。</p>
   </footer>
 
@@ -100,6 +114,8 @@
   <dialog id="workshop-library" class="workshop-dialog" aria-labelledby="workshop-library-title">
     <h2 id="workshop-library-title" data-i18n="作品">作品</h2>
     <div id="workshop-projects"></div>
+    <h3 class="workshop-subheading" data-i18n="灵感模板">灵感模板</h3>
+    <div id="workshop-templates"></div>
     <div class="workshop-actions">
       <button id="workshop-new" type="button" data-i18n="新建作品">新建作品</button>
       <button id="workshop-clear" type="button" data-i18n="清空当前作品">清空当前作品</button>

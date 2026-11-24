@@ -77,7 +77,7 @@ test('bridge tutorial practice world and step progression', () => {
   assert.equal(finished.clear, true);
 });
 
-test('projects CRUD, optimistic concurrency, v1 migration, and session drafts', () => {
+test('projects CRUD, optimistic concurrency, rename, v1 migration, and session drafts', () => {
   localStorage.clear();
   sessionStorage.clear();
 
@@ -86,13 +86,39 @@ test('projects CRUD, optimistic concurrency, v1 migration, and session drafts', 
 
   const raw1 = projects.saveProject('p1', 'Bridge', blocks, null);
   assert.equal(projects.readProject('p1').blocks.size, 1);
-  assert.deepEqual(projects.listProjects(), [{ id: 'p1', name: 'Bridge' }]);
+  const listed1 = projects.listProjects();
+  assert.equal(listed1.length, 1);
+  assert.equal(listed1[0].id, 'p1');
+  assert.equal(listed1[0].name, 'Bridge');
+  assert.equal(listed1[0].count, 1);
+  assert.equal(typeof listed1[0].updatedAt, 'number');
 
   assert.throws(() => projects.saveProject('p1', 'Bridge', blocks, null), /Project changed/);
 
   world.placeBlock(blocks, { x: 2, y: 0, z: 2 }, 'gold');
   const raw2 = projects.saveProject('p1', 'Bridge', blocks, raw1);
   assert.equal(projects.readProject('p1').blocks.size, 2);
+
+  // Rename preserves blocks and rejects stale raw
+  assert.throws(() => projects.renameProject('p1', 'Golden Bridge', raw1), /Project changed/);
+  const raw3 = projects.renameProject('p1', 'Golden Bridge', raw2);
+  assert.equal(projects.readProject('p1').name, 'Golden Bridge');
+  assert.equal(projects.readProject('p1').blocks.size, 2);
+
+  // Sorting orders newest updatedAt first
+  const blocks2 = world.createWorld();
+  world.placeBlock(blocks2, { x: 0, y: 0, z: 0 }, 'brick');
+  localStorage.setItem('game_save_block-workshop_older', JSON.stringify({
+    version: 2,
+    name: 'Older',
+    updatedAt: 1000,
+    cells: [{ x: 0, y: 0, z: 0, material: 'brick' }],
+  }));
+  const sorted = projects.listProjects();
+  assert.equal(sorted[0].id, 'p1');
+  assert.equal(sorted[1].id, 'older');
+  assert.equal(sorted[1].count, 1);
+  localStorage.removeItem('game_save_block-workshop_older');
 
   // Remember and read saved project session
   projects.rememberSession('p1', blocks);
@@ -126,7 +152,90 @@ test('projects CRUD, optimistic concurrency, v1 migration, and session drafts', 
   }));
   assert.equal(projects.readProject('v1bad'), null);
 
-  assert.throws(() => projects.deleteProject('p1', raw1), /Project changed/);
-  projects.deleteProject('p1', raw2);
+  assert.throws(() => projects.deleteProject('p1', raw2), /Project changed/);
+  projects.deleteProject('p1', raw3);
   assert.equal(projects.readProject('p1'), null);
+});
+
+test('all 12 materials, mirror symmetry, undo/redo history, batch clear, and starter templates', () => {
+  const expectedMaterials = [
+    'grass', 'sand', 'wood', 'stone', 'iron', 'copper',
+    'gold', 'diamond', 'brick', 'leaves', 'glass', 'snow',
+  ];
+  assert.deepEqual(Object.keys(world.MATERIALS), expectedMaterials);
+
+  const matBlocks = world.createWorld();
+  expectedMaterials.forEach((mat, index) => {
+    assert.equal(world.placeBlock(matBlocks, { x: index, y: 0, z: 0 }, mat), true);
+  });
+  assert.equal(matBlocks.size, 12);
+
+  // Symmetry mirroring & deduplication
+  assert.deepEqual(world.mirrorPositions({ x: 2, y: 1, z: 3 }, 'off'), [{ x: 2, y: 1, z: 3 }]);
+  assert.deepEqual(world.mirrorPositions({ x: 2, y: 1, z: 3 }, 'x'), [
+    { x: 2, y: 1, z: 3 },
+    { x: 21, y: 1, z: 3 },
+  ]);
+  assert.deepEqual(world.mirrorPositions({ x: 2, y: 1, z: 3 }, 'z'), [
+    { x: 2, y: 1, z: 3 },
+    { x: 2, y: 1, z: 20 },
+  ]);
+  assert.deepEqual(world.mirrorPositions({ x: 2, y: 1, z: 3 }, 'xz'), [
+    { x: 2, y: 1, z: 3 },
+    { x: 21, y: 1, z: 3 },
+    { x: 2, y: 1, z: 20 },
+    { x: 21, y: 1, z: 20 },
+  ]);
+
+  // History undo/redo + batch clear + redo clear on new edit + capacity cap
+  const blocks = world.createWorld();
+  const history = world.createHistory(3);
+  assert.equal(history.canUndo(), false);
+  assert.equal(history.canRedo(), false);
+
+  const placeChanges = world.applyBatchPlace(blocks, world.mirrorPositions({ x: 1, y: 0, z: 1 }, 'xz'), 'brick');
+  assert.equal(placeChanges.length, 4);
+  assert.equal(blocks.size, 4);
+  history.push(placeChanges);
+  assert.equal(history.canUndo(), true);
+
+  const undo1 = history.undo(blocks);
+  assert.ok(undo1 && undo1.materials.has('brick'));
+  assert.equal(blocks.size, 0);
+  assert.equal(history.canUndo(), false);
+  assert.equal(history.canRedo(), true);
+
+  const redo1 = history.redo(blocks);
+  assert.ok(redo1 && redo1.materials.has('brick'));
+  assert.equal(blocks.size, 4);
+
+  const removeChanges = world.applyBatchRemove(blocks, world.mirrorPositions({ x: 1, y: 0, z: 1 }, 'x'));
+  assert.equal(removeChanges.length, 2);
+  assert.equal(blocks.size, 2);
+  history.push(removeChanges);
+  assert.equal(history.canRedo(), false);
+
+  const clearChanges = world.applyClear(blocks);
+  assert.equal(clearChanges.length, 2);
+  assert.equal(blocks.size, 0);
+  history.push(clearChanges);
+  history.undo(blocks);
+  assert.equal(blocks.size, 2);
+
+  // Limit enforcement (max 3)
+  history.push(world.applyBatchPlace(blocks, [{ x: 0, y: 1, z: 0 }], 'snow'));
+  history.push(world.applyBatchPlace(blocks, [{ x: 0, y: 2, z: 0 }], 'glass'));
+  assert.equal(history.size(), 3);
+
+  // Starter templates
+  assert.equal(world.TEMPLATES.length, 3);
+  assert.equal(world.createTemplateWorld('missing'), null);
+  for (const tpl of world.TEMPLATES) {
+    const built = world.createTemplateWorld(tpl.id);
+    assert.ok(built && built.size >= 40, `template ${tpl.id} should be populated`);
+    for (const cell of built.values()) {
+      assert.equal(world.inBounds(cell), true, `template ${tpl.id} cell in bounds`);
+      assert.equal(Object.hasOwn(world.MATERIALS, cell.material), true, `template ${tpl.id} valid material`);
+    }
+  }
 });

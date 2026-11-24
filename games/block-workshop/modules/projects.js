@@ -17,14 +17,15 @@ function decode(raw) {
       if (offset && (cell.x < 0 || cell.x >= oldSize || cell.z < 0 || cell.z >= oldSize)) return null;
       if (!placeBlock(blocks, { x: cell.x + offset, y: cell.y, z: cell.z + offset }, cell.material)) return null;
     }
-    return { name: record.name, blocks, raw };
+    const updatedAt = typeof record.updatedAt === 'number' && Number.isFinite(record.updatedAt) ? record.updatedAt : 0;
+    return { name: record.name, blocks, raw, updatedAt, count: blocks.size };
   } catch {
     return null;
   }
 }
 
-function encode(name, blocks) {
-  return JSON.stringify({ version: 2, name, cells: [...blocks.values()] });
+function encode(name, blocks, updatedAt = Date.now()) {
+  return JSON.stringify({ version: 2, name, updatedAt, cells: [...blocks.values()] });
 }
 
 export function readProject(id) {
@@ -32,17 +33,30 @@ export function readProject(id) {
 }
 
 export function listProjects() {
-  return Object.keys(localStorage).filter((key) => key.startsWith(prefix)).flatMap((key) => {
-    const id = key.slice(prefix.length);
-    const project = readProject(id);
-    return project ? [{ id, name: project.name }] : [];
-  });
+  return Object.keys(localStorage)
+    .filter((key) => key.startsWith(prefix))
+    .flatMap((key) => {
+      const id = key.slice(prefix.length);
+      const project = readProject(id);
+      return project ? [{ id, name: project.name, count: project.blocks.size, updatedAt: project.updatedAt }] : [];
+    })
+    .sort((a, b) => b.updatedAt - a.updatedAt || a.name.localeCompare(b.name, 'zh-CN'));
 }
 
 export function saveProject(id, name, blocks, previous) {
   const key = prefix + id;
   if (localStorage.getItem(key) !== previous) throw new Error('Project changed');
   const raw = encode(name, blocks);
+  localStorage.setItem(key, raw);
+  return raw;
+}
+
+export function renameProject(id, name, previous) {
+  const key = prefix + id;
+  if (localStorage.getItem(key) !== previous) throw new Error('Project changed');
+  const project = decode(previous);
+  if (!project) throw new Error('Project unavailable');
+  const raw = encode(name, project.blocks);
   localStorage.setItem(key, raw);
   return raw;
 }
