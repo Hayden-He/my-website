@@ -417,8 +417,26 @@
     });
   });
 
+  function ensureIconSprite() {
+    if (document.querySelector('svg.icon-sprite') || typeof fetch !== 'function') return;
+    fetch('/assets/icons.svg')
+      .then((res) => (res.ok ? res.text() : ''))
+      .then((text) => {
+        if (!text || document.querySelector('svg.icon-sprite')) return;
+        const doc = new DOMParser().parseFromString(text, 'image/svg+xml');
+        const svg = doc.documentElement;
+        if (!svg || svg.nodeName.toLowerCase() !== 'svg') return;
+        svg.setAttribute('class', 'icon-sprite');
+        svg.setAttribute('aria-hidden', 'true');
+        svg.setAttribute('focusable', 'false');
+        document.body?.prepend(document.importNode(svg, true));
+      })
+      .catch(() => {});
+  }
+
   // 游戏页：自动在页面底部追加入口（列表页由 app.js 在页脚渲染）
   document.addEventListener('DOMContentLoaded', () => {
+    ensureIconSprite();
     const wrap = document.querySelector('main.game-wrap, [data-site-footer-mount]');
     if (!wrap) return;
     const box = document.createElement('div');

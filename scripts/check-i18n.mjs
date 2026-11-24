@@ -3,7 +3,7 @@
  * 中英文案覆盖校验（零依赖）
  * 用法：node scripts/check-i18n.mjs
  *
- * 约定：中文原文就是 key，英文词典在 assets/i18n.js 的 EN 对象里。
+ * 约定：中文原文就是 key，英文词典在 assets/i18n-en.js 的 window.I18N_EN 对象里。
  * 本脚本会检查：
  * - 页面静态 data-i18n / data-i18n-attr 的 key
  * - 页面 <title> / meta description（运行时按原文查词典）
@@ -28,33 +28,23 @@ function read(relativePath) {
 }
 
 function loadEnglishDictionary() {
-  const source = read('assets/i18n.js');
+  const source = read('assets/i18n-en.js');
   if (!source) {
-    console.error('✗ assets/i18n.js 不存在');
+    console.error('✗ assets/i18n-en.js 不存在');
     process.exit(1);
   }
   const sandbox = {
     window: {},
-    document: {
-      readyState: 'loading',
-      addEventListener() {},
-      querySelectorAll() { return []; },
-      querySelector() { return null; },
-      documentElement: { setAttribute() {}, lang: '' },
-      title: '',
-    },
-    localStorage: { getItem() { return null; }, setItem() {} },
-    CustomEvent: class {},
   };
   try {
-    vm.runInNewContext(source, sandbox, { filename: 'assets/i18n.js' });
+    vm.runInNewContext(source, sandbox, { filename: 'assets/i18n-en.js' });
   } catch (error) {
-    console.error('✗ assets/i18n.js 无法解析：' + error.message);
+    console.error('✗ assets/i18n-en.js 无法解析：' + error.message);
     process.exit(1);
   }
-  const dictionary = sandbox.window.I18N && sandbox.window.I18N.en;
+  const dictionary = sandbox.window.I18N_EN;
   if (!dictionary || typeof dictionary !== 'object') {
-    console.error('✗ assets/i18n.js 没有导出 I18N.en');
+    console.error('✗ assets/i18n-en.js 没有导出 window.I18N_EN');
     process.exit(1);
   }
   return dictionary;
@@ -64,7 +54,7 @@ const config = readSiteConfig();
 const pageFiles = [...sitePages(config), ...previewPages(process.argv.slice(2))].map(({ file }) => file);
 
 const sharedScripts = fs.readdirSync(path.join(root, 'assets'))
-  .filter((name) => name.endsWith('.js') && name !== 'i18n.js')
+  .filter((name) => name.endsWith('.js') && name !== 'i18n.js' && name !== 'i18n-en.js')
   .map((name) => 'assets/' + name);
 const gameScripts = pageFiles.flatMap((file) => {
   const vendor = pageModuleDirectory(file) + '/vendor/';
@@ -126,7 +116,7 @@ const extra = [...englishKeys].filter((key) => !seen.has(key));
 if (missing.length) {
   console.error(`✗ 有 ${missing.length} 条文案缺少英文：`);
   missing.forEach((key) => console.error('  - ' + JSON.stringify(key)));
-  console.error('\n请在 assets/i18n.js 的 EN 对象里补上对应英文。');
+  console.error('\n请在 assets/i18n-en.js 的 window.I18N_EN 对象里补上对应英文。');
   process.exit(1);
 }
 

@@ -1,6 +1,5 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { execFileSync } from 'node:child_process';
 import { root, siteUrl, readSiteConfig, sitePages, escapeHtml } from './site-config.mjs';
 
 const config = readSiteConfig();
@@ -62,5 +61,4 @@ for (const [file, text] of output) {
   const target = path.join(root, file);
   if (fs.readFileSync(target, 'utf8') !== text) fs.writeFileSync(target, text);
 }
-execFileSync(process.execPath, [path.join(root, 'scripts/inline-icons.mjs')], { stdio: 'inherit' });
-console.log('已同步 ' + entries.length + ' 个页面的 SEO、网站地图与图标');
+console.log('已同步 ' + entries.length + ' 个页面的 SEO 与网站地图');

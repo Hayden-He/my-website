@@ -25,6 +25,7 @@ for (const file of [...files, ...pages]) {
   version.update(file).update('\0').update(bytes).update('\0');
 }
 const modulePaths = new Map();
+const pageModuleTexts = new Map();
 for (const page of pages) {
   const modules = pageModuleFiles(page).map((file) => [file, fs.readFileSync(path.join(root, file))]);
   if (!modules.length) continue;
@@ -37,6 +38,10 @@ for (const page of pages) {
     if (file.startsWith(vendorPrefix)) vendorFiles.push([file, bytes]);
     else appFiles.push([file, bytes]);
   }
+  pageModuleTexts.set(
+    page,
+    appFiles.filter(([file]) => /\.(?:m?js|css|html)$/i.test(file)).map(([, bytes]) => bytes.toString('utf8'))
+  );
 
   let vendorDir = null;
   let vendorHash = null;
@@ -209,13 +214,90 @@ function verifyShell(file, html) {
   if (problems.length) throw new Error(file + '：静态外壳校验失败：' + problems.join('；'));
 }
 
+const iconSymbols = [...fs.readFileSync(path.join(root, 'assets/icons.svg'), 'utf8')
+  .matchAll(/<symbol\s+id="([^"]+)"[\s\S]*?<\/symbol>/g)]
+  .map((match) => ({ id: match[1], markup: match[0] }));
+if (!iconSymbols.length) throw new Error('assets/icons.svg 中未找到 <symbol> 定义');
+
+function collectPageIcons(html, moduleTexts) {
+  const stripped = html.replace(/<!-- inline-icons:start -->[\s\S]*?<!-- inline-icons:end -->/, '');
+  const haystack = stripped + '\n' + (moduleTexts || []).join('\n');
+  const needed = new Set();
+
+  if (stripped.includes('data-theme-toggle')) {
+    needed.add('theme-system');
+    needed.add('theme-light');
+    needed.add('theme-dark');
+  }
+  if (stripped.includes('nav-sound-btn') || haystack.includes('bindSoundButton')) {
+    needed.add('sound-on');
+    needed.add('sound-off');
+  }
+  if (stripped.includes('initSitePage(') || haystack.includes('showTutorial')) {
+    needed.add('brand');
+  }
+
+  const moreMatch = haystack.match(/GameKit\.mountMoreGames\(\s*['"]([a-z0-9-]+)['"]/);
+  if (moreMatch) {
+    const current = config.games.findIndex((g) => g.id === moreMatch[1]);
+    if (current >= 0) {
+      needed.add('game-' + config.games[current].icon);
+      const recommended = config.games.slice(current + 1)
+        .concat(config.games.slice(0, Math.max(0, current)))
+        .slice(0, 4);
+      for (const game of recommended) needed.add('game-' + game.icon);
+    }
+  }
+
+  if (haystack.includes("'#mem-'") || haystack.includes('"#mem-"')) {
+    for (const { id } of iconSymbols) {
+      if (id.startsWith('mem-')) needed.add(id);
+    }
+  }
+
+  for (const { id } of iconSymbols) {
+    if (haystack.includes('#' + id) || haystack.includes("'" + id + "'") || haystack.includes('"' + id + '"')) {
+      needed.add(id);
+    }
+  }
+
+  return iconSymbols.filter(({ id }) => needed.has(id));
+}
+
+function injectIcons(file, html, moduleTexts) {
+  if (!html.includes('<!-- inline-icons:start -->') || !html.includes('<!-- inline-icons:end -->')) {
+    throw new Error(file + '：缺少 inline-icons 标记');
+  }
+  const symbols = collectPageIcons(html, moduleTexts);
+  if (!symbols.length) throw new Error(file + '：裁剪后未匹配到任何图标');
+  const sprite = [
+    '<svg xmlns="http://www.w3.org/2000/svg" class="icon-sprite" aria-hidden="true" focusable="false">',
+    ...symbols.map(({ markup }) => '  ' + markup),
+    '</svg>',
+  ].join('\n');
+  const next = html.replace(
+    /<!-- inline-icons:start -->[\s\S]*?<!-- inline-icons:end -->/,
+    () => '<!-- inline-icons:start -->\n' + sprite + '\n<!-- inline-icons:end -->'
+  );
+  if (!next.includes('class="icon-sprite"') || !next.includes('<symbol id=')) {
+    throw new Error(file + '：图标内联校验失败');
+  }
+  return next;
+}
+
 for (const file of pages) {
   let html = content.get(file).toString();
   html = injectShell(file, html);
+  html = injectIcons(file, html, pageModuleTexts.get(file));
   verifyShell(file, html);
   const legacyVersion = html.match(/\/assets\/style\.css\?v=(\d{11})/)?.[1];
   html = html.replace(/\b(src|href)="(\/assets\/[^"?]+)(?:\?v=\d+)?"(?=\s|>)/g,
     (_, attribute, asset) => attribute + '="' + versionedAsset(asset) + '"');
+  const enAsset = versionedAsset('/assets/i18n-en.js');
+  html = html.replace(
+    /<script src="(\/assets\/v\/[0-9a-f]{16}\/i18n\.js)"><\/script>/,
+    (_, src) => '<script src="' + src + '" data-en-src="' + enAsset + '"></script>'
+  );
   html = html.replace(/\b(src|href)="\.\/modules\/([^"?#]+)([?#][^"]*)?"(?=\s|>)/g,
     (_, attribute, fileName, suffix = '') => {
       const entry = modulePaths.get(file);

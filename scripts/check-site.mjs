@@ -138,7 +138,8 @@ for (const category of categories) {
     checkContains(categoryPage, 'id="games-grid"', `分类页 ${category.url}`);
     checkContains(categoryPage, 'assets/theme.js', `分类页 ${category.url}`);
     checkContains(categoryPage, 'assets/i18n.js', `分类页 ${category.url}`);
-    checkContains(categoryPage, 'class="icon-sprite"', `分类页 ${category.url}`);
+    checkContains(categoryPage, '<!-- inline-icons:start -->', `分类页 ${category.url}`);
+    checkContains(categoryPage, '<!-- inline-icons:end -->', `分类页 ${category.url}`);
     checkContains(categoryPage, 'assets/style.css?v=', `分类页 ${category.url}`);
     checkContains(categoryPage, 'assets/theme.js?v=', `分类页 ${category.url}`);
     checkContains(categoryPage, 'assets/i18n.js?v=', `分类页 ${category.url}`);
@@ -217,7 +218,8 @@ for (const game of games) {
   checkContains(page, 'assets/site-data.js', pagePath);
   checkContains(page, 'assets/theme.js', pagePath);
   checkContains(page, 'assets/i18n.js', pagePath);
-  checkContains(page, 'class="icon-sprite"', pagePath);
+  checkContains(page, '<!-- inline-icons:start -->', pagePath);
+  checkContains(page, '<!-- inline-icons:end -->', pagePath);
   checkContains(page, 'assets/style.css?v=', pagePath);
   checkContains(page, 'assets/theme.js?v=', pagePath);
   checkContains(page, 'assets/i18n.js?v=', pagePath);
@@ -265,7 +267,8 @@ checkContains(read('index.html'), "initSitePage('all')", 'index.html');
 checkContains(read('index.html'), 'id="games-grid"', 'index.html');
 checkContains(read('index.html'), 'assets/theme.js?v=', 'index.html');
 checkContains(read('index.html'), 'assets/i18n.js?v=', 'index.html');
-checkContains(read('index.html'), 'class="icon-sprite"', 'index.html');
+checkContains(read('index.html'), '<!-- inline-icons:start -->', 'index.html');
+checkContains(read('index.html'), '<!-- inline-icons:end -->', 'index.html');
 checkSeoPage(read('index.html'), {
   label: 'index.html',
   urlPath: '/',
@@ -276,7 +279,8 @@ checkContains(read('index.html'), 'assets/icon.svg?v=', 'index.html');
 checkContains(read('index.html'), 'apple-touch-icon.png', 'index.html');
 checkContains(read('404.html'), 'assets/theme.js?v=', '404.html');
 checkContains(read('404.html'), 'assets/i18n.js?v=', '404.html');
-checkContains(read('404.html'), 'class="icon-sprite"', '404.html');
+checkContains(read('404.html'), '<!-- inline-icons:start -->', '404.html');
+checkContains(read('404.html'), '<!-- inline-icons:end -->', '404.html');
 checkContains(read('404.html'), 'site.webmanifest', '404.html');
 checkContains(read('404.html'), 'assets/icon.svg?v=', '404.html');
 checkContains(read('404.html'), 'apple-touch-icon.png', '404.html');
@@ -326,6 +330,7 @@ for (const asset of [
   'assets/site-data.js',
   'assets/theme.js',
   'assets/i18n.js',
+  'assets/i18n-en.js',
   'assets/games.js',
   'assets/app.js',
   'assets/game-kit.js',
