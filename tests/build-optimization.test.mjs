@@ -214,3 +214,28 @@ test('i18n runtime skips English dictionary in zh mode and loads it on demand fo
   assert.equal(enBoot.I18N.t('全部游戏'), 'All Games');
   assert.deepEqual(bootEvents, ['en']);
 });
+
+test('dist rewrites ./modules/ assets and emits all module files for basketball, fruit, and space', () => {
+  for (const id of ['basketball', 'fruit', 'space']) {
+    const html = fs.readFileSync(path.join(dist, 'games', id, 'index.html'), 'utf8');
+    assert.doesNotMatch(html, /['"]\.\/modules\//, `${id} built HTML must not leave unrewritten ./modules/ paths`);
+
+    const cssMatch = html.match(new RegExp(`/assets/v/([0-9a-f]+)/games/${id}/modules/${id}\\.css`));
+    const mainMatch = html.match(new RegExp(`/assets/v/([0-9a-f]+)/games/${id}/modules/main\\.js`));
+    assert.ok(cssMatch, `${id} built HTML should reference versioned ${id}.css`);
+    assert.ok(mainMatch, `${id} built HTML should reference versioned main.js`);
+
+    assert.equal(
+      fs.existsSync(path.join(dist, 'assets', 'v', cssMatch[1], 'games', id, 'modules', `${id}.css`)),
+      true,
+      `${id}.css should exist in dist`
+    );
+    for (const file of ['rules.js', 'audio.js', 'renderer.js', 'main.js']) {
+      assert.equal(
+        fs.existsSync(path.join(dist, 'assets', 'v', mainMatch[1], 'games', id, 'modules', file)),
+        true,
+        `${id}/modules/${file} should exist in dist`
+      );
+    }
+  }
+});

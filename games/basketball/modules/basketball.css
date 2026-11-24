@@ -1,0 +1,171 @@
+.hint-block {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1 1 260px;
+}
+
+.hud-value.accent {
+  color: var(--accent-text);
+}
+
+.hud-value.danger {
+  color: var(--danger-text);
+}
+
+.timer-bar-wrap {
+  width: 100%;
+  height: 8px;
+  background: var(--track);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.timer-bar {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, #22c55e, #3b82f6);
+  transition: width 0.08s linear, background 0.2s ease;
+}
+
+.timer-bar.low {
+  background: linear-gradient(90deg, #ef4444, #f97316);
+}
+
+.stage-box {
+  position: relative;
+  width: 100%;
+  border-radius: 18px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-md);
+  background: #1e1b4b;
+}
+
+canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 640 / 420;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: pointer;
+}
+
+.controls-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.court-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  width: 100%;
+  gap: 8px;
+}
+
+.timer-bar-wrap.practice { visibility: hidden; }
+
+@media (max-width: 560px) {
+  .game-wrap {
+    margin: 10px auto 24px;
+    padding: 0 10px;
+    gap: 8px;
+  }
+
+  .hud {
+    grid-template-columns: repeat(5, 1fr);
+    gap: 5px;
+  }
+
+  .hud-box {
+    padding: 6px 3px;
+    border-radius: 9px;
+  }
+
+  .hud-label {
+    font-size: 0.65rem;
+  }
+
+  .hud-value {
+    font-size: 0.96rem;
+  }
+
+  .hint-text {
+    font-size: 0.78rem;
+  }
+
+  .controls-row .btn-group {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    width: 100%;
+  }
+}
+
+/* 本页尺寸；其余外壳样式见 assets/game-shell.css */
+.game-wrap {
+  --game-width: 700px;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.hud { grid-template-columns: repeat(5, 1fr); }
+.btn-group { gap: 8px; }
+
+.scene-hint {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: -4px;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.scene-hint strong {
+  color: var(--text);
+  font-weight: 700;
+}
+
+/* 5 列 HUD 在 320/360 宽下过于拥挤，改成 3 列两行 */
+@media (max-width: 380px) {
+  .hud { grid-template-columns: repeat(3, 1fr); }
+}
+
+.game-wrap { --mobile-stage-ratio: 640 / 420; }
+
+.mobile-game-immersive .controls-row,
+.mobile-game-immersive .court-hint { display: none; }
+.mobile-game-immersive .court-controls { justify-content: center; }
+.mobile-game-immersive .court-controls .btn-group { justify-content: center; gap: 6px; }
+
+@media (any-pointer: coarse) and (max-width: 1100px) and (orientation: portrait) {
+  body:not(.mobile-game-immersive) .basketball-rotate-guide {
+    display: block;
+    width: 100%;
+    color: var(--text-muted);
+    text-align: center;
+  }
+
+  .basketball-rotate-guide summary { color: var(--primary); }
+  .basketball-rotate-guide p { margin: 4px 0; font-size: 0.8rem; }
+}
+
+@media (orientation: landscape) {
+  .mobile-game-immersive .scene-hint { flex-wrap: wrap; margin: 0; }
+  .mobile-game-immersive .hud-box:last-child { grid-column: 1 / -1; }
+}
+
+@media (orientation: landscape) and (max-height: 320px) {
+  .mobile-game-immersive .hud-box:nth-child(n+3),
+  .mobile-game-immersive .scene-hint { display: none; }
+}
