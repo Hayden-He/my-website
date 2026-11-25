@@ -697,6 +697,20 @@ async function runSingleCheck(cdp, { label, url, viewport, verify }) {
   return true;
 }
 
+async function verifyNotFoundPage(session, mobile) {
+  await session.waitUntil(
+    'Boolean(document.querySelector(".not-found-card") && document.querySelector("#site-header .brand") && document.querySelector("#site-footer .update-check-btn"))',
+    4000,
+    '404 shell and card rendered'
+  );
+  const cardOk = await session.evaluate(`(() => {
+    const r = document.querySelector('.not-found-card')?.getBoundingClientRect();
+    return Boolean(r && r.width > 120 && r.height > 120);
+  })()`);
+  if (!cardOk) throw new Error('404 卡片尺寸异常');
+  if (mobile) await assertNoHorizontalOverflow(session, '404 竖屏');
+}
+
 const config = readSiteConfig();
 const pages = sitePages(config).filter((entry) => entry.url);
 const landscapePages = pages.filter((entry) => {
@@ -705,13 +719,13 @@ const landscapePages = pages.filter((entry) => {
   const gameId = entry.url.split('/').filter(Boolean).pop();
   return MOBILE_GAME_CONFIG[gameId]?.immersiveMode !== 'none';
 });
-const totalChecks = pages.length * 2 + landscapePages.length;
+const totalChecks = (pages.length + 1) * 2 + landscapePages.length;
 const chromePath = findChrome();
 const profileDir = fs.mkdtempSync(path.join(os.tmpdir(), 'site-smoke-'));
 const { server, port, notFound } = await startStaticServer();
 let cdp = null;
 
-console.log(`浏览器冒烟校验（桌面 ${pages.length} + 移动竖屏 ${pages.length} + 移动横屏 ${landscapePages.length}，共 ${totalChecks} 项，Chrome: ${path.basename(chromePath)}）`);
+console.log(`浏览器冒烟校验（桌面 ${pages.length + 1} + 移动竖屏 ${pages.length + 1} + 移动横屏 ${landscapePages.length}，共 ${totalChecks} 项，Chrome: ${path.basename(chromePath)}）`);
 
 let failures = 0;
 try {
@@ -739,6 +753,13 @@ try {
     if (!ok) failures += 1;
   }
 
+  if (!(await runSingleCheck(cdp, {
+    label: '[desktop] /404.html',
+    url: new URL('/404.html', baseOrigin).href,
+    viewport: DESKTOP_VIEWPORT,
+    verify: (session) => verifyNotFoundPage(session, false),
+  }))) failures += 1;
+
   for (const entry of pages) {
     const ok = await runSingleCheck(cdp, {
       label: `[mobile-portrait] ${entry.url}`,
@@ -748,6 +769,13 @@ try {
     });
     if (!ok) failures += 1;
   }
+
+  if (!(await runSingleCheck(cdp, {
+    label: '[mobile-portrait] /404.html',
+    url: new URL('/404.html', baseOrigin).href,
+    viewport: MOBILE_PORTRAIT_VIEWPORT,
+    verify: (session) => verifyNotFoundPage(session, true),
+  }))) failures += 1;
 
   for (const entry of landscapePages) {
     const ok = await runSingleCheck(cdp, {

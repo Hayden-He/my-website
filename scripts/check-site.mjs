@@ -454,8 +454,22 @@ if (!exists(templatePath)) {
   checkContains(template, 'data-theme-toggle', templatePath);
   checkContains(template, 'assets/game-kit.js', templatePath);
   checkContains(template, 'id="more-games"', templatePath);
+  checkContains(template, 'data-more-games="template"', templatePath);
+  checkContains(template, './modules/template.css', templatePath);
+  checkContains(template, './modules/main.js', templatePath);
   checkContains(template, '<h1', templatePath);
+  checkFile('games/_template/modules/template.css', 'games/_template/modules/template.css');
+  checkFile('games/_template/modules/main.js', 'games/_template/modules/main.js');
   if (/\?v=\d+/.test(template || '')) fail(`${templatePath} 仍残留 ?v= 旧版资源查询参数`);
+  if (/<script(?![^>]*\bsrc=)[^>]*>/i.test(template || '')) {
+    fail(`${templatePath} 存在内联 <script>，违反 CSP script-src 'self' 基线`);
+  }
+  if (/<style\b/i.test(template || '')) {
+    fail(`${templatePath} 存在内联 <style>，请拆分到外部样式文件`);
+  }
+  if (/\son[a-z]+\s*=/i.test(template || '')) {
+    fail(`${templatePath} 存在内联事件属性（on*=），违反严格 CSP 基线`);
+  }
   const tplHead = template ? template.slice(0, template.indexOf('</head>')) : '';
   for (const blocked of ['assets/site-data.js', 'assets/i18n.js', 'assets/games.js', 'assets/game-kit.js']) {
     if (tplHead.includes(blocked)) fail(`${templatePath} 的 <head> 不应同步加载 ${blocked}，请放到 <body> 底部`);

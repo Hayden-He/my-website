@@ -15,19 +15,27 @@ if (!game.title || !game.description || !/^[a-z0-9-]+$/.test(game.icon || '') ||
 }
 
 const directory = path.join(root, 'games', id);
+const modulesDir = path.join(directory, 'modules');
 const target = path.join(directory, 'index.html');
 const template = fs.readFileSync(path.join(root, 'games/_template/index.html'), 'utf8');
+const templateCss = fs.readFileSync(path.join(root, 'games/_template/modules/template.css'), 'utf8');
+const templateJs = fs.readFileSync(path.join(root, 'games/_template/modules/main.js'), 'utf8');
+
 const html = template
   .replaceAll('示例小游戏', () => escapeHtml(game.title))
   .replace('新增游戏模板：包含公共游戏外壳、HUD、音效、最高分、更多游戏与自定义确认弹窗。',
     () => escapeHtml(game.description))
   .replace('#game-template', () => '#game-' + game.icon)
+  .replace('./modules/template.css', () => './modules/' + id + '.css')
   .replace('href="/categories/puzzle" data-i18n="益智休闲">益智休闲',
     () => 'href="' + escapeHtml(category.url) + '" data-i18n="' + escapeHtml(category.name) + '">' + escapeHtml(category.name))
-  .replace("'game_best_template'", () => JSON.stringify(game.storageKey))
-  .replace("mountMoreGames('template'", () => 'mountMoreGames(' + JSON.stringify(id));
+  .replace('data-more-games="template"', () => 'data-more-games="' + id + '"');
 
-fs.mkdirSync(directory, { recursive: true });
+const mainJs = templateJs.replace("'game_best_template'", () => JSON.stringify(game.storageKey));
+
+fs.mkdirSync(modulesDir, { recursive: true });
 fs.writeFileSync(target, html, { flag: 'wx' });
+fs.writeFileSync(path.join(modulesDir, id + '.css'), templateCss, { flag: 'wx' });
+fs.writeFileSync(path.join(modulesDir, 'main.js'), mainJs, { flag: 'wx' });
 execFileSync(process.execPath, [path.join(root, 'scripts/sync-site.mjs'), game.url], { stdio: 'inherit' });
-console.log('已创建 games/' + id + '/index.html；补齐玩法、图标和英文文案后运行构建。');
+console.log('已创建 games/' + id + '/（含 modules/' + id + '.css 与 modules/main.js）；补齐玩法、图标和英文文案后运行构建。');

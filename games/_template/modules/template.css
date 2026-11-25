@@ -1,0 +1,41 @@
+/* 只放这个游戏自己的棋盘/场地样式；HUD、按钮、遮罩等见 game-shell.css */
+.game-wrap { --game-width: 520px; }
+
+.hud { grid-template-columns: repeat(2, 1fr); }
+
+.template-stage {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border-radius: 18px;
+  border: 1px solid var(--border);
+  background: linear-gradient(135deg, #eff6ff, #f8fafc 55%, #fff7ed);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+:root[data-theme="dark"] .template-stage {
+  background: var(--hero-bg);
+}
+
+.template-target {
+  width: 148px;
+  height: 148px;
+  border: none;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #93c5fd, #2563eb 62%, #1e40af);
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 10px 24px -8px rgba(37, 99, 235, 0.7);
+  transition: transform 0.12s ease;
+  touch-action: manipulation;
+}
+
+.template-target:active {
+  transform: scale(0.94);
+}
