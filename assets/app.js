@@ -45,7 +45,14 @@
     let preferredMode = null;
     if (game.modeKey) {
       try {
-        preferredMode = localStorage.getItem(game.modeKey);
+        const rawMode = localStorage.getItem(game.modeKey);
+        if (rawMode && rawMode.startsWith('{')) {
+          const parsed = JSON.parse(rawMode);
+          const field = game.modeField || 'mode';
+          if (parsed && typeof parsed[field] === 'string') preferredMode = parsed[field];
+        } else {
+          preferredMode = rawMode;
+        }
       } catch {}
     }
 

@@ -356,9 +356,19 @@ async function verifyGamePage(session, gameId) {
     await session.waitUntil('!document.getElementById("overlay").classList.contains("show")', 3000, 'tetris overlay hidden');
     await assertCanvasAnimates(session, '#tetris-canvas');
   } else if (gameId === 'tank-maze') {
-    const hasOverlay = await session.evaluate('!document.getElementById("tank-overlay")?.hidden');
-    if (hasOverlay) await session.evaluate('document.getElementById("tank-primary")?.click()');
-    await sleep(300);
+    await session.evaluate('document.getElementById("tank-start")?.click()');
+    await session.waitUntil('document.querySelector(".tank-game")?.dataset.phase === "playing"', 3000, 'tank-maze enters playing phase');
+    await session.evaluate(`(() => {
+      document.dispatchEvent(new KeyboardEvent("keydown", { code: "KeyE", key: "e", bubbles: true }));
+      document.dispatchEvent(new KeyboardEvent("keyup", { code: "KeyE", key: "e", bubbles: true }));
+      document.dispatchEvent(new KeyboardEvent("keydown", { code: "Space", key: " ", bubbles: true }));
+      document.dispatchEvent(new KeyboardEvent("keyup", { code: "Space", key: " ", bubbles: true }));
+    })()`);
+    await sleep(200);
+    await session.evaluate('document.getElementById("tank-pause")?.click()');
+    await session.waitUntil('document.querySelector(".tank-game")?.dataset.phase === "paused"', 3000, 'tank-maze pauses cleanly');
+    const secondaryVisible = await session.evaluate('!document.getElementById("tank-secondary")?.hidden');
+    if (!secondaryVisible) throw new Error('tank-maze 暂停弹窗缺少返回设置按钮');
     const hasCanvas = await session.evaluate('Boolean(document.getElementById("tank-board"))');
     if (!hasCanvas) throw new Error('tank-maze 棋盘未渲染');
   } else if (gameId === 'snake') {

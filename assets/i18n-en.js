@@ -31,7 +31,12 @@ window.I18N_EN = {
   '继续上局 · 马拉松 {score} 分 →': 'Continue · Marathon {score} pts →',
   '已保存 {n} 个作品': 'Saved projects: {n}',
   '胜场: ': 'Wins: ',
+  '简单胜场: ': 'Easy wins: ',
+  '普通胜场: ': 'Normal wins: ',
+  '困难胜场: ': 'Hard wins: ',
+  '最高连胜: ': 'Best streak: ',
   ' 局': '',
+  ' 连胜': '',
   '共 {n} 款': '{n} games',
   '共 {n} 款 · 已留纪录 {recorded} 款': '{n} games · {recorded} with a record',
   '随机来一局': 'Random game',
@@ -904,6 +909,7 @@ window.I18N_EN = {
   '移动摇杆': 'Movement joystick',
   '开火': 'Fire',
   'WASD 或方向键移动 · 空格开火 · P 暂停': 'WASD or arrows to move · Space to fire · P to pause',
+  'WASD 或方向键移动 · Q/E 微调炮口 · 空格开火 · P 暂停': 'WASD or arrows to move · Q/E fine-aim · Space to fire · P to pause',
   '左侧摇杆移动，右侧开火。': 'Move with the left joystick. Fire with the right button.',
   '当前浏览器无法显示迷宫。': 'This browser cannot display the arena.',
   '本局平局': 'Round drawn',
@@ -919,6 +925,14 @@ window.I18N_EN = {
   '人机赢了比赛': 'The AI won the match',
   '最终比分 {player} 比 {ai}': 'Final score {player}–{ai}',
   '最终比分 {player} 比 {ai} · 累计胜场 {wins} 局': 'Final score {player}–{ai} · Total wins: {wins}',
+  '{cause} · 最终比分 {player} 比 {ai} · {difficulty}胜场 {wins} · 连胜 {streak}':
+    '{cause} · Final {player}–{ai} · {difficulty} wins: {wins} · Streak: {streak}',
+  '{cause} · 最终比分 {player} 比 {ai} · 累计胜场 {wins} 局':
+    '{cause} · Final {player}–{ai} · Total wins: {wins}',
+  '累计胜场 {total} · {difficulty} {wins} 胜 · 最高连胜 {streak}':
+    'Total wins: {total} · {difficulty}: {wins} · Best streak: {streak}',
+  '返回设置': 'Back to setup',
+  '离开当前对局并返回设置？当前比分会清零。': 'Leave the current match and return to setup? Your match score will reset.',
   '原图再战': 'Rematch',
   '换图': 'Change map',
   '重新开始这场比赛？当前比分会清零。': 'Restart this match? The score will reset.',
@@ -926,6 +940,8 @@ window.I18N_EN = {
     'Each tank starts with 3 HP. Win two rounds to take the match. Tanks swap starting sides each round.',
   '用 WASD 或方向键移动，空格开火。手机左侧摇杆移动，右侧开火。停下后炮口保留最后的朝向。':
     'Move with WASD or the arrow keys and fire with Space. On a phone, move with the left joystick and fire with the right button. Your barrel keeps its heading when you stop.',
+  '用 WASD 或方向键移动，Q/E 原地微调炮口，空格开火。手机左侧摇杆移动，右侧开火。停下后炮口保留最后的朝向。':
+    'Move with WASD or arrows, fine-aim with Q/E when stopped, and fire with Space. On a phone, move with the left joystick and fire with the right button. Your barrel keeps its heading when you stop.',
   '命中扣 1 点血，短时间内不会再扣血。自己的炮弹撞墙反弹后也可能打中自己。':
     'A hit costs 1 HP and grants brief protection. Your own shots can hit you after bouncing.',
 

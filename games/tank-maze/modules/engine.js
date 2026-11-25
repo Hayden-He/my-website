@@ -116,6 +116,7 @@ function moveTank(match, tank, input, dt) {
     const { x, y } = input.move;
     const length = Math.hypot(x, y);
     if (length > 0) tank.angle = Math.atan2(y, x);
+    else if (input.turn) tank.angle = wrapAngle(tank.angle + input.turn * TURN_SPEED * dt);
     const scale = TANK_SPEED * dt / Math.max(1, length);
     dx = x * scale;
     dy = y * scale;
@@ -141,7 +142,7 @@ export function canFire(tank, elapsed = 0) {
     (tank.ammo > 0 || (elapsed > 0 && tank.reload <= elapsed + EPSILON));
 }
 
-function createShell(map, tank, angle) {
+function findMuzzleDistance(map, tank, angle) {
   const nose = TANK_RADIUS + SHELL_RADIUS + 0.04;
   const directionX = Math.cos(angle);
   const directionY = Math.sin(angle);
@@ -151,12 +152,73 @@ function createShell(map, tank, angle) {
   while (muzzleDistance > 0 && collidesCircle(
     map, tank.x + directionX * muzzleDistance, tank.y + directionY * muzzleDistance, SHELL_RADIUS
   )) muzzleDistance -= 0.02;
+  return muzzleDistance;
+}
+
+function createShell(map, tank, angle) {
+  const directionX = Math.cos(angle);
+  const directionY = Math.sin(angle);
+  const muzzleDistance = findMuzzleDistance(map, tank, angle);
   const x = tank.x + directionX * muzzleDistance;
   const y = tank.y + directionY * muzzleDistance;
   return {
     x, y, vx: directionX * SHELL_SPEED, vy: directionY * SHELL_SPEED,
     owner: tank.id, bounces: 0, life: SHELL_LIFE,
   };
+}
+
+export function traceAimRay(mapInput, tank, maxLength = 4.6, bounceLength = 1.15) {
+  if (!tank) return null;
+  const map = resolveMap(mapInput);
+  const dx = Math.cos(tank.angle);
+  const dy = Math.sin(tank.angle);
+  const muzzleDistance = findMuzzleDistance(map, tank, tank.angle);
+  const start = {
+    x: tank.x + dx * muzzleDistance,
+    y: tank.y + dy * muzzleDistance,
+  };
+  let x = start.x;
+  let y = start.y;
+  let hitWall = false;
+  let bounceDx = dx;
+  let bounceDy = dy;
+  const totalSteps = Math.max(1, Math.ceil(maxLength / 0.05));
+  const ds = maxLength / totalSteps;
+  for (let i = 0; i < totalSteps; i++) {
+    const nx = x + dx * ds;
+    const ny = y + dy * ds;
+    let hitX = collidesCircle(map, nx, y, SHELL_RADIUS);
+    let hitY = collidesCircle(map, x, ny, SHELL_RADIUS);
+    if (!hitX && !hitY && collidesCircle(map, nx, ny, SHELL_RADIUS)) {
+      hitX = true;
+      hitY = true;
+    }
+    if (hitX || hitY) {
+      hitWall = true;
+      if (hitX) bounceDx *= -1;
+      if (hitY) bounceDy *= -1;
+      break;
+    }
+    x = nx;
+    y = ny;
+  }
+  const end = { x, y };
+  let bounceEnd = null;
+  if (hitWall && bounceLength > 0) {
+    let bx = x;
+    let by = y;
+    const bSteps = Math.max(1, Math.ceil(bounceLength / 0.05));
+    const bds = bounceLength / bSteps;
+    for (let i = 0; i < bSteps; i++) {
+      const nx = bx + bounceDx * bds;
+      const ny = by + bounceDy * bds;
+      if (collidesCircle(map, nx, ny, SHELL_RADIUS)) break;
+      bx = nx;
+      by = ny;
+    }
+    if (Math.hypot(bx - x, by - y) > 0.05) bounceEnd = { x: bx, y: by };
+  }
+  return { start, end, hitWall, bounceEnd };
 }
 
 function fire(match, tank) {
@@ -218,13 +280,17 @@ function settleHits(match) {
       target = tank;
     }
     if (!target) return shell.life > 0;
-    if (target.protection > 0) return false;
+    if (target.protection > 0) {
+      match.events.push({ type: 'shield-block', x: shell.x, y: shell.y, owner: shell.owner, target: target.id });
+      return false;
+    }
     target.health -= 1;
     match.events.push({ type: 'hit', x: shell.x, y: shell.y, owner: shell.owner, target: target.id });
     if (target.health === 0) {
       target.active = false;
       knockouts.push(target.id);
       selfHit ||= target.id === shell.owner;
+      match.events.push({ type: 'knockout', x: target.x, y: target.y, owner: shell.owner, target: target.id });
     } else {
       target.protection = HIT_PROTECTION;
     }
@@ -248,7 +314,7 @@ function updateRepair(match) {
   if (!match.repair) {
     if (match.tanks.some(({ health }) => health < MAX_HEALTH)) {
       match.repair = { ...match.map.repair, takenBy: null };
-      match.events.push({ type: 'repair-spawn' });
+      match.events.push({ type: 'repair-spawn', x: match.repair.x, y: match.repair.y });
     }
     return;
   }
@@ -324,3 +390,61 @@ export const rules = Object.freeze({
   TANK_SPEED, TURN_SPEED, SHELL_SPEED, SHELL_LIFE, SHOT_COOLDOWN, AMMO_RECHARGE,
   HIT_PROTECTION, REPAIR_RADIUS,
 });
+
+export const STAT_KEYS = Object.freeze({
+  wins: 'game_best_tank-maze_wins',
+  winsByDifficulty: (difficulty) => `game_best_tank-maze_wins_${difficulty}`,
+  bestStreak: 'game_best_tank-maze_streak',
+  currentStreak: 'game_save_tank-maze_streak',
+});
+
+const VALID_DIFFICULTIES = new Set(['easy', 'normal', 'hard']);
+
+function readNonNegInt(storage, key) {
+  if (!storage) return 0;
+  try {
+    const value = parseInt(storage.getItem(key) || '0', 10);
+    return Number.isFinite(value) && value > 0 ? value : 0;
+  } catch {
+    return 0;
+  }
+}
+
+export function readMatchStats(storage, difficulty = 'normal') {
+  const diff = VALID_DIFFICULTIES.has(difficulty) ? difficulty : 'normal';
+  return {
+    totalWins: readNonNegInt(storage, STAT_KEYS.wins),
+    difficultyWins: readNonNegInt(storage, STAT_KEYS.winsByDifficulty(diff)),
+    currentStreak: readNonNegInt(storage, STAT_KEYS.currentStreak),
+    bestStreak: readNonNegInt(storage, STAT_KEYS.bestStreak),
+  };
+}
+
+export function recordMatchStats(storage, difficulty = 'normal', playerWon = false) {
+  const diff = VALID_DIFFICULTIES.has(difficulty) ? difficulty : 'normal';
+  const current = readMatchStats(storage, diff);
+  const next = playerWon
+    ? {
+        totalWins: current.totalWins + 1,
+        difficultyWins: current.difficultyWins + 1,
+        currentStreak: current.currentStreak + 1,
+        bestStreak: Math.max(current.bestStreak, current.currentStreak + 1),
+      }
+    : {
+        totalWins: current.totalWins,
+        difficultyWins: current.difficultyWins,
+        currentStreak: 0,
+        bestStreak: current.bestStreak,
+      };
+  if (storage) {
+    try {
+      storage.setItem(STAT_KEYS.currentStreak, String(next.currentStreak));
+      if (playerWon) {
+        storage.setItem(STAT_KEYS.wins, String(next.totalWins));
+        storage.setItem(STAT_KEYS.winsByDifficulty(diff), String(next.difficultyWins));
+        storage.setItem(STAT_KEYS.bestStreak, String(next.bestStreak));
+      }
+    } catch {}
+  }
+  return next;
+}

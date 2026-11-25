@@ -2,10 +2,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { MAPS } from '../games/tank-maze/modules/maps.js';
 import {
-  MAX_AMMO, MAX_HEALTH, SHELL_RADIUS, STEP, TANK_RADIUS, WINS,
-  canFire, collidesCircle, createMatch, nextRound, rules, stepMatch, wouldReturnToShooter,
+  MAX_AMMO, MAX_HEALTH, SHELL_RADIUS, STAT_KEYS, STEP, TANK_RADIUS, WINS,
+  canFire, collidesCircle, createMatch, nextRound, readMatchStats, recordMatchStats,
+  rules, stepMatch, traceAimRay, wouldReturnToShooter,
 } from '../games/tank-maze/modules/engine.js';
 import { AI_DIFFICULTIES, createAI } from '../games/tank-maze/modules/ai.js';
+import { createRenderer, drawMapPreview, drawTankPreview } from '../games/tank-maze/modules/renderer.js';
 
 function advanceMatch(match, seconds, inputs = [{}, {}]) {
   const step = 0.05;
@@ -351,5 +353,157 @@ test('AI difficulties, idle on finished match, shell dodging, self-hit guard, an
     assert.ok(Number.isFinite(cmd.turn) && cmd.turn >= -1 && cmd.turn <= 1);
     assert.equal(typeof cmd.fire, 'boolean');
     stepMatch(simMatch, [{ drive: 0.5, turn: 0.2, fire: false }, cmd], STEP);
+  }
+});
+
+test('stationary Q/E fine-turn, shield-block/knockout events, aim raycast, and difficulty streak stats', () => {
+  // Stationary turn via move:{x:0,y:0} + turn
+  const match = createMatch('lanes');
+  const p0 = match.tanks[0];
+  const p1 = match.tanks[1];
+  const initialAngle = p0.angle;
+  stepMatch(match, [{ move: { x: 0, y: 0 }, turn: 0.72, fire: false }, {}], 0.1);
+  assert.ok(p0.angle > initialAngle, 'stationary positive turn rotates clockwise');
+  stepMatch(match, [{ move: { x: 0, y: 0 }, turn: -0.72, fire: false }, {}], 0.2);
+  assert.ok(p0.angle < initialAngle, 'stationary negative turn rotates counter-clockwise');
+
+  // Trace aim ray: straight corridor vs wall bounce
+  p0.x = 2.0;
+  p0.y = 1.5;
+  p0.angle = 0;
+  const openRay = traceAimRay(match.map, p0, 4.0, 1.0);
+  assert.equal(openRay.hitWall, false);
+  assert.equal(openRay.bounceEnd, null);
+  assert.ok(openRay.end.x > openRay.start.x + 3.5);
+
+  p0.x = 1.5;
+  p0.y = 1.0;
+  p0.angle = -Math.PI / 4;
+  const bankRay = traceAimRay(match.map, p0, 4.6, 1.15);
+  assert.equal(bankRay.hitWall, true);
+  assert.ok(bankRay.bounceEnd && bankRay.bounceEnd.y > bankRay.end.y);
+
+  // shield-block and knockout events
+  p0.x = 2.0;
+  p0.y = 1.5;
+  p0.angle = 0;
+  p1.x = 3.2;
+  p1.y = 1.5;
+  p1.protection = 0.5;
+  stepMatch(match, [{ fire: true }, {}], STEP);
+  const blockEvents = advanceMatch(match, 0.25);
+  assert.ok(blockEvents.some((e) => e.type === 'shield-block' && e.target === 1));
+  assert.equal(p1.health, MAX_HEALTH);
+
+  p1.health = 1;
+  p1.protection = 0;
+  p0.cooldown = 0;
+  stepMatch(match, [{ fire: true }, {}], STEP);
+  const koEvents = advanceMatch(match, 0.25);
+  assert.ok(koEvents.some((e) => e.type === 'knockout' && e.target === 1));
+
+  // Stats helpers
+  const store = new Map();
+  const storage = {
+    getItem: (k) => (store.has(k) ? store.get(k) : null),
+    setItem: (k, v) => store.set(k, String(v)),
+  };
+  assert.deepEqual(readMatchStats(storage, 'hard'), {
+    totalWins: 0, difficultyWins: 0, currentStreak: 0, bestStreak: 0,
+  });
+  const s1 = recordMatchStats(storage, 'hard', true);
+  assert.deepEqual(s1, { totalWins: 1, difficultyWins: 1, currentStreak: 1, bestStreak: 1 });
+  const s2 = recordMatchStats(storage, 'hard', true);
+  assert.deepEqual(s2, { totalWins: 2, difficultyWins: 2, currentStreak: 2, bestStreak: 2 });
+  const s3 = recordMatchStats(storage, 'normal', false);
+  assert.deepEqual(s3, { totalWins: 2, difficultyWins: 0, currentStreak: 0, bestStreak: 2 });
+  assert.equal(storage.getItem(STAT_KEYS.wins), '2');
+  assert.equal(storage.getItem(STAT_KEYS.winsByDifficulty('hard')), '2');
+  assert.equal(storage.getItem(STAT_KEYS.bestStreak), '2');
+});
+
+test('tank-maze renderer handles all event types, skins, previews, and themes safely', () => {
+  const noop = () => {};
+  function makeCtx() {
+    return {
+      fillStyle: '#000',
+      strokeStyle: '#000',
+      lineWidth: 1,
+      lineCap: 'butt',
+      globalAlpha: 1,
+      setTransform: noop,
+      drawImage: noop,
+      fillRect: noop,
+      strokeRect: noop,
+      rect: noop,
+      beginPath: noop,
+      moveTo: noop,
+      lineTo: noop,
+      arc: noop,
+      arcTo: noop,
+      closePath: noop,
+      fill: noop,
+      stroke: noop,
+      save: noop,
+      restore: noop,
+      translate: noop,
+      rotate: noop,
+      scale: noop,
+      setLineDash: noop,
+      createLinearGradient: () => ({ addColorStop: noop }),
+    };
+  }
+  function makeCanvas() {
+    return {
+      width: 690,
+      height: 450,
+      getBoundingClientRect: () => ({ width: 690, height: 450 }),
+      getContext: () => makeCtx(),
+    };
+  }
+
+  const prevWindow = globalThis.window;
+  const prevDoc = globalThis.document;
+  const prevMatchMedia = globalThis.matchMedia;
+  const docEl = { dataset: { theme: 'light' } };
+  globalThis.window = { devicePixelRatio: 1 };
+  globalThis.document = {
+    documentElement: docEl,
+    createElement: () => makeCanvas(),
+  };
+  globalThis.matchMedia = () => ({ matches: false });
+
+  try {
+    const renderer = createRenderer(makeCanvas());
+    assert.ok(renderer);
+    const match = createMatch('outpost');
+    match.repair = { ...match.map.repair, takenBy: null };
+    match.tanks[1].protection = 0.4;
+    match.shells.push({ x: 3, y: 8.5, vx: 7.5, vy: 0, owner: 0, bounces: 0, life: 4 });
+
+    renderer.announceSpawn();
+    renderer.addEvents([
+      { type: 'shot', x: 2.2, y: 8.5, owner: 0 },
+      { type: 'bounce', x: 5, y: 8.5, owner: 0, bounces: 1 },
+      { type: 'shield-block', x: 10, y: 8.5, owner: 0, target: 1 },
+      { type: 'hit', x: 10, y: 8.5, owner: 0, target: 1 },
+      { type: 'knockout', x: 10, y: 8.5, owner: 0, target: 1 },
+      { type: 'repair-spawn', x: match.repair.x, y: match.repair.y },
+      { type: 'repair', x: match.repair.x, y: match.repair.y, target: 0 },
+    ]);
+    assert.equal(renderer.hasEffects(), true);
+
+    for (const theme of ['light', 'dark']) {
+      docEl.dataset.theme = theme;
+      renderer.draw(match, 0.05, { playerSkin: 'wedge', aiSkin: 'cabin', showAim: true });
+    }
+    for (const map of MAPS) drawMapPreview(makeCanvas(), map);
+    for (const skin of ['standard', 'wedge', 'cabin']) drawTankPreview(makeCanvas(), skin);
+    renderer.clear();
+    assert.equal(renderer.hasEffects(), false);
+  } finally {
+    globalThis.window = prevWindow;
+    globalThis.document = prevDoc;
+    globalThis.matchMedia = prevMatchMedia;
   }
 });

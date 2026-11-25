@@ -1,4 +1,4 @@
-import { SHELL_RADIUS, TANK_RADIUS, collidesCircle, rules } from './engine.js';
+import { SHELL_RADIUS, TANK_RADIUS, collidesCircle, rules, traceAimRay } from './engine.js';
 
 const FRAME = 0.55;
 const PALETTES = {
@@ -459,12 +459,13 @@ function drawShell(ctx, map, shell, team, cssScale) {
   ctx.globalAlpha = 1;
 }
 
-function drawRepair(ctx, repair, palette, cssScale) {
+function drawRepair(ctx, repair, palette, cssScale, animTime = 0, reducedMotion = false) {
   const { x, y } = repair;
   const radius = Math.max(rules.REPAIR_RADIUS, 6.5 / cssScale);
+  const pulse = reducedMotion ? 1.29 : 1.25 + Math.sin(animTime * 5.2) * 0.08;
   const accent = palette.repair;
   ctx.beginPath();
-  ctx.arc(x, y, radius * 1.29, 0, Math.PI * 2);
+  ctx.arc(x, y, radius * pulse, 0, Math.PI * 2);
   ctx.lineWidth = Math.max(0.031, 0.85 / cssScale);
   ctx.strokeStyle = accent;
   ctx.stroke();
@@ -474,26 +475,86 @@ function drawRepair(ctx, repair, palette, cssScale) {
   ctx.fillRect(x - radius * 0.17, y - radius * 0.61, radius * 0.34, radius * 1.22);
 }
 
+function drawAimSight(ctx, map, tank, team, cssScale) {
+  if (!tank?.active) return;
+  const ray = traceAimRay(map, tank, 4.6, 1.15);
+  if (!ray) return;
+  ctx.save();
+  ctx.lineCap = 'round';
+  ctx.lineWidth = Math.max(0.036, 1.1 / cssScale);
+  ctx.strokeStyle = team.halo;
+  ctx.globalAlpha = 0.5;
+  if (typeof ctx.setLineDash === 'function') ctx.setLineDash([0.16, 0.15]);
+  ctx.beginPath();
+  ctx.moveTo(ray.start.x, ray.start.y);
+  ctx.lineTo(ray.end.x, ray.end.y);
+  ctx.stroke();
+  if (ray.hitWall) {
+    circle(ctx, ray.end.x, ray.end.y, Math.max(0.055, 1.7 / cssScale), team.light);
+    if (ray.bounceEnd) {
+      ctx.globalAlpha = 0.28;
+      if (typeof ctx.setLineDash === 'function') ctx.setLineDash([0.11, 0.14]);
+      ctx.beginPath();
+      ctx.moveTo(ray.end.x, ray.end.y);
+      ctx.lineTo(ray.bounceEnd.x, ray.bounceEnd.y);
+      ctx.stroke();
+    }
+  }
+  if (typeof ctx.setLineDash === 'function') ctx.setLineDash([]);
+  ctx.restore();
+}
+
+function drawSpawnBeacon(ctx, tank, team, cssScale, remaining, duration, animTime, reducedMotion) {
+  if (!tank?.active || remaining <= 0) return;
+  const fade = Math.min(1, remaining / Math.min(0.45, duration));
+  const wave = reducedMotion ? 0.5 : Math.sin(animTime * 14) * 0.5 + 0.5;
+  const radius = Math.max(0.62, 10 / cssScale) + wave * 0.26;
+  ctx.save();
+  ctx.strokeStyle = team.halo;
+  ctx.lineWidth = Math.max(0.05, 1.4 / cssScale);
+  ctx.globalAlpha = fade * 0.78;
+  ctx.beginPath();
+  ctx.arc(tank.x, tank.y, radius, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function resolveEffectColor(item, palette) {
+  if (item.colorKey === 'repair') return palette.repair;
+  if (item.colorKey === 'shield') return palette.shield;
+  const team = palette.teams[item.owner] || palette.teams[0];
+  return item.colorKey === 'teamLight' ? team.light : team.halo;
+}
+
 function drawEffect(ctx, effect, color) {
   const progress = effect.age / effect.duration;
-  ctx.globalAlpha = (1 - progress) * 0.84;
+  ctx.globalAlpha = Math.max(0, (1 - progress) * (effect.alpha ?? 0.84));
   ctx.strokeStyle = color;
-  ctx.lineWidth = effect.type === 'hit' ? 0.072 : 0.044;
+  ctx.lineWidth = effect.lineWidth ?? (effect.type === 'hit' ? 0.072 : 0.044);
   ctx.beginPath();
-  ctx.arc(effect.x, effect.y, 0.07 + progress * effect.radius, 0, 2 * Math.PI);
+  ctx.arc(effect.x, effect.y, (effect.baseRadius ?? 0.07) + progress * effect.radius, 0, 2 * Math.PI);
   ctx.stroke();
-  if (effect.type === 'bounce') {
+  if (effect.type === 'bounce' || effect.type === 'shield-block') {
+    const rays = effect.type === 'shield-block' ? 6 : 4;
+    const offset = effect.type === 'shield-block' ? 0 : Math.PI / 4;
     ctx.beginPath();
-    for (let index = 0; index < 4; index++) {
-      const angle = index * Math.PI / 2 + Math.PI / 4;
+    for (let index = 0; index < rays; index++) {
+      const angle = index * (Math.PI * 2 / rays) + offset;
       const x = Math.cos(angle);
       const y = Math.sin(angle);
-      const spread = 0.075 + progress * 0.28;
+      const spread = 0.075 + progress * 0.34;
       ctx.moveTo(effect.x + x * spread, effect.y + y * spread);
-      ctx.lineTo(effect.x + x * (spread + 0.09), effect.y + y * (spread + 0.09));
+      ctx.lineTo(effect.x + x * (spread + 0.11), effect.y + y * (spread + 0.11));
     }
     ctx.stroke();
   }
+  ctx.globalAlpha = 1;
+}
+
+function drawParticle(ctx, particle, color) {
+  const progress = particle.age / particle.duration;
+  ctx.globalAlpha = Math.max(0, (1 - progress) * 0.9);
+  circle(ctx, particle.x, particle.y, particle.size * (1 - progress * 0.55), color);
   ctx.globalAlpha = 1;
 }
 
@@ -506,8 +567,47 @@ export function createRenderer(canvas) {
   let cachedMap;
   let cachedTheme;
   let effects = [];
+  let particles = [];
+  let animTime = 0;
+  let shakeTime = 0;
+  let shakeDuration = 0;
+  let shakeMag = 0;
+  let spawnBeacon = 0;
+  let spawnBeaconDuration = 1.35;
 
-  function draw(match, elapsed = 0, playerSkin = 'standard') {
+  function triggerShake(magnitude, duration) {
+    if (reducedMotion.matches) return;
+    if (magnitude >= shakeMag || shakeTime <= 0.04) {
+      shakeMag = magnitude;
+      shakeDuration = duration;
+      shakeTime = duration;
+    }
+  }
+
+  function spawnParticles(x, y, count, speedMin, speedMax, duration, colorKey, size, owner = 0) {
+    if (!Number.isFinite(x) || !Number.isFinite(y)) return;
+    for (let index = 0; index < count; index++) {
+      const angle = (Math.PI * 2 * index / count) + (Math.random() - 0.5) * 0.45;
+      const speed = speedMin + Math.random() * (speedMax - speedMin);
+      particles.push({
+        x, y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        age: 0,
+        duration: duration * (0.75 + Math.random() * 0.45),
+        colorKey,
+        owner,
+        size,
+      });
+    }
+  }
+
+  function draw(match, elapsed = 0, options = 'standard') {
+    const {
+      playerSkin = 'standard',
+      aiSkin = 'standard',
+      showAim = false,
+    } = typeof options === 'string' ? { playerSkin: options } : (options || {});
     const { map } = match;
     const rect = canvas.getBoundingClientRect();
     const dpr = Math.min(2, window.devicePixelRatio || 1);
@@ -518,6 +618,10 @@ export function createRenderer(canvas) {
       canvas.width = width;
       canvas.height = height;
     }
+
+    animTime += elapsed;
+    if (shakeTime > 0) shakeTime = Math.max(0, shakeTime - elapsed);
+    if (spawnBeacon > 0) spawnBeacon = Math.max(0, spawnBeacon - elapsed);
 
     const theme = getTheme();
     const palette = paletteFor(map, theme);
@@ -530,24 +634,61 @@ export function createRenderer(canvas) {
       cachedTheme = theme;
     }
     ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.drawImage(backdrop, 0, 0);
+    let shakeX = 0;
+    let shakeY = 0;
+    if (shakeTime > 0 && !reducedMotion.matches && shakeDuration > 0) {
+      const decay = shakeTime / shakeDuration;
+      const sx = width / (map.width + FRAME * 2);
+      const px = shakeMag * decay * sx;
+      shakeX = (Math.random() * 2 - 1) * px;
+      shakeY = (Math.random() * 2 - 1) * px;
+      ctx.fillStyle = palette.frame;
+      ctx.fillRect(0, 0, width, height);
+    }
+    ctx.drawImage(backdrop, shakeX, shakeY);
     setBoardTransform(ctx, width, height, map);
+    if (shakeX || shakeY) {
+      const sx = width / (map.width + FRAME * 2);
+      const sy = height / (map.height + FRAME * 2);
+      ctx.setTransform(sx, 0, 0, sy, FRAME * sx + shakeX, FRAME * sy + shakeY);
+    }
     const cssScale = rect.width / (map.width + FRAME * 2);
-    if (match.repair?.takenBy === null && !match.result) drawRepair(ctx, match.repair, palette, cssScale);
+    if (match.repair?.takenBy === null && !match.result) {
+      drawRepair(ctx, match.repair, palette, cssScale, animTime, reducedMotion.matches);
+    }
+    if (showAim && !match.result) {
+      drawAimSight(ctx, map, match.tanks[0], palette.teams[0], cssScale);
+    }
+    if (spawnBeacon > 0 && !match.result) {
+      drawSpawnBeacon(
+        ctx, match.tanks[0], palette.teams[0], cssScale,
+        spawnBeacon, spawnBeaconDuration, animTime, reducedMotion.matches,
+      );
+    }
     for (const tank of match.tanks) {
       drawTank(ctx, tank, palette.teams[tank.id], palette, cssScale, reducedMotion.matches,
-        tank.id === 0 ? playerSkin : 'standard');
+        tank.id === 0 ? playerSkin : aiSkin);
     }
     for (const shell of match.shells) drawShell(ctx, map, shell, palette.teams[shell.owner], cssScale);
 
     if (reducedMotion.matches) {
       effects = [];
+      particles = [];
     } else {
       effects = effects.filter((effect) => {
         effect.age += elapsed;
         if (effect.age >= effect.duration) return false;
-        const color = effect.type === 'repair' ? palette.repair : palette.teams[effect.owner].halo;
-        drawEffect(ctx, effect, color);
+        drawEffect(ctx, effect, resolveEffectColor(effect, palette));
+        return true;
+      });
+      particles = particles.filter((particle) => {
+        particle.age += elapsed;
+        if (particle.age >= particle.duration) return false;
+        particle.x += particle.vx * elapsed;
+        particle.y += particle.vy * elapsed;
+        particle.vx *= Math.max(0, 1 - elapsed * 3.5);
+        particle.vy *= Math.max(0, 1 - elapsed * 3.5);
+        drawParticle(ctx, particle, resolveEffectColor(particle, palette));
         return true;
       });
     }
@@ -555,16 +696,61 @@ export function createRenderer(canvas) {
 
   return {
     draw,
-    clear: () => { effects = []; },
-    hasEffects: () => effects.length > 0,
+    announceSpawn(duration = 1.35) {
+      spawnBeaconDuration = duration;
+      spawnBeacon = duration;
+    },
+    clear: () => {
+      effects = [];
+      particles = [];
+      shakeTime = 0;
+      shakeMag = 0;
+      spawnBeacon = 0;
+    },
+    hasEffects: () => effects.length > 0 || particles.length > 0 || shakeTime > 0 || spawnBeacon > 0,
     addEvents(events) {
       if (reducedMotion.matches) return;
       for (const event of events) {
         switch (event.type) {
-          case 'shot': effects.push({ ...event, age: 0, duration: rules.SHOT_COOLDOWN / 4, radius: 0.24 }); break;
-          case 'bounce': effects.push({ ...event, age: 0, duration: 0.18, radius: 0.28 }); break;
-          case 'hit': effects.push({ ...event, age: 0, duration: 0.38, radius: 1.05 }); break;
-          case 'repair': effects.push({ ...event, age: 0, duration: 0.48, radius: 1.1 }); break;
+          case 'shot':
+            effects.push({ ...event, age: 0, duration: rules.SHOT_COOLDOWN / 4, radius: 0.26, colorKey: 'team' });
+            spawnParticles(event.x, event.y, 4, 0.9, 2.1, 0.16, 'teamLight', 0.045, event.owner);
+            break;
+          case 'bounce':
+            effects.push({ ...event, age: 0, duration: 0.18, radius: 0.28, colorKey: 'team' });
+            spawnParticles(event.x, event.y, 4, 0.8, 1.9, 0.18, 'teamLight', 0.04, event.owner);
+            break;
+          case 'shield-block':
+            effects.push({ ...event, age: 0, duration: 0.24, radius: 0.62, lineWidth: 0.06, colorKey: 'shield' });
+            spawnParticles(event.x, event.y, 8, 1.4, 3.0, 0.24, 'shield', 0.055, event.target);
+            break;
+          case 'hit':
+            effects.push({ ...event, age: 0, duration: 0.38, radius: 1.05, colorKey: 'team' });
+            spawnParticles(event.x, event.y, 12, 1.5, 3.8, 0.36, 'team', 0.065, event.owner);
+            triggerShake(0.14, 0.18);
+            break;
+          case 'knockout':
+            effects.push({
+              ...event, age: 0, duration: 0.52, radius: 1.55, lineWidth: 0.095,
+              colorKey: 'team', owner: event.target ?? event.owner,
+            });
+            effects.push({
+              ...event, age: 0, duration: 0.36, radius: 0.95, lineWidth: 0.075,
+              colorKey: 'shield',
+            });
+            spawnParticles(event.x, event.y, 16, 1.8, 4.8, 0.52, 'shield', 0.085, event.target ?? 0);
+            spawnParticles(event.x, event.y, 10, 1.1, 3.2, 0.48, 'team', 0.075, event.target ?? 0);
+            triggerShake(0.28, 0.34);
+            break;
+          case 'repair-spawn':
+            if (Number.isFinite(event.x) && Number.isFinite(event.y)) {
+              effects.push({ ...event, age: 0, duration: 0.65, radius: 1.25, lineWidth: 0.055, colorKey: 'repair' });
+            }
+            break;
+          case 'repair':
+            effects.push({ ...event, age: 0, duration: 0.48, radius: 1.15, colorKey: 'repair' });
+            spawnParticles(event.x, event.y, 10, 1.2, 2.8, 0.42, 'repair', 0.065, event.target ?? 0);
+            break;
         }
       }
     },

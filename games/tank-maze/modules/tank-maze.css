@@ -175,7 +175,7 @@
   position: relative;
   isolation: isolate;
   margin-inline: auto;
-  --arena-ratio: calc(15 / 11);
+  --arena-ratio: calc(24.1 / 16.1);
   aspect-ratio: var(--arena-ratio);
   overflow: hidden;
   border-radius: 16px;
@@ -324,6 +324,18 @@
   color: var(--primary-hover);
 }
 [data-theme="dark"] .tank-immersive-btn { color: #bfdbfe; }
+
+.tank-stats {
+  margin: 4px 0 0;
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--track);
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+.tank-stats:empty { display: none; }
 
 .tank-key-hint,
 .tank-touch-hint {

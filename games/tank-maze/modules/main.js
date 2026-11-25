@@ -1,4 +1,6 @@
-import { MAPS, MAX_AMMO, MAX_HEALTH, STEP, createMatch, nextRound, rules, stepMatch } from './engine.js';
+import {
+  MAPS, MAX_AMMO, MAX_HEALTH, STEP, createMatch, nextRound, readMatchStats, recordMatchStats, rules, stepMatch,
+} from './engine.js';
 import { createAI, AI_DIFFICULTIES } from './ai.js';
 import { arenaRatio, createRenderer, drawMapPreview, drawTankPreview } from './renderer.js';
 
@@ -6,7 +8,7 @@ const { GameKit, SiteData, I18N } = window;
 const t = (key, params) => I18N.t(key, params);
 const byId = (id) => document.getElementById(id);
 const SETTINGS_KEY = 'game_mode_tank-maze';
-const WINS_KEY = 'game_best_tank-maze_wins';
+const AI_SKIN_BY_DIFFICULTY = { easy: 'standard', normal: 'wedge', hard: 'cabin' };
 const MAP_COPY = {
   lanes: ['长直道', '沿长廊对射，也可以从侧门绕过去。'],
   corners: ['连续拐角', '从多个入口穿过交叉区，利用墙角反弹。'],
@@ -70,33 +72,98 @@ const ammoMeters = ['player-ammo', 'ai-ammo'].map((id) => buildMeter(byId(id), M
 const roundLabel = byId('round-label');
 const roundNote = byId('tank-round-note');
 const roundSummary = roundLabel.parentElement;
+const statsText = byId('tank-stats');
+const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
 
 const sound = GameKit.bindSoundButton(byId('tank-sound'), SiteData.getSound());
 let lastBounce = -Infinity;
+let lastShieldSound = -Infinity;
+let lastSpawnSound = -Infinity;
+let lastEmptyClick = -Infinity;
+
+function playTone(context, { from, to = from, duration, volume, type = 'sine', delay = 0 }) {
+  const start = context.currentTime + delay;
+  const oscillator = context.createOscillator();
+  const gain = context.createGain();
+  oscillator.type = type;
+  oscillator.frequency.setValueAtTime(from, start);
+  if (to !== from) oscillator.frequency.exponentialRampToValueAtTime(Math.max(20, to), start + duration);
+  gain.gain.setValueAtTime(0.001, start);
+  gain.gain.linearRampToValueAtTime(volume, start + Math.min(0.012, duration * 0.25));
+  gain.gain.exponentialRampToValueAtTime(0.001, start + duration);
+  oscillator.connect(gain).connect(context.destination);
+  oscillator.start(start);
+  oscillator.stop(start + duration + 0.01);
+}
+
 function playEventSound(events) {
   if (!sound.isEnabled() || !events.length) return;
   const now = performance.now();
-  const impact = events.some(({ type }) => type === 'hit');
+  const knockout = events.some(({ type }) => type === 'knockout');
+  const impact = !knockout && events.some(({ type }) => type === 'hit');
+  const shield = events.some(({ type }) => type === 'shield-block') && now - lastShieldSound > 80;
   const repaired = events.some(({ type }) => type === 'repair');
+  const repairSpawn = !repaired && events.some(({ type }) => type === 'repair-spawn') && now - lastSpawnSound > 150;
   const fired = events.some(({ type }) => type === 'shot');
-  const bounce = events.some(({ type }) => type === 'bounce') && now - lastBounce > 80;
+  const bounce = events.some(({ type }) => type === 'bounce') && now - lastBounce > 70;
+  if (shield) lastShieldSound = now;
+  if (repairSpawn) lastSpawnSound = now;
   if (bounce) lastBounce = now;
-  if (!impact && !repaired && !fired && !bounce) return;
+  if (!knockout && !impact && !shield && !repaired && !repairSpawn && !fired && !bounce) return;
   SiteData.withAudio((context) => {
-    const time = context.currentTime;
-    const oscillator = context.createOscillator();
-    const gain = context.createGain();
-    const [from, to, duration, volume] = repaired ? [500, 780, 0.18, 0.10]
-      : impact ? [175, 53, 0.30, 0.11]
-      : fired ? [270, 95, 0.12, 0.075] : [600, 390, 0.055, 0.036];
-    oscillator.type = impact ? 'triangle' : 'sine';
-    oscillator.frequency.setValueAtTime(from, time);
-    oscillator.frequency.exponentialRampToValueAtTime(to, time + duration);
-    gain.gain.setValueAtTime(volume, time);
-    gain.gain.exponentialRampToValueAtTime(0.001, time + duration);
-    oscillator.connect(gain).connect(context.destination);
-    oscillator.start(time);
-    oscillator.stop(time + duration);
+    if (knockout) {
+      playTone(context, { from: 155, to: 38, duration: 0.36, volume: 0.13, type: 'sawtooth' });
+      playTone(context, { from: 95, to: 28, duration: 0.40, volume: 0.10, type: 'triangle', delay: 0.02 });
+    } else if (impact) {
+      playTone(context, { from: 175, to: 53, duration: 0.26, volume: 0.11, type: 'triangle' });
+    }
+    if (shield) {
+      playTone(context, { from: 660, to: 920, duration: 0.09, volume: 0.065, type: 'triangle' });
+    }
+    if (repaired) {
+      playTone(context, { from: 480, to: 520, duration: 0.08, volume: 0.085, type: 'sine', delay: 0 });
+      playTone(context, { from: 640, to: 690, duration: 0.08, volume: 0.085, type: 'sine', delay: 0.06 });
+      playTone(context, { from: 860, to: 920, duration: 0.12, volume: 0.09, type: 'sine', delay: 0.12 });
+    } else if (repairSpawn) {
+      playTone(context, { from: 520, duration: 0.075, volume: 0.065, type: 'sine', delay: 0.05 });
+      playTone(context, { from: 740, duration: 0.11, volume: 0.065, type: 'sine', delay: 0.13 });
+    }
+    if (fired) playTone(context, { from: 270, to: 95, duration: 0.12, volume: 0.075, type: 'sine' });
+    if (bounce) playTone(context, { from: 600, to: 390, duration: 0.055, volume: 0.036, type: 'sine' });
+  });
+}
+
+function playEmptyClick() {
+  if (!sound.isEnabled()) return;
+  const now = performance.now();
+  if (now - lastEmptyClick < 180) return;
+  lastEmptyClick = now;
+  SiteData.withAudio((context) => {
+    playTone(context, { from: 220, to: 140, duration: 0.045, volume: 0.045, type: 'square' });
+  });
+}
+
+function playOutcomeSound(kind) {
+  if (!sound.isEnabled()) return;
+  const sequences = {
+    'round-win': [[523, 0], [659, 0.08], [784, 0.16]],
+    'round-lose': [[340, 0], [260, 0.09], [195, 0.18]],
+    draw: [[440, 0], [440, 0.11]],
+    'match-win': [[523, 0], [659, 0.08], [784, 0.16], [1046, 0.25]],
+    'match-lose': [[330, 0], [277, 0.09], [220, 0.18], [165, 0.28]],
+  };
+  const notes = sequences[kind];
+  if (!notes) return;
+  SiteData.withAudio((context) => {
+    for (const [freq, delay] of notes) {
+      playTone(context, {
+        from: freq,
+        duration: 0.14,
+        volume: 0.085,
+        type: kind.includes('lose') ? 'triangle' : 'sine',
+        delay: 0.08 + delay,
+      });
+    }
   });
 }
 
@@ -123,10 +190,15 @@ let immersive = false;
 let frameId = 0;
 let lastFrame = 0;
 let accumulator = 0;
+let resolveTimer = 0;
 let restarting = false;
 let interruptions = 0;
+let latestStats = readMatchStats(localStorage, settings.difficulty);
 
-const movementKeys = new Set(['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'KeyW', 'KeyA', 'KeyS', 'KeyD']);
+const movementKeys = new Set([
+  'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight',
+  'KeyW', 'KeyA', 'KeyS', 'KeyD', 'KeyQ', 'KeyE',
+]);
 const neutral = { x: 0, y: 0 };
 const pressed = new Set();
 let stickPointer = null;
@@ -147,8 +219,10 @@ function getPlayerInput() {
     Number(pressed.has('KeyA') || pressed.has('ArrowLeft'));
   const y = Number(pressed.has('KeyS') || pressed.has('ArrowDown')) -
     Number(pressed.has('KeyW') || pressed.has('ArrowUp'));
+  const turn = (Number(pressed.has('KeyE')) - Number(pressed.has('KeyQ'))) * 0.72;
   const input = {
     move: x || y ? { x, y } : stickMove,
+    turn,
     fire: queuedShot || pressed.has('Space') || firePointer !== null,
   };
   queuedShot = false;
@@ -197,6 +271,17 @@ function renderRoundNote() {
   roundNote.classList.toggle('available', available);
 }
 
+function renderStats() {
+  if (!statsText) return;
+  latestStats = readMatchStats(localStorage, settings.difficulty);
+  statsText.textContent = t('累计胜场 {total} · {difficulty} {wins} 胜 · 最高连胜 {streak}', {
+    total: latestStats.totalWins,
+    difficulty: t(DIFFICULTY_COPY[settings.difficulty][0]),
+    wins: latestStats.difficultyWins,
+    streak: latestStats.bestStreak,
+  });
+}
+
 function renderState() {
   arena.style.setProperty('--arena-ratio', String(arenaRatio(match.map)));
   game.dataset.phase = phase;
@@ -212,7 +297,7 @@ function renderState() {
   byId('tank-skin-value').textContent = t(SKIN_COPY[settings.skin][0]);
   startButton.hidden = !ready;
   startButton.disabled = !renderer;
-  restartButton.disabled = ready || phase === 'finished';
+  restartButton.disabled = ready || phase === 'finished' || phase === 'resolving';
   for (const button of [pauseButton, stagePause]) {
     button.disabled = phase !== 'playing' && phase !== 'paused';
     button.dataset.i18n = phase === 'paused' ? '继续游戏' : '暂停';
@@ -226,9 +311,12 @@ function renderState() {
   renderAmmo();
   roundLabel.textContent = t('第 {round} 局', { round: match.round });
   renderRoundNote();
-  overlay.hidden = ready || phase === 'playing';
-  secondaryButton.hidden = phase !== 'finished';
+  renderStats();
+  overlay.hidden = ready || phase === 'playing' || phase === 'resolving';
+  secondaryButton.hidden = phase !== 'paused' && phase !== 'finished';
   if (phase === 'paused') {
+    secondaryButton.dataset.i18n = '返回设置';
+    secondaryButton.textContent = t('返回设置');
     overlayTitle.textContent = t('已暂停');
     overlayNote.textContent = '';
     primaryButton.textContent = t('继续游戏');
@@ -238,20 +326,34 @@ function renderState() {
     overlayNote.textContent = roundMessage();
     primaryButton.textContent = t('下一局');
   } else if (phase === 'finished') {
+    secondaryButton.dataset.i18n = '换图';
+    secondaryButton.textContent = t('换图');
     overlayTitle.textContent = match.winner === 0 ? t('你赢了比赛') : t('人机赢了比赛');
     overlayNote.textContent = match.winner === 0
-      ? t('最终比分 {player} 比 {ai} · 累计胜场 {wins} 局', {
+      ? t('{cause} · 最终比分 {player} 比 {ai} · {difficulty}胜场 {wins} · 连胜 {streak}', {
+          cause: roundMessage(),
           player: match.scores[0],
           ai: match.scores[1],
-          wins: GameKit.readBest(WINS_KEY),
+          difficulty: t(DIFFICULTY_COPY[settings.difficulty][0]),
+          wins: latestStats.difficultyWins,
+          streak: latestStats.currentStreak,
         })
-      : t('最终比分 {player} 比 {ai}', { player: match.scores[0], ai: match.scores[1] });
+      : t('{cause} · 最终比分 {player} 比 {ai} · 累计胜场 {wins} 局', {
+          cause: roundMessage(),
+          player: match.scores[0],
+          ai: match.scores[1],
+          wins: latestStats.totalWins,
+        });
     primaryButton.textContent = t('原图再战');
   }
 }
 
 function scheduleFrame() {
   if (!frameId) frameId = requestAnimationFrame(frame);
+}
+
+function settleMatchOutcome() {
+  setPhase(match.winner === null ? 'round-end' : 'finished', primaryButton);
 }
 
 function frame(timestamp) {
@@ -266,18 +368,43 @@ function frame(timestamp) {
       renderer.addEvents(match.events);
       playEventSound(match.events);
       if (match.result) {
-        if (match.winner === 0) GameKit.writeBest(WINS_KEY, GameKit.readBest(WINS_KEY) + 1);
-        setPhase(match.winner === null ? 'round-end' : 'finished', primaryButton);
-      }
-      else if (match.events.length) {
+        if (match.winner !== null) {
+          latestStats = recordMatchStats(localStorage, settings.difficulty, match.winner === 0);
+          playOutcomeSound(match.winner === 0 ? 'match-win' : 'match-lose');
+        } else {
+          playOutcomeSound(match.result.winner === null ? 'draw' : match.result.winner === 0 ? 'round-win' : 'round-lose');
+        }
+        renderHealth();
+        renderAmmo();
+        renderRoundNote();
+        scores.forEach((score, id) => { score.textContent = match.scores[id]; });
+        compactScore.textContent = match.scores.join(' – ');
+        renderStats();
+        if (reducedMotion.matches) {
+          settleMatchOutcome();
+        } else {
+          clearInput();
+          phase = 'resolving';
+          resolveTimer = 0.46;
+          renderState();
+        }
+        break;
+      } else if (match.events.length) {
         if (match.events.some(({ type }) => type === 'hit' || type === 'repair')) renderHealth();
         if (match.events.some(({ type }) => type === 'repair-spawn' || type === 'repair')) renderRoundNote();
       }
     }
+  } else if (phase === 'resolving') {
+    resolveTimer -= elapsed;
+    if (resolveTimer <= 0) settleMatchOutcome();
   }
   if (phase === 'playing') renderAmmo();
-  renderer.draw(match, elapsed, settings.skin);
-  if (phase === 'playing' || renderer.hasEffects()) scheduleFrame();
+  renderer.draw(match, elapsed, {
+    playerSkin: settings.skin,
+    aiSkin: AI_SKIN_BY_DIFFICULTY[settings.difficulty] || 'standard',
+    showAim: phase === 'playing',
+  });
+  if (phase === 'playing' || phase === 'resolving' || renderer.hasEffects()) scheduleFrame();
   else lastFrame = 0;
 }
 
@@ -297,17 +424,20 @@ function startMatch() {
   match = createMatch(settings.map);
   ai = createAI(settings.difficulty);
   renderer.clear();
+  renderer.announceSpawn();
   setPhase('playing', arena);
 }
 
 function nextMatchRound() {
   nextRound(match);
   renderer.clear();
+  renderer.announceSpawn();
   setPhase('playing', arena);
 }
 
 function pause({ focus = false } = {}) {
   if (phase === 'playing') setPhase('paused', focus ? primaryButton : null);
+  else if (phase === 'resolving') settleMatchOutcome();
   else clearInput();
 }
 
@@ -317,7 +447,7 @@ function resume() {
 }
 
 async function confirmRestart() {
-  if (restarting || phase === 'ready' || phase === 'finished') return;
+  if (restarting || phase === 'ready' || phase === 'finished' || phase === 'resolving') return;
   restarting = true;
   const wasPlaying = phase === 'playing';
   const interruptionCount = interruptions;
@@ -336,12 +466,31 @@ async function confirmRestart() {
   }
 }
 
+async function confirmReturnToSetup() {
+  if (restarting || phase !== 'paused') return;
+  restarting = true;
+  const interruptionCount = interruptions;
+  const confirmed = await SiteData.confirmDialog({
+    title: t('返回设置'),
+    message: t('离开当前对局并返回设置？当前比分会清零。'),
+    confirmText: t('返回设置'),
+  });
+  restarting = false;
+  if (confirmed) {
+    match = createMatch(settings.map);
+    renderer.clear();
+    setPhase('ready', startButton);
+  } else if (interruptions === interruptionCount) {
+    primaryButton.focus({ preventScroll: true });
+  }
+}
+
 function showTutorial(force) {
   GameKit.showTutorial({
     id: 'tank-maze', force,
     steps: [
       { icon: 'game-tank-maze', title: t('坦克迷宫'), text: t('每局双方各有 3 点血，先赢两局者获胜。每局交换出生侧。') },
-      { icon: 'art-tap', title: t('驾驶'), text: t('用 WASD 或方向键移动，空格开火。手机左侧摇杆移动，右侧开火。停下后炮口保留最后的朝向。') },
+      { icon: 'art-tap', title: t('驾驶'), text: t('用 WASD 或方向键移动，Q/E 原地微调炮口，空格开火。手机左侧摇杆移动，右侧开火。停下后炮口保留最后的朝向。') },
       { icon: 'art-target', title: t('弹药'), text: t('每辆坦克开局有三发。开火消耗一格，未满时每 {seconds} 秒回充一格。', { seconds: rules.AMMO_RECHARGE }) },
       { icon: 'art-target', title: t('炮弹反弹'), text: t('命中扣 1 点血，短时间内不会再扣血。自己的炮弹撞墙反弹后也可能打中自己。') },
       { icon: 'art-star', title: t('维修补给'), text: t('每局第一次有人受伤后，地图中部会出现一份维修补给。掉血的坦克可以拾取，恢复 1 点血。') },
@@ -442,6 +591,10 @@ primaryButton.addEventListener('click', () => {
   else if (phase === 'finished') startMatch();
 });
 secondaryButton.addEventListener('click', () => {
+  if (phase === 'paused') {
+    confirmReturnToSetup();
+    return;
+  }
   match = createMatch(settings.map);
   renderer.clear();
   setPhase('ready');
@@ -460,10 +613,21 @@ document.addEventListener('keydown', (event) => {
     }
     return;
   }
+  if ((event.code === 'Enter' || event.code === 'Space') && !event.repeat &&
+      (phase === 'ready' || phase === 'round-end' || phase === 'finished')) {
+    event.preventDefault();
+    if (phase === 'ready') startMatch();
+    else if (phase === 'round-end') nextMatchRound();
+    else startMatch();
+    return;
+  }
   if (phase !== 'playing' || (!movementKeys.has(event.code) && event.code !== 'Space')) return;
   event.preventDefault();
   pressed.add(event.code);
-  if (event.code === 'Space' && !event.repeat) queuedShot = true;
+  if (event.code === 'Space' && !event.repeat) {
+    if (match.tanks[0].ammo === 0 && match.tanks[0].cooldown <= 0.02) playEmptyClick();
+    else queuedShot = true;
+  }
   updateFire();
 });
 document.addEventListener('keyup', (event) => {
@@ -520,7 +684,8 @@ fireButton.addEventListener('pointerdown', (event) => {
   event.preventDefault();
   firePointer = event.pointerId;
   fireButton.setPointerCapture(event.pointerId);
-  queuedShot = true;
+  if (match.tanks[0].ammo === 0 && match.tanks[0].cooldown <= 0.02) playEmptyClick();
+  else queuedShot = true;
   updateFire();
 });
 for (const eventType of ['pointerup', 'pointercancel', 'lostpointercapture']) {

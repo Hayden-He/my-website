@@ -256,6 +256,36 @@ test('getCardMetaText renders Tank Maze cumulative win count in zh and en', () =
   assert.equal(harness.SiteLobby.getCardMetaText(tankMaze), 'Wins: 3');
 });
 
+test('Tank Maze prefers active difficulty wins from JSON modeKey and exposes difficulty/streak records', () => {
+  const harness = createLobbyHarness({
+    initialStorage: {
+      'game_mode_tank-maze': JSON.stringify({ map: 'lanes', difficulty: 'hard', skin: 'wedge' }),
+      'game_best_tank-maze_wins': '5',
+      'game_best_tank-maze_wins_easy': '2',
+      'game_best_tank-maze_wins_hard': '3',
+      'game_best_tank-maze_streak': '4',
+    },
+  });
+  const tankMaze = harness.SITE_CONFIG.games.find((g) => g.id === 'tank-maze');
+
+  assert.equal(harness.SiteLobby.getCardMetaText(tankMaze), '困难胜场: 3 局');
+  assert.deepEqual(harness.SiteLobby.getAllGameRecords(tankMaze), [
+    '胜场: 5 局',
+    '简单胜场: 2 局',
+    '困难胜场: 3 局',
+    '最高连胜: 4 连胜',
+  ]);
+
+  harness.I18N.setLang('en');
+  assert.equal(harness.SiteLobby.getCardMetaText(tankMaze), 'Hard wins: 3');
+  assert.deepEqual(harness.SiteLobby.getAllGameRecords(tankMaze), [
+    'Wins: 5',
+    'Easy wins: 2',
+    'Hard wins: 3',
+    'Best streak: 4',
+  ]);
+});
+
 test('initSitePage recent game shortcut supports unified resume prompt for tetris', () => {
   const harness = createLobbyHarness({
     initialStorage: {

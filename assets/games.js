@@ -94,6 +94,15 @@ window.SITE_CONFIG = {
       storageKey: 'game_best_tank-maze_wins',
       bestPrefix: '胜场: ',
       bestSuffix: ' 局',
+      modeKey: 'game_mode_tank-maze',
+      modeField: 'difficulty',
+      records: [
+        { mode: 'wins', key: 'game_best_tank-maze_wins', prefix: '胜场: ', suffix: ' 局' },
+        { mode: 'easy', key: 'game_best_tank-maze_wins_easy', prefix: '简单胜场: ', suffix: ' 局' },
+        { mode: 'normal', key: 'game_best_tank-maze_wins_normal', prefix: '普通胜场: ', suffix: ' 局' },
+        { mode: 'hard', key: 'game_best_tank-maze_wins_hard', prefix: '困难胜场: ', suffix: ' 局' },
+        { mode: 'streak', key: 'game_best_tank-maze_streak', prefix: '最高连胜: ', suffix: ' 连胜' },
+      ],
     },
     {
       id: '2048',
