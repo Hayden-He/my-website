@@ -196,19 +196,35 @@
       100% { transform: scale(1); }
     }
 
-    .tile[data-val="2"] .tile-inner { background: #eee4da; }
-    .tile[data-val="4"] .tile-inner { background: #ede0c8; }
-    .tile[data-val="8"] .tile-inner { background: #f2b179; }
-    .tile[data-val="16"] .tile-inner { background: #f59563; }
-    .tile[data-val="32"] .tile-inner { background: #f67c5f; }
-    .tile[data-val="64"] .tile-inner { background: #f65e3b; }
-    .tile[data-val="128"] .tile-inner { background: #edcf72; font-size: 1.35rem; }
-    .tile[data-val="256"] .tile-inner { background: #edcc61; font-size: 1.35rem; }
-    .tile[data-val="512"] .tile-inner { background: #edc850; font-size: 1.35rem; }
-    .tile[data-val="1024"] .tile-inner { background: #edc53f; font-size: 1.1rem; }
-    .tile[data-val="2048"] .tile-inner { background: #edc22e; font-size: 1.1rem; box-shadow: 0 0 18px rgba(237, 194, 46, 0.55); }
-    .tile.super .tile-inner { background: #3c3a32; color: #fff; font-size: 1.02rem; }
+    .tile[data-val="2"] .tile-inner { background: #eee4da; color: #776e65; }
+    .tile[data-val="4"] .tile-inner { background: #ede0c8; color: #776e65; }
+    .tile[data-val="8"] .tile-inner { background: #f2b179; color: #f9f6f2; }
+    .tile[data-val="16"] .tile-inner { background: #f59563; color: #f9f6f2; }
+    .tile[data-val="32"] .tile-inner { background: #f67c5f; color: #f9f6f2; }
+    .tile[data-val="64"] .tile-inner { background: #f65e3b; color: #f9f6f2; }
+    .tile[data-val="128"] .tile-inner { background: #edcf72; color: #f9f6f2; font-size: 1.35rem; box-shadow: 0 0 10px rgba(237, 207, 114, 0.35); }
+    .tile[data-val="256"] .tile-inner { background: #edcc61; color: #f9f6f2; font-size: 1.35rem; box-shadow: 0 0 12px rgba(237, 204, 97, 0.42); }
+    .tile[data-val="512"] .tile-inner { background: #edc850; color: #f9f6f2; font-size: 1.35rem; box-shadow: 0 0 14px rgba(237, 200, 80, 0.48); }
+    .tile[data-val="1024"] .tile-inner { background: #edc53f; color: #f9f6f2; font-size: 1.1rem; box-shadow: 0 0 16px rgba(237, 197, 63, 0.52); }
+    .tile[data-val="2048"] .tile-inner { background: linear-gradient(135deg, #f3cf47, #e4b51b); color: #f9f6f2; font-size: 1.1rem; box-shadow: 0 0 20px rgba(237, 194, 46, 0.62); }
+    .tile.super .tile-inner { background: linear-gradient(135deg, #4f46e5, #312e81); color: #f9f6f2; font-size: 1.02rem; box-shadow: 0 0 18px rgba(79, 70, 229, 0.45); }
     .tile.compact.super .tile-inner { font-size: 0.85rem; }
+    .tile.obstacle .tile-inner {
+      background: linear-gradient(145deg, #64748b, #475569);
+      color: #e2e8f0;
+      border: 1px solid #334155;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22);
+      font-size: 1.2rem;
+    }
+    :root[data-theme="dark"] .tile.obstacle .tile-inner {
+      background: linear-gradient(145deg, #475569, #1e293b);
+      color: #94a3b8;
+      border-color: #64748b;
+    }
+
+    @media (max-width: 390px) {
+      .toolbar .mode-pill { padding-inline: 8px; font-size: 0.78rem; white-space: nowrap; }
+    }
 
     /* 本页尺寸；其余外壳样式见 assets/game-shell.css */
     .game-wrap { --game-width: 460px; }
@@ -259,8 +275,9 @@
 
     <div class="toolbar">
       <div class="mode-pills" role="group" aria-label="棋盘尺寸" data-i18n-attr="aria-label:棋盘尺寸">
-        <button id="size-4" class="mode-pill active" data-i18n="4×4 经典">4×4 经典</button>
-        <button id="size-5" class="mode-pill" data-i18n="5×5 轻松">5×5 轻松</button>
+        <button id="size-4" class="mode-pill active" data-mode="4" data-i18n="4×4 经典">4×4 经典</button>
+        <button id="size-obstacle" class="mode-pill" data-mode="obstacle" data-i18n="4×4 障碍">4×4 障碍</button>
+        <button id="size-5" class="mode-pill" data-mode="5" data-i18n="5×5 轻松">5×5 轻松</button>
       </div>
       <div class="btn-group">
         <button id="help-btn" class="btn-small secondary" type="button" title="查看玩法" data-i18n="玩法" data-i18n-attr="title:查看玩法">玩法</button>
@@ -285,7 +302,7 @@
       </div>
     </div>
 
-    <p class="hint-text" data-i18n="滑动或拖动棋盘，键盘可用方向键或 WASD。初次玩可试 5×5。">滑动或拖动棋盘，键盘可用方向键或 WASD。初次玩可试 5×5。</p>
+    <p class="hint-text" data-i18n="滑动或方向键/WASD 移动，U 或 Ctrl+Z 撤回（最多 3 步）。可挑战 4×4 障碍或 5×5 轻松。">滑动或方向键/WASD 移动，U 或 Ctrl+Z 撤回（最多 3 步）。可挑战 4×4 障碍或 5×5 轻松。</p>
 
     <div id="more-games" class="more-games"></div>
   </main>
@@ -302,6 +319,12 @@
       const BEST_PREFIX = LEGACY_BEST_KEY + '_';
       const SAVE_PREFIX = 'game_save_2048_';
       const MODE_KEY = SAVE_PREFIX + 'mode';
+      const MAX_UNDO = 3;
+      const MODES = {
+        4: { size: 4, obstacle: false, label: '4×4 经典' },
+        obstacle: { size: 4, obstacle: true, label: '4×4 障碍' },
+        5: { size: 5, obstacle: false, label: '5×5 轻松' },
+      };
       const temporarySaves = new Map();
 
       const gridBgEl = document.getElementById('grid-bg');
@@ -312,8 +335,7 @@
       const bestEl = document.getElementById('best-el');
       const undoBtn = document.getElementById('undo-btn');
       const soundBtn = document.getElementById('sound-btn');
-      const size4Btn = document.getElementById('size-4');
-      const size5Btn = document.getElementById('size-5');
+      const modeBtns = document.querySelectorAll('.mode-pill[data-mode]');
       const overlay = document.getElementById('overlay');
       const overlayTitle = document.getElementById('overlay-title');
       const overlayDesc = document.getElementById('overlay-desc');
@@ -325,39 +347,64 @@
         soundEnabled = on;
       });
 
-      function playMergeTone(maxVal) {
+      function playOsc(audioCtx, { freq, to, duration, volume, type = 'sine', delay = 0 }) {
+        const start = audioCtx.currentTime + delay;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, start);
+        if (to) osc.frequency.exponentialRampToValueAtTime(to, start + duration);
+        gain.gain.setValueAtTime(volume, start);
+        gain.gain.exponentialRampToValueAtTime(0.001, start + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(start);
+        osc.stop(start + duration + 0.01);
+      }
+
+      function playSlideTone() {
         if (!soundEnabled || !window.SiteData) return;
         SiteData.withAudio((audioCtx) => {
           try {
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            const base = maxVal > 0 ? Math.min(880, 260 + Math.log2(maxVal) * 48) : 220;
-            osc.frequency.setValueAtTime(base, audioCtx.currentTime);
-            gain.gain.setValueAtTime(0.07, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.08);
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.08);
+            playOsc(audioCtx, { freq: 190, to: 130, duration: 0.045, volume: 0.032, type: 'sine' });
           } catch {}
         });
       }
 
-      function bestKeyFor(sizeValue) {
-        return BEST_PREFIX + sizeValue;
+      function playMergeTone(maxVal, reached2048 = false) {
+        if (!soundEnabled || !window.SiteData) return;
+        SiteData.withAudio((audioCtx) => {
+          try {
+            if (reached2048) {
+              [[523, 0], [659, 0.08], [784, 0.16], [1046, 0.25]].forEach(([f, d]) => {
+                playOsc(audioCtx, { freq: f, duration: 0.16, volume: 0.085, type: 'triangle', delay: d });
+              });
+              return;
+            }
+            const base = maxVal > 0 ? Math.min(880, 260 + Math.log2(maxVal) * 48) : 220;
+            playOsc(audioCtx, { freq: base, to: base * 1.12, duration: 0.085, volume: 0.07, type: 'sine' });
+            if (maxVal >= 128) {
+              playOsc(audioCtx, { freq: base * 1.5, duration: 0.1, volume: 0.045, type: 'triangle', delay: 0.03 });
+            }
+          } catch {}
+        });
       }
 
-      function readBestScore(sizeValue) {
-        return GameKit.readBest(bestKeyFor(sizeValue));
+      function bestKeyFor(modeValue) {
+        return BEST_PREFIX + modeValue;
+      }
+
+      function readBestScore(modeValue) {
+        return GameKit.readBest(bestKeyFor(modeValue));
       }
 
       // 旧版把 4×4 / 5×5 的最高分存在同一个键里，首次升级时迁移到当前尺寸
-      function migrateLegacyBest(sizeValue) {
+      function migrateLegacyBest(modeValue) {
         try {
           const legacy = localStorage.getItem(LEGACY_BEST_KEY);
           if (!legacy) return;
-          if (!localStorage.getItem(bestKeyFor(sizeValue))) {
-            localStorage.setItem(bestKeyFor(sizeValue), legacy);
+          if (!localStorage.getItem(bestKeyFor(modeValue))) {
+            localStorage.setItem(bestKeyFor(modeValue), legacy);
           }
           localStorage.removeItem(LEGACY_BEST_KEY);
         } catch {}
@@ -366,11 +413,12 @@
       let bestScore = 0;
       let newBestThisGame = false;
 
+      let mode = '4';
       let size = 4;
       let board = [];
       let score = 0;
       let played = false;
-      let prevState = null;
+      let history = [];
       let victory = null;
       let lastSpawn = null;
       let lastMerged = new Set();
@@ -399,15 +447,19 @@
       }
 
       function saveGame() {
-        writeProgress(SAVE_PREFIX + size, JSON.stringify({ board, score, played, prevState, victory }));
+        const prevState = history.length ? history[history.length - 1] : null;
+        writeProgress(SAVE_PREFIX + mode, JSON.stringify({ board, score, played, history, prevState, victory }));
       }
 
-      function isValidPosition(position) {
-        return position && Number.isSafeInteger(position.score) && position.score >= 0 &&
-          Array.isArray(position.board) && position.board.length === size &&
-          position.board.every((row) => Array.isArray(row) && row.length === size && row.every((tile) => (
-            tile === 0 || (Number.isSafeInteger(tile) && tile >= 2 && tile === 2 ** Math.floor(Math.log2(tile)))
-          ))) && position.board.some((row) => row.some((tile) => tile !== 0));
+      function isValidPosition(position, targetMode = mode) {
+        const cfg = MODES[targetMode];
+        if (!cfg || !position || !Number.isSafeInteger(position.score) || position.score < 0) return false;
+        const s = cfg.size;
+        return Array.isArray(position.board) && position.board.length === s &&
+          position.board.every((row) => Array.isArray(row) && row.length === s && row.every((tile) => (
+            tile === 0 || (cfg.obstacle && tile === -1) ||
+            (Number.isSafeInteger(tile) && tile >= 2 && tile === 2 ** Math.floor(Math.log2(tile)))
+          ))) && position.board.some((row) => row.some((tile) => tile > 0));
       }
 
       function rebuildGridBg() {
@@ -421,31 +473,39 @@
       }
 
       function openGame(saveFresh = true) {
-        size4Btn.classList.toggle('active', size === 4);
-        size5Btn.classList.toggle('active', size === 5);
-        size4Btn.setAttribute('aria-pressed', String(size === 4));
-        size5Btn.setAttribute('aria-pressed', String(size === 5));
+        size = MODES[mode].size;
+        modeBtns.forEach((btn) => {
+          const active = btn.dataset.mode === mode;
+          btn.classList.toggle('active', active);
+          btn.setAttribute('aria-pressed', String(active));
+        });
         rebuildGridBg();
-        bestScore = readBestScore(size);
+        bestScore = readBestScore(mode);
         newBestThisGame = false;
 
         let saved;
         try {
-          saved = JSON.parse(readProgress(SAVE_PREFIX + size));
+          saved = JSON.parse(readProgress(SAVE_PREFIX + mode));
         } catch {
           // 无法读取的存档可用新棋局替换
         }
-        if (!isValidPosition(saved)) {
+        if (!isValidPosition(saved, mode)) {
           initGame();
           if (saveFresh) saveGame();
           return;
         }
         board = saved.board;
         score = saved.score;
-        prevState = isValidPosition(saved.prevState) ? saved.prevState : null;
+        if (Array.isArray(saved.history)) {
+          history = saved.history.filter((entry) => isValidPosition(entry, mode)).slice(-MAX_UNDO);
+        } else if (isValidPosition(saved.prevState, mode)) {
+          history = [saved.prevState];
+        } else {
+          history = [];
+        }
         played = typeof saved.played === 'boolean'
           ? saved.played
-          : score > 0 || prevState !== null || board.flat().filter(Boolean).length > 2;
+          : score > 0 || history.length > 0 || board.flat().filter((v) => v > 0).length > 2;
         victory = saved.victory === 'acknowledged' ? 'acknowledged' : 'pending';
         if (getMaxTile() < 2048) victory = null;
         lastSpawn = null;
@@ -455,14 +515,20 @@
       }
 
       function initGame() {
+        size = MODES[mode].size;
         board = Array.from({ length: size }, () => Array(size).fill(0));
         score = 0;
         played = false;
-        prevState = null;
+        history = [];
         victory = null;
         newBestThisGame = false;
         lastSpawn = null;
         lastMerged = new Set();
+        if (MODES[mode].obstacle) {
+          const inner = [[1, 1], [1, 2], [2, 1], [2, 2]];
+          const [or, oc] = inner[Math.floor(Math.random() * inner.length)];
+          board[or][oc] = -1;
+        }
         addRandomTile();
         addRandomTile();
         render();
@@ -528,7 +594,7 @@
               board[r][c] = val;
               moved = true;
             }
-            if (val > 0) {
+            if (val !== 0) {
               const isMerged = mergedIdx.includes(j);
               if (isMerged) mergedCells.add(r + ',' + c);
               origins[j].forEach((fromIdx) => {
@@ -550,9 +616,9 @@
         if (!moved) return;
 
         played = true;
-        playMergeTone(highestMerged);
 
-        prevState = { board: snapshotBoard, score: snapshotScore };
+        history.push({ board: snapshotBoard, score: snapshotScore });
+        if (history.length > MAX_UNDO) history.shift();
         lastMerged = mergedCells;
 
         score += totalGained;
@@ -560,11 +626,14 @@
         if (score > bestScore) {
           newBestThisGame = true;
           bestScore = score;
-          GameKit.saveBestIfHigher(bestKeyFor(size), bestScore);
+          GameKit.saveBestIfHigher(bestKeyFor(mode), bestScore);
         }
 
         addRandomTile();
-        if (victory === null && getMaxTile() >= 2048) victory = 'pending';
+        const hit2048Now = victory === null && getMaxTile() >= 2048;
+        if (hit2048Now) victory = 'pending';
+        if (highestMerged > 0) playMergeTone(highestMerged, hit2048Now);
+        else playSlideTone();
         render(animTiles);
         // 滑动结束后再落定合并值与新方块，避免两个“合并后数字”同时滑入
         const seq = renderSeq;
@@ -613,7 +682,8 @@
         const tile = document.createElement('div');
         let cls = 'tile';
         if (size === 5) cls += ' compact';
-        if (val > 2048) cls += ' super';
+        if (val === -1) cls += ' obstacle';
+        else if (val > 2048) cls += ' super';
         if (extraClass) cls += ' ' + extraClass;
         tile.className = cls;
         tile.dataset.val = String(val);
@@ -621,9 +691,19 @@
 
         const inner = document.createElement('div');
         inner.className = 'tile-inner';
-        inner.textContent = String(val);
+        if (val === -1) {
+          inner.textContent = '❖';
+          tile.setAttribute('aria-label', t('障碍石块'));
+        } else {
+          inner.textContent = String(val);
+        }
         tile.appendChild(inner);
         return tile;
+      }
+
+      function updateUndoButton() {
+        undoBtn.disabled = !history.length;
+        undoBtn.textContent = history.length ? t('撤回 ({n})', { n: history.length }) : t('撤回');
       }
 
       function render(animTiles) {
@@ -631,7 +711,7 @@
         scoreEl.textContent = score;
         maxEl.textContent = getMaxTile();
         bestEl.textContent = bestScore;
-        undoBtn.disabled = !prevState;
+        updateUndoButton();
         tileLayerEl.innerHTML = '';
 
         if (animTiles && animTiles.length > 0) {
@@ -661,19 +741,19 @@
         for (let r = 0; r < size; r++) {
           for (let c = 0; c < size; c++) {
             const val = board[r][c];
-            if (val <= 0) continue;
+            if (val === 0) continue;
             const key = r + ',' + c;
-            const extra = key === lastSpawn ? 'spawn' : lastMerged.has(key) ? 'merged' : '';
+            const extra = val > 0 ? (key === lastSpawn ? 'spawn' : lastMerged.has(key) ? 'merged' : '') : '';
             tileLayerEl.appendChild(createTileEl(val, r, c, extra));
           }
         }
       }
 
-      undoBtn.addEventListener('click', () => {
-        if (!prevState) return;
-        board = prevState.board;
-        score = prevState.score;
-        prevState = null;
+      function performUndo() {
+        if (!history.length) return;
+        const previous = history.pop();
+        board = previous.board;
+        score = previous.score;
         // 撤回后按棋盘实际状态重置“已提示胜利”标记，避免回到 2048 之前后再次合成不再提示
         victory = getMaxTile() >= 2048 ? 'acknowledged' : null;
         lastSpawn = null;
@@ -681,7 +761,9 @@
         render();
         showOutcome();
         saveGame();
-      });
+      }
+
+      undoBtn.addEventListener('click', performUndo);
 
       keepBtn.addEventListener('click', () => {
         victory = 'acknowledged';
@@ -689,20 +771,33 @@
         saveGame();
       });
 
-      function switchMode(nextSize) {
-        if (size === nextSize) return;
-        size = nextSize;
-        writeProgress(MODE_KEY, String(size));
+      function switchMode(nextMode) {
+        if (!MODES[nextMode] || mode === nextMode) return;
+        mode = nextMode;
+        writeProgress(MODE_KEY, mode);
         openGame();
       }
 
-      size4Btn.addEventListener('click', () => switchMode(4));
-      size5Btn.addEventListener('click', () => switchMode(5));
+      modeBtns.forEach((btn) => {
+        btn.addEventListener('click', () => switchMode(btn.dataset.mode));
+      });
 
       document.addEventListener('keydown', (e) => {
-        if (GameKit.shouldIgnoreGameKey(e)) return;
         if (window.SiteData && SiteData.isDialogOpen && SiteData.isDialogOpen()) return;
         if (window.GameKit && GameKit.isTutorialOpen && GameKit.isTutorialOpen()) return;
+        const target = e.target;
+        if (target instanceof Element && target.closest('input, textarea, select, [contenteditable="true"]')) return;
+        if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && e.key.toLowerCase() === 'z') {
+          e.preventDefault();
+          performUndo();
+          return;
+        }
+        if (GameKit.shouldIgnoreGameKey(e)) return;
+        if (e.code === 'KeyU') {
+          e.preventDefault();
+          performUndo();
+          return;
+        }
         const map = {
           ArrowLeft: 'left',
           KeyA: 'left',
@@ -733,7 +828,7 @@
         }
         const ok = await window.SiteData.confirmDialog({
           title: t('重开棋局'),
-          message: t('重开 {size}×{size} 棋局？当前进度将被清除。', { size }),
+          message: t('重开 {label} 棋局？当前进度将被清除。', { label: t(MODES[mode].label) }),
           confirmText: t('重开'),
           cancelText: t('继续本局'),
           danger: true,
@@ -745,6 +840,10 @@
       document.getElementById('overlay-btn').addEventListener('click', forceRestart);
 
       document.addEventListener('i18n:change', () => {
+        updateUndoButton();
+        tileLayerEl.querySelectorAll('.tile.obstacle').forEach((tile) => {
+          tile.setAttribute('aria-label', t('障碍石块'));
+        });
         if (overlay.classList.contains('show')) showOutcome();
       });
 
@@ -753,12 +852,12 @@
       });
 
       window.addEventListener('storage', (event) => {
-        if (event.key === null || event.key === bestKeyFor(size)) {
-          bestScore = readBestScore(size);
+        if (event.key === null || event.key === bestKeyFor(mode)) {
+          bestScore = readBestScore(mode);
           bestEl.textContent = bestScore;
           showOutcome();
         }
-        const saveKey = SAVE_PREFIX + size;
+        const saveKey = SAVE_PREFIX + mode;
         if (event.key === null || event.key === saveKey) {
           temporarySaves.delete(saveKey);
           openGame(false);
@@ -771,14 +870,15 @@
           force,
           steps: [
             { icon: 'game-2048', title: t('合并相同数字'), text: t('滑动棋盘或按方向键 / WASD，把相同数字撞在一起翻倍，目标合成 2048。') },
-            { icon: 'icon-undo', title: t('撤回与双尺寸'), text: t('支持 4×4 经典与 5×5 轻松棋盘，进度会自动保存，走错时还可单步撤回。') },
+            { icon: 'icon-undo', title: t('撤回与三模式'), text: t('支持 4×4 经典、4×4 障碍与 5×5 轻松棋盘，进度自动保存；走错时支持连续撤回最多 3 步（快捷键 U / Ctrl+Z）。') },
           ],
         });
       }
 
       document.getElementById('help-btn').addEventListener('click', () => showTutorial(true));
-      size = readProgress(MODE_KEY) === '5' ? 5 : 4;
-      migrateLegacyBest(size);
+      const savedMode = readProgress(MODE_KEY);
+      mode = MODES[savedMode] ? savedMode : '4';
+      migrateLegacyBest(mode);
       openGame();
       GameKit.mountMoreGames('2048', document.getElementById('more-games'));
       showTutorial(false);

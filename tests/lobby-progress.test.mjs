@@ -222,6 +222,40 @@ test('get2048Resume and getResumeInfo detect playable vs deadlocked or unplayed 
   }));
   assert.equal(harness.SiteLobby.get2048Resume(), null);
   assert.equal(harness.SiteLobby.getResumeInfo(game2048), null);
+
+  // Obstacle mode save (-1 stones) resumes with obstacle label and deadlocks when adjacent -1 stones remain
+  harness.localStorage.setItem('game_save_2048_mode', 'obstacle');
+  harness.localStorage.setItem('game_save_2048_obstacle', JSON.stringify({
+    score: 88,
+    board: [
+      [-1, 2, 4, 0],
+      [2, -1, 8, 2],
+      [4, 8, 16, 4],
+      [2, 4, 2, 8],
+    ],
+    played: true,
+  }));
+  assert.deepEqual(harness.SiteLobby.getResumeInfo(game2048), {
+    label: '继续上局 · 4×4 障碍 88 分 →',
+    title: '继续上次未完成的棋局',
+  });
+  harness.I18N.setLang('en');
+  assert.deepEqual(harness.SiteLobby.getResumeInfo(game2048), {
+    label: 'Continue · 4×4 Obstacles 88 pts →',
+    title: 'Continue your previous game',
+  });
+
+  harness.localStorage.setItem('game_save_2048_obstacle', JSON.stringify({
+    score: 256,
+    board: [
+      [-1, -1, 2, 4],
+      [4, 8, 16, 2],
+      [2, 4, 8, 16],
+      [4, 2, 16, 8],
+    ],
+    played: true,
+  }));
+  assert.equal(harness.SiteLobby.get2048Resume(), null);
 });
 
 test('getCardMetaText renders block-workshop saved count without turning play button into resume', () => {
@@ -241,6 +275,33 @@ test('getCardMetaText renders block-workshop saved count without turning play bu
 
   harness.I18N.setLang('en');
   assert.equal(harness.SiteLobby.getCardMetaText(workshop), 'Saved projects: 2');
+});
+
+test('getCardMetaText renders Minesweeper active mode best time and streak records', () => {
+  const harness = createLobbyHarness({
+    initialStorage: {
+      game_mode_minesweeper: 'medium',
+      game_best_minesweeper_easy: '18',
+      game_best_minesweeper_medium: '42',
+      game_best_minesweeper_streak: '3',
+    },
+  });
+  const minesweeper = harness.SITE_CONFIG.games.find((g) => g.id === 'minesweeper');
+
+  assert.equal(harness.SiteLobby.getCardMetaText(minesweeper), '12×12 最快: 42s');
+  assert.deepEqual(harness.SiteLobby.getAllGameRecords(minesweeper), [
+    '9×9 最快: 18s',
+    '12×12 最快: 42s',
+    '最高连胜: 3 连胜',
+  ]);
+
+  harness.I18N.setLang('en');
+  assert.equal(harness.SiteLobby.getCardMetaText(minesweeper), '12×12 fastest: 42s');
+  assert.deepEqual(harness.SiteLobby.getAllGameRecords(minesweeper), [
+    '9×9 fastest: 18s',
+    '12×12 fastest: 42s',
+    'Best streak: 3',
+  ]);
 });
 
 test('getCardMetaText renders Tank Maze cumulative win count in zh and en', () => {

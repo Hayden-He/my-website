@@ -91,41 +91,45 @@
   }
 
   // 与 2048 游戏页的存档读取条件一致。
-  function isValid2048Position(position, size) {
+  function isValid2048Position(position, size, allowObstacle = false) {
     return position && Number.isSafeInteger(position.score) && position.score >= 0 &&
       Array.isArray(position.board) && position.board.length === size &&
       position.board.every((row) => Array.isArray(row) && row.length === size && row.every((tile) =>
-        tile === 0 || (Number.isSafeInteger(tile) && tile >= 2 && tile === 2 ** Math.floor(Math.log2(tile))))) &&
-      position.board.some((row) => row.some((tile) => tile !== 0));
+        tile === 0 || (allowObstacle && tile === -1) ||
+        (Number.isSafeInteger(tile) && tile >= 2 && tile === 2 ** Math.floor(Math.log2(tile))))) &&
+      position.board.some((row) => row.some((tile) => tile > 0));
   }
 
   // 判断 2048 存档是否还有可续玩的棋局。
   function get2048Resume() {
     try {
-      const mode = localStorage.getItem('game_save_2048_mode') === '5' ? 5 : 4;
+      const savedMode = localStorage.getItem('game_save_2048_mode');
+      const mode = savedMode === '5' || savedMode === 'obstacle' ? savedMode : '4';
+      const size = mode === '5' ? 5 : 4;
+      const allowObstacle = mode === 'obstacle';
       const raw = localStorage.getItem('game_save_2048_' + mode);
       if (!raw) return null;
       const save = JSON.parse(raw);
-      if (!isValid2048Position(save, mode)) return null;
+      if (!isValid2048Position(save, size, allowObstacle)) return null;
 
       const { board, score } = save;
       let tileCount = 0;
       let canMove = false;
-      for (let r = 0; r < mode; r++) {
-        for (let c = 0; c < mode; c++) {
+      for (let r = 0; r < size; r++) {
+        for (let c = 0; c < size; c++) {
           const v = board[r][c];
           if (v > 0) tileCount += 1;
           if (v === 0) canMove = true;
-          if (c + 1 < mode && v !== 0 && v === board[r][c + 1]) canMove = true;
-          if (r + 1 < mode && v !== 0 && v === board[r + 1][c]) canMove = true;
+          if (v > 0 && c + 1 < size && v === board[r][c + 1]) canMove = true;
+          if (v > 0 && r + 1 < size && v === board[r + 1][c]) canMove = true;
         }
       }
       // 旧存档没有 played，用得分、撤回快照与方块数识别已有进度。
       const played = typeof save.played === 'boolean'
         ? save.played
-        : score > 0 || isValid2048Position(save.prevState, mode) || tileCount > 2;
+        : score > 0 || isValid2048Position(save.prevState, size, allowObstacle) || tileCount > 2;
       if (!canMove || !played) return null;
-      return { size: mode, score };
+      return { size, mode, score };
     } catch {
       return null;
     }
@@ -181,7 +185,7 @@
     2048: () => {
       const resume = get2048Resume();
       if (!resume) return null;
-      const board = resume.size + '×' + resume.size;
+      const board = resume.mode === 'obstacle' ? t('4×4 障碍') : resume.size + '×' + resume.size;
       return {
         label: resume.score > 0
           ? t('继续上局 · {board} {score} 分 →', { board, score: resume.score })

@@ -171,6 +171,7 @@ window.I18N_EN = {
   '60 秒狂热最高: ': '60s Frenzy best: ',
   '王牌极速最高: ': 'Ace Rush best: ',
   '4×4 最高: ': '4×4 best: ',
+  '障碍模式最高: ': 'Obstacle best: ',
   '5×5 最高: ': '5×5 best: ',
   '40 行最快: ': '40-Line fastest: ',
   '道具狂热最高: ': 'Party Mode best: ',
@@ -217,10 +218,18 @@ window.I18N_EN = {
   '最大方块': 'Max',
   '模式最高': 'Best',
   '4×4 经典': '4×4 Classic',
+  '4×4 障碍': '4×4 Obstacles',
   '5×5 轻松': '5×5 Relaxed',
+  '障碍石块': 'Obstacle stone',
+  '撤回 ({n})': 'Undo ({n})',
+  '继续本局': 'Keep playing',
   '没有可移动的方块了': 'No moves left',
   '滑动或拖动棋盘，键盘可用方向键或 WASD。初次玩可试 5×5。':
     'Swipe or drag the board, or use arrows or WASD. Try 5×5 if you are new.',
+  '滑动或方向键/WASD 移动，U 或 Ctrl+Z 撤回（最多 3 步）。可挑战 4×4 障碍或 5×5 轻松。':
+    'Swipe or use arrows / WASD, U or Ctrl+Z to undo (up to 3 moves). Try 4×4 Obstacles or 5×5 Relaxed.',
+  '滑动合并相同数字，支持 4×4 经典、4×4 障碍与 5×5 棋盘、自动存档与最多 3 步撤回。':
+    'Slide and merge matching numbers on 4×4 Classic, 4×4 Obstacles, or 5×5 boards with autosave and 3-step undo.',
   '恭喜合成 2048！🎉': 'You made 2048! 🎉',
   '当前得分：{score}，你可以继续挑战更高数字！': 'Score: {score}. Keep going for higher tiles!',
   '🎉 新纪录！': '🎉 New record! ',
@@ -230,6 +239,8 @@ window.I18N_EN = {
   '重开棋局': 'Restart game',
   '重开 {size}×{size} 棋局？当前进度将被清除。':
     'Restart the {size}×{size} board? Current progress will be lost.',
+  '重开 {label} 棋局？当前进度将被清除。':
+    'Restart {label}? Current progress will be lost.',
   '棋盘尺寸': 'Board size',
   '合并相同数字': 'Merge Matching Numbers',
   '滑动棋盘或按方向键 / WASD，把相同数字撞在一起翻倍，目标合成 2048。':
@@ -237,6 +248,9 @@ window.I18N_EN = {
   '撤回与双尺寸': 'Undo & Two Board Sizes',
   '支持 4×4 经典与 5×5 轻松棋盘，进度会自动保存，走错时还可单步撤回。':
     'Play 4×4 Classic or 5×5 Relaxed with autosave and one-step undo.',
+  '撤回与三模式': 'Undo & Three Modes',
+  '支持 4×4 经典、4×4 障碍与 5×5 轻松棋盘，进度自动保存；走错时支持连续撤回最多 3 步（快捷键 U / Ctrl+Z）。':
+    'Play 4×4 Classic, 4×4 Obstacles, or 5×5 Relaxed with autosave and up to 3-step undo (U / Ctrl+Z).',
 
   // ---- 贪吃蛇 ----
   '经典撞墙': 'Walls',
@@ -278,17 +292,29 @@ window.I18N_EN = {
   '模式: 翻开': 'Mode: Reveal',
   '模式: 插旗': 'Mode: Flag',
   '模式: 🚩插旗': 'Mode: 🚩Flag',
+  '提示 ({n})': 'Hint ({n})',
+  '安全提示，使用后本局不计入最快纪录': 'Safe hint (excludes this round from fastest time & streak)',
+  '当前连胜 {current} · 最高连胜 {best}': 'Streak {current} · Best {best}',
+  '切换难度': 'Switch difficulty',
+  '切换难度会清除当前棋局进度。': 'Switching difficulty will clear your current board.',
+  '当前排雷进度将被清除，确定重开吗？': 'Current progress will be lost. Restart?',
   '窄屏新局 9×9，当前棋局保留。': 'New games use 9×9 here. Keep playing your current board.',
   '排雷成功！🎉': 'Cleared! 🎉',
   '用时：0s': 'Time: 0s',
+  '首击安全，支持右键插旗/? 标记、连胜统计与每局 2 次安全提示。':
+    'Safe first click with Flag / ? cycling, streak tracking, and 2 safe hints per game.',
   '点格子翻开。长按、右键或切换到插旗模式可标记。':
     'Tap a tile to reveal it. Long-press, right-click, or switch to Flag mode to mark it.',
+  '点击翻开，右键或长按在插旗与 ? 间切换；按 F 切模式、H 安全提示、R 重开。':
+    'Tap/click to open, right-click or long-press to cycle Flag / ?; press F for mode, H for hint, R to restart.',
   '9×9 轻松': '9×9 Easy',
   '12×12 标准': '12×12 Standard',
   '16×16 挑战': '16×16 Hard',
   '踩到地雷了': 'Boom!',
   '坚持了 {elapsed} 秒，再试一次吧！': 'You lasted {elapsed}s. Try again!',
   '{label} · 用时 {sec} 秒（最佳 {best} 秒）': '{label} · Time {sec}s (best {best}s)',
+  '{label} · 用时 {sec} 秒（使用了安全提示，不计入最快纪录）':
+    '{label} · Time {sec}s (hint used, not counted for records)',
   '目标：翻开所有安全格': 'Goal: reveal every safe tile',
   '把所有不是雷的格子翻开就赢；不需要去点雷。':
     'Open every tile that is not a mine to win; you never need to click a mine.',
@@ -298,6 +324,9 @@ window.I18N_EN = {
   '翻开与插旗': 'Reveal & flag',
   '点击或左键翻开；右键或手机长按插旗。第一下一定安全，会先翻出一片空白。':
     'Click/tap or left-click to reveal; right-click or long-press to flag. The first click is always safe and opens a blank area.',
+  '翻开、插旗与问号': 'Reveal, Flag & ?',
+  '左键翻开；右键或手机长按可在插旗与 ? 间切换。第一下一定安全，支持三档难度与每局 2 次安全提示。':
+    'Left-click to reveal; right-click or long-press to cycle Flag / ?. First click is safe, with 3 sizes and 2 hints per game.',
   '快捷排雷': 'Quick clear',
   '周围旗数等于数字时，再点数字可翻开其余邻格。插错旗可能踩雷。':
     'When the number matches the adjacent flag count, tap it again to uncover the remaining neighbors. A misplaced flag can reveal a mine.',
@@ -306,6 +335,7 @@ window.I18N_EN = {
   '地雷': 'mine',
   '插错的旗子': 'wrong flag',
   '已插旗': 'flagged',
+  '已标问号': 'marked as ?',
   '已翻开，周围 {adj} 颗雷': 'revealed, {adj} mines nearby',
   '已翻开，周围 1 颗雷': 'revealed, 1 mine nearby',
   '已翻开，空白': 'revealed, blank',

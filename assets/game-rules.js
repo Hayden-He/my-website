@@ -1,40 +1,57 @@
 (function () {
   function merge2048Line(line) {
-    const nonZero = line.filter((item) => item.val !== 0);
-    const result = [];
-    const origins = [];
+    const result = Array(line.length).fill(0);
+    const origins = Array.from({ length: line.length }, () => []);
     const mergedIdx = [];
     let gained = 0;
     let highestMerged = 0;
+    let segStart = 0;
 
-    for (let i = 0; i < nonZero.length; i++) {
-      const current = nonZero[i];
-      const next = nonZero[i + 1];
-      if (next && current.val === next.val) {
-        const merged = current.val * 2;
-        mergedIdx.push(result.length);
-        origins.push([current.idx, next.idx]);
-        result.push(merged);
-        gained += merged;
-        highestMerged = Math.max(highestMerged, merged);
-        i++;
-      } else {
-        origins.push([current.idx]);
-        result.push(current.val);
+    function flushSegment(end) {
+      const nonZero = [];
+      for (let k = segStart; k < end; k += 1) {
+        if (line[k].val > 0) nonZero.push(line[k]);
+      }
+      let write = segStart;
+      for (let i = 0; i < nonZero.length; i += 1) {
+        const current = nonZero[i];
+        const next = nonZero[i + 1];
+        if (next && current.val === next.val) {
+          const merged = current.val * 2;
+          mergedIdx.push(write);
+          origins[write] = [current.idx, next.idx];
+          result[write] = merged;
+          gained += merged;
+          highestMerged = Math.max(highestMerged, merged);
+          write += 1;
+          i += 1;
+        } else {
+          origins[write] = [current.idx];
+          result[write] = current.val;
+          write += 1;
+        }
       }
     }
-    while (result.length < line.length) {
-      result.push(0);
-      origins.push([]);
+
+    for (let k = 0; k < line.length; k += 1) {
+      if (line[k].val === -1) {
+        flushSegment(k);
+        result[k] = -1;
+        origins[k] = [line[k].idx];
+        segStart = k + 1;
+      }
     }
+    flushSegment(line.length);
     return { result, origins, gained, mergedIdx, highestMerged };
   }
 
   function canMove2048(board) {
     const size = board.length;
     return board.some((row, r) => row.some((value, c) =>
-      value === 0 || (r + 1 < size && value === board[r + 1][c]) ||
-      (c + 1 < size && value === row[c + 1])));
+      value === 0 || (value > 0 && (
+        (r + 1 < size && value === board[r + 1][c]) ||
+        (c + 1 < size && value === row[c + 1])
+      ))));
   }
 
   function solvedSlideBoard(size) {
@@ -128,6 +145,7 @@
         mine: false,
         open: false,
         flag: false,
+        question: false,
         adj: 0,
       }))
     );
@@ -169,6 +187,7 @@
       const cell = board[r][c];
       if (cell.open || cell.flag || cell.mine) continue;
       cell.open = true;
+      cell.question = false;
       opened += 1;
       if (cell.adj === 0) {
         mineNeighbors(size, r, c).forEach(([nr, nc]) => {
@@ -177,6 +196,33 @@
       }
     }
     return opened;
+  }
+
+  function findSafeMineCell(board, random = Math.random) {
+    const size = board.length;
+    for (let r = 0; r < size; r += 1) {
+      for (let c = 0; c < size; c += 1) {
+        const cell = board[r][c];
+        if (!cell.open || cell.adj <= 0) continue;
+        const adj = mineNeighbors(size, r, c);
+        const flags = adj.filter(([nr, nc]) => board[nr][nc].flag).length;
+        if (flags !== cell.adj) continue;
+        const deduced = adj.find(([nr, nc]) => !board[nr][nc].open && !board[nr][nc].flag && !board[nr][nc].mine);
+        if (deduced) return deduced;
+      }
+    }
+    const frontier = [];
+    const safe = [];
+    for (let r = 0; r < size; r += 1) {
+      for (let c = 0; c < size; c += 1) {
+        const cell = board[r][c];
+        if (cell.open || cell.flag || cell.mine) continue;
+        safe.push([r, c]);
+        if (mineNeighbors(size, r, c).some(([nr, nc]) => board[nr][nc].open)) frontier.push([r, c]);
+      }
+    }
+    const pool = frontier.length ? frontier : safe;
+    return pool.length ? pool[Math.floor(random() * pool.length)] : null;
   }
 
   function snakeRandomEmptyCell(gridSize, snake, food, bonusItem, options, random = Math.random) {
@@ -242,7 +288,7 @@
     merge2048Line, canMove2048,
     solvedSlideBoard, slideNeighbors, shuffleSlideBoard,
     scoreHoop, hoopBounce,
-    mineNeighbors, createMineBoard, placeMinesOnBoard, revealMineSafeArea,
+    mineNeighbors, createMineBoard, placeMinesOnBoard, revealMineSafeArea, findSafeMineCell,
     snakeRandomEmptyCell, snakeNextStep, snakeTickDelay,
     buildMemoryDeck, isMemoryPairMatch,
   };

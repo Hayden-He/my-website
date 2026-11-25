@@ -62,6 +62,19 @@ test('canMove2048 detects empty spaces, adjacent matches, and deadlocks', () => 
     [2, 4, 8, 16],
     [32, 64, 128, 256],
   ]), false);
+
+  // Stone obstacles (-1) split lines cleanly and never merge with each other
+  const obsLine = GameRules.merge2048Line(toLine([2, 2, -1, 4]));
+  assert.deepEqual(obsLine.result, [4, 0, -1, 4]);
+  assert.deepEqual(obsLine.origins, [[0, 1], [], [2], [3]]);
+  assert.equal(obsLine.gained, 4);
+
+  assert.equal(GameRules.canMove2048([
+    [-1, -1, 2, 4],
+    [4, 8, 16, 2],
+    [2, 4, 8, 16],
+    [4, 2, 16, 8],
+  ]), false);
 });
 
 function countInversions(board) {
@@ -186,19 +199,44 @@ test('minesweeper board generation keeps 3x3 start zone safe, computes adj, and 
   const checkCell = board.flat().find((cell) => !cell.mine && cell.adj > 0);
   assert.ok(checkCell);
 
-  // Flood fill stops at flagged/mine/numbered cells
+  // Flood fill stops at flagged/mine/numbered cells and clears question marks
   const floodBoard = GameRules.createMineBoard(4);
   floodBoard[3][3].mine = true;
   floodBoard[2][2].adj = 1;
   floodBoard[2][3].adj = 1;
   floodBoard[3][2].adj = 1;
   floodBoard[0][1].flag = true;
+  floodBoard[1][0].question = true;
   const opened = GameRules.revealMineSafeArea(floodBoard, 0, 0);
   assert.equal(floodBoard[0][0].open, true);
   assert.equal(floodBoard[0][1].open, false); // skipped flagged cell
+  assert.equal(floodBoard[1][0].question, false); // question cleared on reveal
   assert.equal(floodBoard[3][3].open, false); // skipped mine cell
   assert.equal(floodBoard[2][2].open, true);  // numbered border cell opens and stops cascade
   assert.equal(opened, 14);
+
+  // Safe hint prefers deduced safe neighbor when adjacent flags satisfy number
+  const hintBoard = GameRules.createMineBoard(3);
+  hintBoard[0][0].open = true;
+  hintBoard[0][0].adj = 1;
+  hintBoard[0][1].mine = true;
+  hintBoard[0][1].flag = true;
+  hintBoard[1][0].adj = 1;
+  hintBoard[1][1].adj = 1;
+  const deduced = GameRules.findSafeMineCell(hintBoard, () => 0);
+  assert.ok(Array.isArray(deduced));
+  const [dr, dc] = deduced;
+  assert.equal(hintBoard[dr][dc].mine, false);
+  assert.equal(hintBoard[dr][dc].open, false);
+  assert.ok(dr <= 1 && dc <= 1);
+
+  // Fallback when all safe cells are already open returns null
+  const doneBoard = GameRules.createMineBoard(2);
+  doneBoard[0][0].mine = true;
+  doneBoard[0][1].open = true;
+  doneBoard[1][0].open = true;
+  doneBoard[1][1].open = true;
+  assert.equal(GameRules.findSafeMineCell(doneBoard), null);
 });
 
 test('snake helpers pick valid empty cells, detect wall/self/tail movement, and scale tick delay', () => {

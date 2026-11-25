@@ -45,28 +45,52 @@
       position: relative;
       width: 100%;
       max-width: 480px;
-      aspect-ratio: 1 / 1;
       background: #cbd5e1;
       border-radius: 16px;
       padding: 10px;
       box-shadow: var(--shadow-md);
       user-select: none;
       -webkit-user-select: none;
-      touch-action: manipulation;
+    }
+
+    .board-wrap.shake {
+      animation: mine-shake 0.34s ease-out;
+    }
+
+    @keyframes mine-shake {
+      0%, 100% { transform: translateX(0); }
+      20% { transform: translateX(-6px); }
+      40% { transform: translateX(6px); }
+      60% { transform: translateX(-4px); }
+      80% { transform: translateX(3px); }
+    }
+
+    .mine-grid-scroll {
+      width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      border-radius: 10px;
+      touch-action: pan-x pinch-zoom;
     }
 
     .mine-grid {
       --cols: 9;
       width: 100%;
-      height: 100%;
+      aspect-ratio: 1 / 1;
       display: grid;
       grid-template-columns: repeat(var(--cols), 1fr);
       grid-template-rows: repeat(var(--cols), 1fr);
       gap: 3px;
+      touch-action: manipulation;
     }
 
     .mine-grid.dense {
       gap: 2px;
+    }
+
+    @media (max-width: 500px) {
+      .mine-grid.mid { min-width: 360px; }
+      .mine-grid.dense { min-width: 448px; }
     }
 
     .cell {
@@ -102,12 +126,31 @@
       background: linear-gradient(180deg, #ffffff 0%, #dbeafe 100%);
     }
 
-    .cell.closed:active {
+    .cell.closed:active,
+    .cell.closed.chord-preview {
       transform: scale(0.94);
+    }
+
+    .cell.closed.chord-preview {
+      background: linear-gradient(180deg, #eff6ff 0%, #bfdbfe 100%);
     }
 
     .cell.flagged {
       background: linear-gradient(180deg, #fff7ed 0%, #fed7aa 100%);
+    }
+
+    .cell.question {
+      background: linear-gradient(180deg, #eff6ff 0%, #bfdbfe 100%);
+      color: #1d4ed8;
+    }
+
+    .cell.hint-flash {
+      animation: hint-glow 0.7s ease-out;
+    }
+
+    @keyframes hint-glow {
+      0% { box-shadow: inset 0 0 0 3px #10b981; background: #d1fae5; }
+      100% { box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.06); }
     }
 
     .cell.open {
@@ -152,13 +195,28 @@
       box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 1px 2px rgba(0, 0, 0, 0.45);
     }
 
-    :root[data-theme="dark"] .cell.closed:hover {
+    :root[data-theme="dark"] .cell.closed:hover,
+    :root[data-theme="dark"] .cell.closed.chord-preview {
       background: linear-gradient(180deg, #3b4c68 0%, #2a3a58 100%);
     }
 
     :root[data-theme="dark"] .cell.flagged {
       background: linear-gradient(180deg, #7c2d12 0%, #4a1d0c 100%);
       color: #fed7aa;
+    }
+
+    :root[data-theme="dark"] .cell.question {
+      background: linear-gradient(180deg, #1e3a8a 0%, #172554 100%);
+      color: #93c5fd;
+    }
+
+    :root[data-theme="dark"] .cell.hint-flash {
+      animation: hint-glow-dark 0.7s ease-out;
+    }
+
+    @keyframes hint-glow-dark {
+      0% { box-shadow: inset 0 0 0 3px #34d399; background: #065f46; }
+      100% { box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.35); }
     }
 
     :root[data-theme="dark"] .cell.open {
@@ -186,34 +244,23 @@
     /* 本页尺寸；其余外壳样式见 assets/game-shell.css */
     .game-wrap { --game-width: 540px; }
     .hud { grid-template-columns: repeat(3, 1fr); }
-
-    .mobile-diff-note {
-      display: none;
-      width: 100%;
-      margin: -4px 0 0;
-      text-align: center;
-      font-size: 0.78rem;
-      color: var(--text-muted);
-    }
-
-    @media (max-width: 600px) {
-      .mode-pill[data-diff="medium"],
-      .mode-pill[data-diff="hard"] {
-        display: none;
-      }
-
-      .mobile-diff-note {
-        display: block;
-      }
-    }
+    .btn-group { flex-wrap: wrap; justify-content: center; }
+    .mine-streak { margin: -4px 0 0; font-size: 0.8rem; }
 
     @media (max-width: 340px) {
-      /* 320px 下 4 个按钮改成 2×2，避免最后只剩一个按钮单独一行 */
+      /* 320px 下按钮改成 2 列，避免最后只剩一个按钮单独一行 */
       .btn-group {
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 8px;
         width: 100%;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .board-wrap.shake,
+      .cell.hint-flash {
+        animation: none;
       }
     }
 
@@ -261,16 +308,19 @@
       </div>
       <div class="btn-group">
         <button id="help-btn" class="btn-small secondary" title="查看玩法" data-i18n="玩法" data-i18n-attr="title:查看玩法">玩法</button>
+        <button id="hint-btn" class="btn-small secondary" type="button" disabled>提示 (2)</button>
         <button id="tool-btn" class="btn-small secondary">模式: 翻开</button>
         <button id="sound-btn" class="btn-small secondary">音效: 开</button>
         <button id="restart-btn" class="btn-small" data-i18n="重开">重开</button>
       </div>
     </div>
 
-    <p class="mobile-diff-note" data-i18n="窄屏新局 9×9，当前棋局保留。">窄屏新局 9×9，当前棋局保留。</p>
+    <p id="mine-streak" class="hint-text mine-streak" aria-live="polite"></p>
 
     <div class="board-wrap">
-      <div id="mine-grid" class="mine-grid"></div>
+      <div class="mine-grid-scroll">
+        <div id="mine-grid" class="mine-grid"></div>
+      </div>
       <div id="overlay" class="overlay" role="status" aria-live="polite">
         <h2 id="overlay-title">排雷成功！🎉</h2>
         <p id="overlay-desc">用时：0s</p>
@@ -281,7 +331,7 @@
       </div>
     </div>
 
-    <p class="hint-text" data-i18n="点格子翻开。长按、右键或切换到插旗模式可标记。">点格子翻开。长按、右键或切换到插旗模式可标记。</p>
+    <p class="hint-text" data-i18n="点击翻开，右键或长按在插旗与 ? 间切换；按 F 切模式、H 安全提示、R 重开。">点击翻开，右键或长按在插旗与 ? 间切换；按 F 切模式、H 安全提示、R 重开。</p>
 
     <div id="more-games" class="more-games"></div>
   </main>
@@ -315,6 +365,9 @@
       const GLOBAL_BEST_KEY = 'game_best_minesweeper';
       const DIFF_BEST_PREFIX = 'game_best_minesweeper_';
       const MODE_KEY = 'game_mode_minesweeper';
+      const CURRENT_STREAK_KEY = 'game_save_minesweeper_streak';
+      const BEST_STREAK_KEY = 'game_best_minesweeper_streak';
+      const MAX_HINTS = 2;
 
       const DIFFS = {
         easy: { size: 9, mines: 10, label: '9×9 轻松' },
@@ -322,12 +375,14 @@
         hard: { size: 16, mines: 40, label: '16×16 挑战' },
       };
 
-      const MOBILE_BOARD_QUERY = window.matchMedia('(max-width: 600px)');
-
+      const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+      const boardWrap = document.querySelector('.board-wrap');
       const gridEl = document.getElementById('mine-grid');
       const minesEl = document.getElementById('mines-el');
       const timeEl = document.getElementById('time-el');
       const bestEl = document.getElementById('best-el');
+      const streakEl = document.getElementById('mine-streak');
+      const hintBtn = document.getElementById('hint-btn');
       const toolBtn = document.getElementById('tool-btn');
       const soundBtn = document.getElementById('sound-btn');
       const overlay = document.getElementById('overlay');
@@ -380,9 +435,23 @@
       let endState = '';
       let endSec = 0;
       let endBest = 0;
+      let hintsLeft = MAX_HINTS;
+      let hintUsed = false;
+      let hintCellKey = '';
+      let hintFlashTimer = null;
+      let gameId = 0;
+      let currentStreak = GameKit.readBest(CURRENT_STREAK_KEY);
+      let bestStreak = GameKit.readBest(BEST_STREAK_KEY);
 
       function readBest(key) {
         return GameKit.readBest(key);
+      }
+
+      function saveStreaks() {
+        try {
+          localStorage.setItem(CURRENT_STREAK_KEY, String(currentStreak));
+        } catch {}
+        if (bestStreak > 0) GameKit.writeBest(BEST_STREAK_KEY, bestStreak);
       }
 
       function saveBest(sec) {
@@ -397,11 +466,26 @@
         }
       }
 
+      function updateHintButton() {
+        hintBtn.disabled = !started || ended || hintsLeft <= 0;
+        hintBtn.textContent = t('提示 ({n})', { n: hintsLeft });
+        hintBtn.title = t('安全提示，使用后本局不计入最快纪录');
+      }
+
+      function renderStreak() {
+        streakEl.textContent = t('当前连胜 {current} · 最高连胜 {best}', {
+          current: currentStreak,
+          best: bestStreak,
+        });
+      }
+
       function updateHud() {
         minesEl.textContent = Math.max(0, totalMines - flagCount);
         timeEl.textContent = elapsed + 's';
         const best = readBest(DIFF_BEST_PREFIX + diff);
         bestEl.textContent = best > 0 ? best + 's' : '--';
+        updateHintButton();
+        renderStreak();
       }
 
       function stopTimer() {
@@ -429,10 +513,13 @@
       }
 
       function initGame() {
+        gameId += 1;
         stopTimer();
+        clearTimeout(hintFlashTimer);
         cancelLongPress();
+        clearChordPreview();
         suppressClick = false;
-        if (MOBILE_BOARD_QUERY.matches) diff = 'easy';
+        boardWrap.classList.remove('shake');
         const cfg = DIFFS[diff];
         size = cfg.size;
         totalMines = cfg.mines;
@@ -445,6 +532,9 @@
         endState = '';
         endSec = 0;
         endBest = 0;
+        hintsLeft = MAX_HINTS;
+        hintUsed = false;
+        hintCellKey = '';
 
         board = GameRules.createMineBoard(size);
 
@@ -466,18 +556,36 @@
         return opened;
       }
 
+      function countFlags(list) {
+        let next = 0;
+        for (let r = 0; r < size; r++) {
+          for (let c = 0; c < size; c++) {
+            if (list[r][c].flag) next += 1;
+          }
+        }
+        return next;
+      }
+
       function checkWin() {
         if (openedCount === size * size - totalMines) {
           ended = true;
           stopTimer();
           for (let r = 0; r < size; r++) {
             for (let c = 0; c < size; c++) {
-              if (board[r][c].mine) board[r][c].flag = true;
+              if (board[r][c].mine) {
+                board[r][c].flag = true;
+                board[r][c].question = false;
+              }
             }
           }
           flagCount = totalMines;
           const finalSec = Math.max(1, elapsed);
-          saveBest(finalSec);
+          if (!hintUsed) {
+            saveBest(finalSec);
+            currentStreak += 1;
+            if (currentStreak > bestStreak) bestStreak = currentStreak;
+            saveStreaks();
+          }
           updateHud();
           render();
           playTone(523, 0.12, 'triangle', 784);
@@ -493,11 +601,17 @@
       function renderEndText() {
         if (endState === 'win') {
           overlayTitle.textContent = t('排雷成功！🎉');
-          overlayDesc.textContent = t('{label} · 用时 {sec} 秒（最佳 {best} 秒）', {
-            label: t(DIFFS[diff].label),
-            sec: endSec,
-            best: endBest,
-          });
+          const summary = hintUsed
+            ? t('{label} · 用时 {sec} 秒（使用了安全提示，不计入最快纪录）', {
+                label: t(DIFFS[diff].label),
+                sec: endSec,
+              })
+            : t('{label} · 用时 {sec} 秒（最佳 {best} 秒）', {
+                label: t(DIFFS[diff].label),
+                sec: endSec,
+                best: endBest > 0 ? endBest : endSec,
+              });
+          overlayDesc.textContent = summary;
         } else if (endState === 'lose') {
           overlayTitle.textContent = t('踩到地雷了');
           overlayDesc.textContent = t('坚持了 {elapsed} 秒，再试一次吧！', { elapsed: endSec });
@@ -505,15 +619,32 @@
       }
 
       function triggerLose(r, c) {
+        const currentGame = gameId;
         ended = true;
         hitPos = r + ',' + c;
         stopTimer();
+        currentStreak = 0;
+        saveStreaks();
+        updateHud();
         playTone(170, 0.28, 'sawtooth', 75);
         endState = 'lose';
         endSec = elapsed;
         render();
         renderEndText();
-        overlay.classList.add('show');
+        if (!reducedMotion.matches) {
+          boardWrap.classList.remove('shake');
+          void boardWrap.offsetWidth;
+          boardWrap.classList.add('shake');
+        }
+        const delay = reducedMotion.matches ? 0 : 420;
+        if (delay === 0) {
+          overlay.classList.add('show');
+        } else {
+          setTimeout(() => {
+            if (currentGame !== gameId || !ended) return;
+            overlay.classList.add('show');
+          }, delay);
+        }
       }
 
       function openCell(r, c) {
@@ -525,6 +656,7 @@
           started = true;
           placeMines(r, c);
           startTimer();
+          updateHintButton();
         }
 
         if (cell.open) {
@@ -568,11 +700,39 @@
         if (ended) return;
         const cell = board[r][c];
         if (cell.open) return;
-        cell.flag = !cell.flag;
-        flagCount += cell.flag ? 1 : -1;
-        playTone(cell.flag ? 680 : 380, 0.05, 'triangle');
+        if (!cell.flag && !cell.question) {
+          cell.flag = true;
+          flagCount += 1;
+          playTone(680, 0.05, 'triangle');
+        } else if (cell.flag) {
+          cell.flag = false;
+          cell.question = true;
+          flagCount = countFlags(board);
+          playTone(520, 0.045, 'sine');
+        } else {
+          cell.question = false;
+          playTone(380, 0.05, 'triangle');
+        }
         updateHud();
         render();
+      }
+
+      function useSafeHint() {
+        if (!started || ended || hintsLeft <= 0) return;
+        const pick = GameRules.findSafeMineCell(board);
+        if (!pick) return;
+        hintsLeft -= 1;
+        hintUsed = true;
+        const [hr, hc] = pick;
+        hintCellKey = hr + ',' + hc;
+        clearTimeout(hintFlashTimer);
+        hintFlashTimer = setTimeout(() => {
+          hintCellKey = '';
+          gridEl.querySelectorAll('.cell.hint-flash').forEach((el) => el.classList.remove('hint-flash'));
+        }, 720);
+        playTone(760, 0.08, 'sine', 980);
+        updateHintButton();
+        openCell(hr, hc);
       }
 
       function render() {
@@ -602,15 +762,22 @@
               } else if (cell.open) {
                 btn.className = 'cell open' + (cell.adj > 0 ? ' n' + cell.adj : '');
                 btn.textContent = cell.adj > 0 ? String(cell.adj) : '';
+              } else if (cell.question) {
+                btn.className = 'cell closed question';
+                btn.textContent = '?';
               } else {
                 btn.className = 'cell closed';
               }
             } else if (cell.open) {
-              btn.className = 'cell open' + (cell.adj > 0 ? ' n' + cell.adj + ' chordable' : '');
+              btn.className = 'cell open' + (cell.adj > 0 ? ' n' + cell.adj + ' chordable' : '') +
+                (hintCellKey === r + ',' + c ? ' hint-flash' : '');
               btn.textContent = cell.adj > 0 ? String(cell.adj) : '';
             } else if (cell.flag) {
               btn.className = 'cell closed flagged';
               appendCellIcon(btn, 'icon-flag');
+            } else if (cell.question) {
+              btn.className = 'cell closed question';
+              btn.textContent = '?';
             } else {
               btn.className = 'cell closed';
             }
@@ -622,6 +789,8 @@
               stateLabel = t('插错的旗子');
             } else if (cell.flag) {
               stateLabel = t('已插旗');
+            } else if (cell.question) {
+              stateLabel = t('已标问号');
             } else if (cell.open) {
               stateLabel = cell.adj > 0
                 ? (cell.adj === 1
@@ -645,11 +814,16 @@
         }
       }
 
-      // 事件委托：支持左键翻开/快捷排雷、右键插旗、手机长按插旗
+      // 事件委托：支持左键翻开/快捷排雷、右键插旗与问号循环、手机长按标记、邻格高亮预览
       let longPress = null;
       let suppressClick = false;
 
+      function clearChordPreview() {
+        gridEl.querySelectorAll('.cell.chord-preview').forEach((el) => el.classList.remove('chord-preview'));
+      }
+
       function cancelLongPress(event) {
+        clearChordPreview();
         if (!longPress || (event && event.pointerId !== longPress.id)) return;
         clearTimeout(longPress.timer);
         longPress = null;
@@ -667,7 +841,15 @@
         suppressClick = false;
         const r = Number(btn.dataset.r);
         const c = Number(btn.dataset.c);
-        // 长按插旗只用于触屏/手写笔；鼠标慢点不应变成插旗
+        if (!flagMode && board[r][c].open && board[r][c].adj > 0) {
+          neighbors(r, c).forEach(([nr, nc]) => {
+            const target = board[nr][nc];
+            if (!target.open && !target.flag) {
+              gridEl.querySelector(`.cell[data-r="${nr}"][data-c="${nc}"]`)?.classList.add('chord-preview');
+            }
+          });
+        }
+        // 长按标记只用于触屏/手写笔；鼠标慢点不应变成标记
         if (!isMouse && !board[r][c].open) {
           const timer = setTimeout(() => {
             longPress = null;
@@ -713,24 +895,35 @@
         }
       });
 
+      async function confirmAbandonAndRun(action, nextDiff) {
+        if (!started || ended) {
+          action();
+          return;
+        }
+        const switching = Boolean(nextDiff && nextDiff !== diff);
+        dialogOpen = true;
+        const ok = await window.SiteData.confirmDialog({
+          title: t(switching ? '切换难度' : '重开棋局'),
+          message: t(switching ? '切换难度会清除当前棋局进度。' : '当前排雷进度将被清除，确定重开吗？'),
+          confirmText: t(switching ? '切换' : '重开'),
+          cancelText: t('继续本局'),
+          danger: true,
+        });
+        dialogOpen = false;
+        if (ok) action();
+      }
+
       diffBtns.forEach((btn) => {
         btn.addEventListener('click', () => {
           const next = btn.dataset.diff;
           if (!DIFFS[next] || next === diff) return;
-          if (MOBILE_BOARD_QUERY.matches && next !== 'easy') return;
-          diff = next;
-          try { localStorage.setItem(MODE_KEY, diff); } catch {}
-          initGame();
+          confirmAbandonAndRun(() => {
+            diff = next;
+            try { localStorage.setItem(MODE_KEY, diff); } catch {}
+            initGame();
+          }, next);
         });
       });
-
-      if (typeof MOBILE_BOARD_QUERY.addEventListener === 'function') {
-        MOBILE_BOARD_QUERY.addEventListener('change', (event) => {
-          if (event.matches && diff !== 'easy' && !started && flagCount === 0) {
-            initGame();
-          }
-        });
-      }
 
       function renderToolMode() {
         toolBtn.textContent = '';
@@ -742,9 +935,30 @@
         toolBtn.setAttribute('aria-pressed', String(flagMode));
       }
 
-      toolBtn.addEventListener('click', () => {
+      function toggleToolMode() {
         flagMode = !flagMode;
         renderToolMode();
+      }
+
+      toolBtn.addEventListener('click', toggleToolMode);
+      hintBtn.addEventListener('click', useSafeHint);
+
+      document.addEventListener('keydown', (e) => {
+        if (GameKit.shouldIgnoreGameKey(e, { ignoreOnControl: true })) return;
+        if (window.SiteData && SiteData.isDialogOpen && SiteData.isDialogOpen()) return;
+        if (window.GameKit && GameKit.isTutorialOpen && GameKit.isTutorialOpen()) return;
+        const target = e.target;
+        if (target instanceof Element && target.closest('input, textarea, select, [contenteditable="true"]')) return;
+        if (e.code === 'KeyF') {
+          e.preventDefault();
+          toggleToolMode();
+        } else if (e.code === 'KeyH') {
+          e.preventDefault();
+          useSafeHint();
+        } else if (e.code === 'KeyR') {
+          e.preventDefault();
+          confirmAbandonAndRun(initGame);
+        }
       });
 
       document.addEventListener('site:dialogopen', () => {
@@ -755,7 +969,7 @@
         dialogOpen = false;
       });
 
-      document.getElementById('restart-btn').addEventListener('click', initGame);
+      document.getElementById('restart-btn').addEventListener('click', () => confirmAbandonAndRun(initGame));
       document.getElementById('overlay-btn').addEventListener('click', initGame);
       document.getElementById('view-board-btn').addEventListener('click', () => {
         overlay.classList.remove('show');
@@ -763,6 +977,8 @@
 
       document.addEventListener('i18n:change', () => {
         renderToolMode();
+        updateHintButton();
+        renderStreak();
         if (ended) renderEndText();
         render();
       });
@@ -780,8 +996,8 @@
         },
         {
           icon: 'icon-flag',
-          title: '翻开与插旗',
-          text: '点击或左键翻开；右键或手机长按插旗。第一下一定安全，会先翻出一片空白。',
+          title: '翻开、插旗与问号',
+          text: '左键翻开；右键或手机长按可在插旗与 ? 间切换。第一下一定安全，支持三档难度与每局 2 次安全提示。',
         },
         {
           icon: 'art-zap',

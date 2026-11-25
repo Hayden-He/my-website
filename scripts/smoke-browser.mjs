@@ -417,12 +417,20 @@ async function verifyGamePage(session, gameId) {
   } else if (gameId === 'minesweeper') {
     await session.evaluate('document.querySelector("#mine-grid button")?.click()');
     await session.waitUntil('document.querySelectorAll("#mine-grid button.open").length > 0', 3000, 'minesweeper first click opens cells');
+    const hintReady = await session.evaluate('(() => { const b = document.getElementById("hint-btn"); return Boolean(b && !b.disabled); })()');
+    if (!hintReady) throw new Error('minesweeper 安全提示按钮未启用');
+    await session.evaluate('document.getElementById("hint-btn")?.click()');
+    await session.waitUntil('document.getElementById("hint-btn")?.textContent.includes("(1)")', 3000, 'minesweeper safe hint decrements counter');
   } else if (gameId === 'memory') {
     await session.evaluate('(() => { const c = document.querySelectorAll("#memory-board .memory-card"); c[0]?.click(); c[1]?.click(); })()');
     await session.waitUntil('document.querySelectorAll("#memory-board .flipped, #memory-board .matched").length > 0', 3000, 'memory cards flipped');
   } else if (gameId === '2048') {
     await session.evaluate('document.dispatchEvent(new KeyboardEvent("keydown", { code: "ArrowLeft", key: "ArrowLeft", bubbles: true }))');
     await session.waitUntil('document.querySelectorAll("#tile-layer .tile").length >= 2', 3000, '2048 tiles present');
+    const undoLabel = await session.evaluate('document.getElementById("undo-btn")?.textContent.trim() || ""');
+    if (!undoLabel) throw new Error('2048 撤回按钮缺少文案');
+    await session.evaluate('document.getElementById("size-obstacle")?.click()');
+    await session.waitUntil('document.querySelectorAll("#tile-layer .tile.obstacle").length === 1', 3000, '2048 obstacle mode renders stone obstacle');
   } else if (gameId === 'slide') {
     await session.evaluate('document.dispatchEvent(new KeyboardEvent("keydown", { code: "ArrowLeft", key: "ArrowLeft", bubbles: true }))');
     await session.waitUntil('document.querySelectorAll("#slide-board .slide-tile").length >= 8', 3000, 'slide tiles present');
