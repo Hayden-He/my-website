@@ -1,0 +1,196 @@
+:root { --game-width: 520px; }
+
+.hud {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.slide-stage {
+  position: relative;
+  width: 100%;
+}
+
+.slide-board {
+  display: grid;
+  grid-template-columns: repeat(var(--size, 3), 1fr);
+  gap: 8px;
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  aspect-ratio: 1 / 1;
+  padding: 10px;
+  background: var(--track);
+  border-radius: 18px;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.slide-tile {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border-strong);
+  border-radius: 11px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: clamp(1.15rem, 5.6vw, 2rem);
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 2px 0 var(--border-strong);
+  transition: transform 0.1s ease, background 0.12s ease, border-color 0.12s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.slide-tile:active {
+  transform: scale(0.96);
+}
+
+.slide-tile.in-place {
+  background: #ecfdf5;
+  border-color: #6ee7b7;
+  color: #065f46;
+}
+
+.slide-tile.in-place::after {
+  content: '';
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #10b981;
+  pointer-events: none;
+}
+
+.slide-tile.movable {
+  background: #eff6ff;
+  border-color: #93c5fd;
+}
+
+.slide-tile.in-place.movable {
+  background: #d1fae5;
+  border-color: #34d399;
+}
+
+.slide-tile.inline-movable:hover {
+  border-color: #93c5fd;
+}
+
+:root[data-theme="dark"] .slide-tile.in-place {
+  background: rgba(16, 185, 129, 0.16);
+  border-color: #10b981;
+  color: #6ee7b7;
+}
+
+:root[data-theme="dark"] .slide-tile.movable {
+  background: rgba(59, 130, 246, 0.22);
+  border-color: #3b82f6;
+}
+
+:root[data-theme="dark"] .slide-tile.in-place.movable {
+  background: rgba(16, 185, 129, 0.28);
+  border-color: #34d399;
+}
+
+:root[data-theme="dark"] .slide-tile.inline-movable:hover {
+  border-color: #60a5fa;
+}
+
+.slide-goal {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 12px;
+}
+
+.slide-goal-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.slide-goal .hint-text { text-align: start; }
+.slide-progress { color: var(--primary); font-weight: 600; }
+.slide-goal-grid {
+  display: grid;
+  flex: none;
+  grid-template-columns: repeat(var(--size, 3), 1fr);
+  gap: 2px;
+}
+.slide-goal-grid span {
+  display: grid;
+  place-items: center;
+  width: 1.15rem;
+  height: 1.15rem;
+  background: var(--track);
+  border-radius: 3px;
+  font-size: 0.65rem;
+  font-weight: 700;
+}
+.slide-goal-grid[data-size="5"] span {
+  width: 0.92rem;
+  height: 0.92rem;
+  font-size: 0.56rem;
+}
+.slide-goal-grid span:empty { background: transparent; border: 1px dashed var(--text-muted); }
+.slide-stage .overlay-actions { flex-wrap: wrap; justify-content: center; }
+
+.slide-tile:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 3px;
+}
+
+.slide-tile.blank {
+  background: transparent;
+  border: 1px dashed var(--border-strong);
+  box-shadow: none;
+  cursor: default;
+}
+
+.slide-board[data-size="4"] .slide-tile {
+  border-radius: 9px;
+  font-size: clamp(0.95rem, 4.2vw, 1.5rem);
+}
+
+.slide-board[data-size="5"] {
+  gap: 6px;
+  padding: 8px;
+}
+
+.slide-board[data-size="5"] .slide-tile {
+  border-radius: 7px;
+  font-size: clamp(0.82rem, 3.2vw, 1.22rem);
+}
+
+.slide-board[data-size="5"] .slide-tile.in-place::after {
+  top: 4px;
+  right: 4px;
+  width: 4px;
+  height: 4px;
+}
+
+.toolbar .mode-pills { flex-wrap: wrap; }
+
+@media (max-width: 380px) {
+  .toolbar .mode-pill {
+    padding-inline: 7px;
+    font-size: 0.74rem;
+    white-space: nowrap;
+  }
+  .toolbar .btn-small { padding-inline: 6px; }
+  .slide-goal .hint-text { font-size: 0.76rem; line-height: 1.35; }
+  .slide-board {
+    gap: 6px;
+    padding: 8px;
+  }
+
+  .slide-tile {
+    border-radius: 9px;
+  }
+}

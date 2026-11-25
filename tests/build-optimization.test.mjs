@@ -312,3 +312,26 @@ test('dist emits version.json matching meta site-build in built HTML pages', () 
   assert.ok(metaMatch, 'dist/index.html should include meta site-build');
   assert.equal(payload.build, metaMatch[1]);
 });
+
+test('dist rewrites ./modules/ assets for migrated classic games (slide, memory)', () => {
+  for (const id of ['slide', 'memory']) {
+    const html = fs.readFileSync(path.join(dist, 'games', id, 'index.html'), 'utf8');
+    assert.doesNotMatch(html, /['"]\.\/modules\//, `${id} built HTML must not leave unrewritten ./modules/ paths`);
+
+    const cssMatch = html.match(new RegExp(`/assets/v/([0-9a-f]+)/games/${id}/modules/${id}\\.css`));
+    const mainMatch = html.match(new RegExp(`/assets/v/([0-9a-f]+)/games/${id}/modules/main\\.js`));
+    assert.ok(cssMatch, `${id} built HTML should reference versioned ${id}.css`);
+    assert.ok(mainMatch, `${id} built HTML should reference versioned main.js`);
+
+    assert.equal(
+      fs.existsSync(path.join(dist, 'assets', 'v', cssMatch[1], 'games', id, 'modules', `${id}.css`)),
+      true,
+      `${id}.css should exist in dist`
+    );
+    assert.equal(
+      fs.existsSync(path.join(dist, 'assets', 'v', mainMatch[1], 'games', id, 'modules', 'main.js')),
+      true,
+      `${id}/modules/main.js should exist in dist`
+    );
+  }
+});
