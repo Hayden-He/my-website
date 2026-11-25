@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>经典打砖块 - 小游乐场</title>
+  <meta name="description" content="经典打砖块：8 关原创阵型与无尽下压双模式，支持三款视觉涂装与 6 种增益胶囊。" />
+  <link rel="canonical" href="https://my-website-all.pages.dev/games/breakout/" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="小游乐场" />
+  <meta property="og:locale" content="zh_CN" />
+  <meta property="og:title" content="经典打砖块 · Little Playground" />
+  <meta property="og:description" content="经典打砖块：8 关原创阵型与无尽下压双模式，支持三款视觉涂装与 6 种增益胶囊。" />
+  <meta property="og:url" content="https://my-website-all.pages.dev/games/breakout/" />
+  <meta property="og:image" content="https://my-website-all.pages.dev/assets/og-image.jpg" />
+  <meta property="og:image:type" content="image/jpeg" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="小游乐场 · Little Playground：12 款即开即玩的小游戏" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="经典打砖块 · Little Playground" />
+  <meta name="twitter:description" content="经典打砖块：8 关原创阵型与无尽下压双模式，支持三款视觉涂装与 6 种增益胶囊。" />
+  <meta name="twitter:image" content="https://my-website-all.pages.dev/assets/og-image.jpg" />
+  <meta name="twitter:image:alt" content="小游乐场 · Little Playground：12 款即开即玩的小游戏" />
+  <meta name="author" content="Hayden-He" />
+  <meta name="theme-color" content="#0f172a" />
+  <link rel="icon" type="image/svg+xml" href="/assets/icon.svg" />
+  <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png" />
+  <link rel="manifest" href="/site.webmanifest" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="小游乐场" />
+  <script src="/assets/theme.js"></script>
+  <link rel="stylesheet" href="/assets/style.css" />
+  <link rel="stylesheet" href="/assets/game-shell.css" />
+  <link rel="stylesheet" href="./modules/breakout.css" />
+</head>
+<body>
+  <!-- inline-icons:start -->
+  <!-- inline-icons:end -->
+  <header class="game-topbar">
+    <div class="container game-topbar-inner">
+      <a class="back-link" href="/" data-i18n="← 返回大厅">← 返回大厅</a>
+      <h1 class="game-topbar-title">
+        <svg class="title-icon" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><use href="#game-breakout"></use></svg>
+        <span data-i18n="经典打砖块">经典打砖块</span>
+      </h1>
+      <div class="game-topbar-actions">
+        <a class="game-topbar-cat" href="/categories/arcade" data-i18n="动作街机">动作街机</a>
+        <button class="lang-btn theme-btn" type="button" data-theme-toggle aria-label="主题：跟随系统" title="主题：跟随系统"><svg class="theme-ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#theme-system"></use></svg></button>
+        <button class="lang-btn" type="button" data-lang-toggle>EN</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="game-wrap">
+    <div class="hud">
+      <div class="hud-box">
+        <div id="stage-label" class="hud-label" data-i18n="当前关卡">当前关卡</div>
+        <div id="stage-value" class="hud-value">1</div>
+      </div>
+      <div class="hud-box">
+        <div class="hud-label" data-i18n="当前得分">当前得分</div>
+        <div id="score-el" class="hud-value">0</div>
+      </div>
+      <div class="hud-box best-hud">
+        <div class="hud-label" data-i18n="模式最高">模式最高</div>
+        <div id="best-el" class="hud-value accent">0</div>
+      </div>
+    </div>
+
+    <div class="toolbar">
+      <div class="mode-pills" role="group" aria-label="游戏模式" data-i18n-attr="aria-label:游戏模式">
+        <button id="mode-classic" class="mode-pill active" type="button" data-i18n="经典闯关">经典闯关</button>
+        <button id="mode-endless" class="mode-pill" type="button" data-i18n="无尽下压">无尽下压</button>
+      </div>
+      <div class="btn-group">
+        <button id="pause-btn" class="btn-small secondary" type="button">暂停</button>
+        <button id="sound-btn" class="btn-small secondary" type="button">音效: 开</button>
+        <button id="help-btn" class="btn-small secondary" type="button" data-i18n="玩法">玩法</button>
+        <button id="restart-btn" class="btn-small" type="button" data-i18n="重开">重开</button>
+        <button id="immersive-btn" class="btn-small secondary" type="button" data-i18n="沉浸模式" hidden>沉浸模式</button>
+      </div>
+    </div>
+
+    <div class="status-strip">
+      <div class="status-group">
+        <div class="lives-status">
+          <span id="lives-label" class="lives-label">生命 3</span>
+          <div id="lives-pips" class="lives-pips" role="meter" aria-label="剩余生命" aria-valuemin="0" aria-valuemax="5" aria-valuenow="3"></div>
+        </div>
+        <span id="combo-badge" class="status-badge combo" hidden></span>
+      </div>
+      <div class="status-group">
+        <span id="effect-expand" class="status-badge effect" hidden></span>
+        <span id="effect-fire" class="status-badge effect fire" hidden></span>
+        <span id="effect-laser" class="status-badge effect laser" hidden></span>
+        <span id="effect-magnet" class="status-badge effect magnet" hidden></span>
+      </div>
+    </div>
+
+    <div class="mobile-game-stage">
+      <div class="stage-box">
+        <div class="playfield">
+          <canvas id="canvas" width="460" height="560" aria-label="经典打砖块画布" data-i18n-attr="aria-label:经典打砖块画布"></canvas>
+          <div id="overlay" class="overlay show" role="status" aria-live="polite">
+            <h2 id="overlay-title">经典打砖块</h2>
+            <p id="overlay-desc"></p>
+            <div class="overlay-actions">
+              <button id="overlay-btn" class="overlay-btn" type="button">开始游戏</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="action-bar">
+      <button id="launch-btn" class="launch-btn" type="button" disabled data-i18n="发射 / 激光 (空格)">发射 / 激光 (空格)</button>
+      <div class="skin-pills" role="group" aria-label="挡板涂装" data-i18n-attr="aria-label:挡板涂装">
+        <button class="skin-pill active" type="button" data-skin="neon"><span class="skin-swatch" style="background:#38bdf8"></span><span data-i18n="霓虹电光">霓虹电光</span></button>
+        <button class="skin-pill" type="button" data-skin="retro"><span class="skin-swatch" style="background:#f97316"></span><span data-i18n="复古街机">复古街机</span></button>
+        <button class="skin-pill" type="button" data-skin="ocean"><span class="skin-swatch" style="background:#2dd4bf"></span><span data-i18n="深海极光">深海极光</span></button>
+      </div>
+    </div>
+
+    <p class="hint" data-i18n="触屏拖动 / 鼠标滑动 / A·D·方向键控板 · 空格发球或激光 · P 暂停 · R 重开">触屏拖动 / 鼠标滑动 / A·D·方向键控板 · 空格发球或激光 · P 暂停 · R 重开</p>
+
+    <section class="breakout-legend" aria-label="砖块与胶囊图鉴" data-i18n-attr="aria-label:砖块与胶囊图鉴">
+      <div class="legend-title" data-i18n="砖块与胶囊说明">砖块与胶囊说明</div>
+      <div class="legend-grid">
+        <div class="legend-item"><span class="legend-badge" style="background:#2563eb" aria-hidden="true">W</span><span data-i18n="宽板：临时加宽挡板">宽板：临时加宽挡板</span></div>
+        <div class="legend-item"><span class="legend-badge" style="background:#7c3aed" aria-hidden="true">×3</span><span data-i18n="三球：场上弹珠一分为三">三球：场上弹珠一分为三</span></div>
+        <div class="legend-item"><span class="legend-badge" style="background:#ea580c" aria-hidden="true">🔥</span><span data-i18n="烈焰：直线穿透并破金墙">烈焰：直线穿透并破金墙</span></div>
+        <div class="legend-item"><span class="legend-badge" style="background:#0891b2" aria-hidden="true">⚡</span><span data-i18n="激光：双门激光炮点射">激光：双门激光炮点射</span></div>
+        <div class="legend-item"><span class="legend-badge" style="background:#0d9488" aria-hidden="true">🧲</span><span data-i18n="磁性：吸住弹珠再瞄准发射">磁性：吸住弹珠再瞄准发射</span></div>
+        <div class="legend-item"><span class="legend-badge" style="background:#16a34a" aria-hidden="true">+♥</span><span data-i18n="生命：恢复 1 条生命">生命：恢复 1 条生命</span></div>
+        <div class="legend-item"><span class="legend-badge" style="background:#dc2626" aria-hidden="true">●</span><span data-i18n="爆炸砖：引爆 3×3 邻近砖块">爆炸砖：引爆 3×3 邻近砖块</span></div>
+        <div class="legend-item"><span class="legend-badge" style="background:#d97706" aria-hidden="true">■</span><span data-i18n="金墙：普通弹珠不破，火球/爆炸可毁">金墙：普通弹珠不破，火球/爆炸可毁</span></div>
+      </div>
+    </section>
+
+    <div id="more-games" class="more-games"></div>
+  </main>
+
+  <script src="/assets/canvas-polyfill.js"></script>
+  <script src="/assets/site-data.js"></script>
+  <script src="/assets/i18n.js"></script>
+  <script src="/assets/games.js"></script>
+  <script src="/assets/game-kit.js"></script>
+  <script>GameKit.mountMoreGames('breakout', document.getElementById('more-games'));</script>
+  <script type="module" src="./modules/main.js"></script>
+</body>
+</html>

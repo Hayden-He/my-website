@@ -389,6 +389,14 @@ async function verifyGamePage(session, gameId) {
     await session.evaluate('document.querySelector("#overlay.show #overlay-btn")?.click()');
     await session.waitUntil('!document.getElementById("overlay").classList.contains("show")', 3000, 'space overlay hidden');
     await assertCanvasAnimates(session, '#canvas');
+  } else if (gameId === 'breakout') {
+    await session.evaluate('document.querySelector("#overlay.show #overlay-btn")?.click()');
+    await session.waitUntil('!document.getElementById("overlay").classList.contains("show")', 3000, 'breakout overlay hidden');
+    await assertCanvasAnimates(session, '#canvas');
+    await session.evaluate('document.querySelector(".skin-pill[data-skin=\\"retro\\"]")?.click()');
+    await session.waitUntil('document.querySelector(".skin-pill[data-skin=\\"retro\\"]")?.classList.contains("active")', 2000, 'breakout skin switches');
+    await session.evaluate('document.getElementById("pause-btn")?.click()');
+    await session.waitUntil('document.getElementById("overlay")?.classList.contains("show")', 2000, 'breakout pauses cleanly');
   } else if (gameId === 'tetris') {
     await session.evaluate('document.querySelector("#overlay.show #overlay-primary-btn")?.click()');
     await session.waitUntil('!document.getElementById("overlay").classList.contains("show")', 3000, 'tetris overlay hidden');

@@ -345,6 +345,33 @@ test('getCardMetaText renders Slide 5x5 and Memory 6x4 + combo records in zh and
   ]);
 });
 
+test('getCardMetaText renders Breakout active classic/endless score and stage records in zh and en', () => {
+  const harness = createLobbyHarness({
+    initialStorage: {
+      game_mode_breakout: 'classic',
+      game_best_breakout_classic: '3480',
+      game_best_breakout_level: '6',
+      game_best_breakout_endless: '2190',
+    },
+  });
+  const breakout = harness.SITE_CONFIG.games.find((g) => g.id === 'breakout');
+
+  assert.equal(harness.SiteLobby.getCardMetaText(breakout), '闯关最高: 3480');
+  assert.deepEqual(harness.SiteLobby.getAllGameRecords(breakout), [
+    '闯关最高: 3480',
+    '最高关卡: 第 6 关',
+    '无尽最高: 2190',
+  ]);
+
+  harness.I18N.setLang('en');
+  assert.equal(harness.SiteLobby.getCardMetaText(breakout), 'Classic best: 3480');
+  assert.deepEqual(harness.SiteLobby.getAllGameRecords(breakout), [
+    'Classic best: 3480',
+    'Highest stage: Stage 6',
+    'Endless best: 2190',
+  ]);
+});
+
 test('getCardMetaText renders Tank Maze cumulative win count in zh and en', () => {
   const harness = createLobbyHarness({
     initialStorage: {
@@ -500,7 +527,7 @@ test('getOverviewStats aggregates recorded games, total mode records, and active
   });
 
   const stats = harness.SiteLobby.getOverviewStats();
-  assert.equal(stats.totalGames, 11);
+  assert.equal(stats.totalGames, 12);
   assert.equal(stats.recordedGames, 2);
   assert.equal(stats.totalRecords, 3);
   assert.equal(stats.resumeCount, 2);

@@ -297,6 +297,17 @@
     <path d="M14.6 23.8 16 28l1.4-4.2z" fill="#f97316"/>
     <path d="M15.2 23.8 16 26.5l.8-2.7z" fill="#fde047"/>
   </symbol>
+  <symbol id="game-breakout" viewBox="0 0 32 32">
+    <rect x="2" y="2" width="28" height="28" rx="8" fill="#0f172a"/>
+    <rect x="6" y="6.5" width="6" height="3.6" rx="1" fill="#f43f5e"/>
+    <rect x="13" y="6.5" width="6" height="3.6" rx="1" fill="#fb923c"/>
+    <rect x="20" y="6.5" width="6" height="3.6" rx="1" fill="#facc15"/>
+    <rect x="6" y="11.2" width="6" height="3.6" rx="1" fill="#34d399"/>
+    <rect x="13" y="11.2" width="6" height="3.6" rx="1" fill="#38bdf8"/>
+    <rect x="20" y="11.2" width="6" height="3.6" rx="1" fill="#a855f7"/>
+    <circle cx="18.5" cy="19.5" r="2.2" fill="#f8fafc"/>
+    <rect x="9" y="24.2" width="14" height="3" rx="1.5" fill="#38bdf8"/>
+  </symbol>
   <symbol id="game-tank-maze" viewBox="0 0 32 32">
     <rect x="1.5" y="1.5" width="29" height="29" rx="7" fill="#162637"/>
     <rect x="4" y="4" width="24" height="24" rx="4.5" fill="none" stroke="#526f89" stroke-width="1.2"/>

@@ -195,9 +195,15 @@ window.I18N_EN = {
   '小游乐场 - 在线小游戏合集': 'Little Playground - Free Online Mini Games',
   '小游乐场：打开即玩的在线轻游戏合集，包含街头投篮、经典贪吃蛇、极速切水果、太空战机、坦克迷宫、经典 2048、经典扫雷、数字华容道、记忆翻牌、方块工坊与俄罗斯方块，支持电脑与手机。':
     'Little Playground: instant online mini games—Street Hoops, Classic Snake, Fruit Slicer, Space Shooter, Tank Maze, 2048, Minesweeper, Sliding Puzzle, Memory Match, Block Workshop and Tetris. Play on desktop or mobile.',
+  '小游乐场：打开即玩的在线轻游戏合集，包含街头投篮、经典贪吃蛇、极速切水果、太空战机、经典打砖块、坦克迷宫、经典 2048、经典扫雷、数字华容道、记忆翻牌、方块工坊与俄罗斯方块，支持电脑与手机。':
+    'Little Playground: instant online mini games—Street Hoops, Classic Snake, Fruit Slicer, Space Shooter, Classic Breakout, Tank Maze, 2048, Minesweeper, Sliding Puzzle, Memory Match, Block Workshop and Tetris. Play on desktop or mobile.',
   '动作街机 - 小游乐场': 'Arcade - Little Playground',
   '动作街机分类：街头投篮、经典贪吃蛇、极速切水果、太空战机、坦克迷宫等考验反应的小游戏。':
     'Arcade games: Street Hoops, Classic Snake, Fruit Slicer, Space Shooter, Tank Maze and more reflex-based challenges.',
+  '动作街机分类：街头投篮、经典贪吃蛇、极速切水果、太空战机、经典打砖块、坦克迷宫等考验反应的小游戏。':
+    'Arcade games: Street Hoops, Classic Snake, Fruit Slicer, Space Shooter, Classic Breakout, Tank Maze and more reflex-based challenges.',
+  '考验反应与手感的街机挑战，投篮、贪吃蛇、切水果、太空战机、打砖块与坦克迷宫各有玩法，随时刷新自己的纪录。':
+    'Reflex-based arcade challenges—Hoops, Snake, Fruit Slicer, Space Shooter, Breakout and Tank Maze. Beat your personal bests anytime.',
   '益智休闲 - 小游乐场': 'Puzzle - Little Playground',
   '益智休闲分类：经典 2048、经典扫雷、数字华容道、记忆翻牌、方块工坊与俄罗斯方块等轻松动脑与自由搭建的小游戏。':
     'Puzzle games: 2048, Minesweeper, Sliding Puzzle, Memory Match, Block Workshop, Tetris and more relaxed brain-teasers and sandbox building.',
@@ -1025,4 +1031,78 @@ window.I18N_EN = {
   '清除失败': "Couldn't clear local data",
   '浏览器禁止访问本地存储，请检查浏览器的隐私设置后重试。':
     'Your browser is blocking local storage. Check its privacy settings and try again.',
+
+  // ---- 经典打砖块 ----
+  '经典打砖块': 'Classic Breakout',
+  '经典打砖块 - 小游乐场': 'Classic Breakout - Little Playground',
+  '经典打砖块：8 关原创阵型与无尽下压双模式，支持三款视觉涂装与 6 种增益胶囊。':
+    'Classic Breakout: 8 handcrafted levels and Endless push mode with 3 visual skins and 6 power-ups.',
+  '控板弹球击碎砖块，含 8 关原创阵型、无尽下压、6 种胶囊与三款涂装。':
+    'Bounce the ball to smash bricks across 8 handcrafted levels and Endless push mode with 6 power-ups and 3 skins.',
+  '闯关最高: ': 'Classic best: ',
+  '最高关卡: 第 ': 'Highest stage: Stage ',
+  ' 关': '',
+  '无尽最高: ': 'Endless best: ',
+  '当前关卡': 'Stage',
+  '推进波次': 'Wave',
+  '经典闯关': 'Classic',
+  '无尽下压': 'Endless',
+  '生命 3': 'Lives 3',
+  '生命 {n}': 'Lives {n}',
+  '剩余生命 {n}': '{n} lives left',
+  '发射 / 激光 (空格)': 'Launch / Laser (Space)',
+  '发射激光 (空格)': 'Fire Laser (Space)',
+  '挡板涂装': 'Paddle skin',
+  '霓虹电光': 'Neon Spark',
+  '复古街机': 'Retro Arcade',
+  '深海极光': 'Ocean Aurora',
+  '经典打砖块画布': 'Classic Breakout canvas',
+  '触屏拖动 / 鼠标滑动 / A·D·方向键控板 · 空格发球或激光 · P 暂停 · R 重开':
+    'Drag, move mouse, or A/D/Arrows to steer · Space launch/laser · P pause · R restart',
+  '砖块与胶囊图鉴': 'Bricks & power-ups legend',
+  '砖块与胶囊说明': 'Bricks & Power-Ups',
+  '宽板：临时加宽挡板': 'Expand: wider paddle',
+  '三球：场上弹珠一分为三': 'Multi-ball: split into 3 balls',
+  '烈焰：直线穿透并破金墙': 'Fireball: pierce & break gold walls',
+  '激光：双门激光炮点射': 'Laser: dual paddle cannons',
+  '磁性：吸住弹珠再瞄准发射': 'Magnet: catch & aim relaunch',
+  '生命：恢复 1 条生命': 'Extra life: restore 1 life',
+  '爆炸砖：引爆 3×3 邻近砖块': 'Bomb brick: 3×3 chain blast',
+  '金墙：普通弹珠不破，火球/爆炸可毁': 'Gold wall: fireball or bomb only',
+  '彩虹阶梯': 'Rainbow Steps',
+  '城墙要塞': 'Fortress Wall',
+  '双塔走廊': 'Twin Towers',
+  '钻石矩阵': 'Diamond Matrix',
+  '迷宫通道': 'Maze Corridor',
+  '十字堡垒': 'Cross Bastion',
+  '蜂巢核心': 'Honeycomb Core',
+  '霓虹终局': 'Neon Finale',
+  '宽板': 'Expand',
+  '三球分裂': 'Multi-ball',
+  '烈焰穿透': 'Fireball',
+  '双联激光': 'Laser',
+  '磁性吸板': 'Magnet',
+  '生命 +1': 'Life +1',
+  '第 {level} 关 · {name}': 'Stage {level} · {name}',
+  '无尽下压 · 阻挡砖块触底': 'Endless · Keep bricks above the line',
+  '砖块突破警戒线！': 'Bricks breached the danger line!',
+  '共 8 关原创阵型，接住增益胶囊并用角度控球击碎全部砖块。':
+    'Clear 8 handcrafted stages—catch capsules and angle your shots cleanly.',
+  '砖块会持续向下压进，守住红色警戒线并冲击无尽高分！':
+    'Brick rows keep pushing down—hold the red line and chase a high score!',
+  '当前得分 {score} · 准备好随时继续。': 'Score {score} · Resume when ready.',
+  '得分 {score} · 最高第 {level} 关 · 最高连击 ×{combo} · 纪录 {best}':
+    'Score {score} · Stage {level} · {combo}× max combo · Best {best}',
+  '得分 {score} · 坚持 {wave} 波 · 最高连击 ×{combo} · 纪录 {best}':
+    'Score {score} · {wave} waves · {combo}× max combo · Best {best}',
+  '切换模式会结束当前对局进度。': 'Switching modes will end your current run.',
+  '控板接球碎砖': 'Bounce & Smash Bricks',
+  '鼠标滑动、触屏拖动或用 A/D/方向键控制挡板，按空格或轻点画布发射弹珠击碎全部砖块。':
+    'Move with mouse, touch drag, or A/D/Arrows. Press Space or tap to launch the ball.',
+  '接住增益胶囊': 'Catch Power-Up Capsules',
+  '碎砖随机掉落宽板、三球分裂、烈焰穿透、双联激光、磁性吸板与额外生命。':
+    'Shattering bricks drops Expand, Multi-ball, Fireball, Laser, Magnet, and Extra Life.',
+  '闯关与无尽双模式': 'Classic & Endless Modes',
+  '经典闯关含 8 套原创阵型；无尽下压中砖块会不断下压，守住红色警戒线！':
+    'Play 8 handcrafted stages in Classic, or defend the danger line as rows push down in Endless!',
 };

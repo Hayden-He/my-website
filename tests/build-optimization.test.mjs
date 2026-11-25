@@ -215,8 +215,8 @@ test('i18n runtime skips English dictionary in zh mode and loads it on demand fo
   assert.deepEqual(bootEvents, ['en']);
 });
 
-test('dist rewrites ./modules/ assets and emits all module files for basketball, fruit, and space', () => {
-  for (const id of ['basketball', 'fruit', 'space']) {
+test('dist rewrites ./modules/ assets and emits all module files for basketball, fruit, space, and breakout', () => {
+  for (const id of ['basketball', 'fruit', 'space', 'breakout']) {
     const html = fs.readFileSync(path.join(dist, 'games', id, 'index.html'), 'utf8');
     assert.doesNotMatch(html, /['"]\.\/modules\//, `${id} built HTML must not leave unrewritten ./modules/ paths`);
 
