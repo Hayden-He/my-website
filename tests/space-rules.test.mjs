@@ -9,6 +9,7 @@ import {
 } from '../games/space/modules/rules.js';
 import { createSpaceAudio } from '../games/space/modules/audio.js';
 import { createSpaceRenderer } from '../games/space/modules/renderer.js';
+import { createBossController } from '../games/space/modules/boss.js';
 
 test('space configs expose valid skins, pickup themes, and backdrops', () => {
   assert.deepEqual(Object.keys(SKINS), ['cobalt', 'crimson', 'phantom']);
@@ -251,4 +252,61 @@ test('space renderer and audio modules run cleanly across skins, scenes, bosses,
     audio.playPrismReflectCue(true);
     audio.playComboMilestone();
   });
+});
+
+test('space boss controller spawns, transforms, and updates crimson, prism, and mothership cleanly', () => {
+  let boss = null;
+  let mode = 'standard';
+  let defeated = 0;
+  const player = { x: W * 0.5, y: H - 90, r: 14 };
+  const enemyBullets = [{ x: 100, y: 100 }];
+  const noop = () => {};
+  const ctrl = createBossController({
+    getBoss: () => boss,
+    setBoss: (next) => { boss = next; },
+    getMode: () => mode,
+    getPlayer: () => player,
+    getEnemyBullets: () => enemyBullets,
+    clearEnemyBullets: () => { enemyBullets.length = 0; },
+    t: (k) => k,
+    triggerShake: noop,
+    spawnExplosion: noop,
+    pushParticle: noop,
+    damagePlayer: noop,
+    onDefeat: () => { defeated += 1; },
+    renderHud: noop,
+    playBossAlert: noop,
+    playBossLaserCharge: noop,
+    playBossLaserFire: noop,
+    playExplode: noop,
+    playHit: noop,
+    playPrismReflectCue: noop,
+  });
+
+  // Tier 1: Crimson Arbiter
+  ctrl.spawnBoss(1);
+  assert.equal(boss.kind, 'crimson');
+  boss.y = boss.targetY;
+  ctrl.damageBoss(boss.maxHp, true);
+  assert.equal(boss.maneuver, 'transform');
+  assert.equal(enemyBullets.length, 0);
+  for (let i = 0; i < 40; i += 1) ctrl.updateCrimsonBoss(0.05);
+  assert.equal(boss.phase, 2);
+  ctrl.damageBoss(boss.maxHp * 3, true);
+  assert.equal(defeated, 1);
+
+  // Tier 2: Azure Prism
+  ctrl.spawnBoss(2);
+  assert.equal(boss.kind, 'prism');
+  boss.y = boss.targetY;
+  for (let i = 0; i < 30; i += 1) ctrl.updatePrismBoss(0.05);
+  assert.equal(boss.kind, 'prism');
+
+  // Tier 3: Void Mothership
+  mode = 'ace';
+  ctrl.spawnBoss(3);
+  assert.equal(boss.kind, 'mothership');
+  boss.y = boss.targetY;
+  for (let i = 0; i < 30; i += 1) ctrl.updateMothership(0.05);
+  assert.equal(boss.kind, 'mothership');
 });

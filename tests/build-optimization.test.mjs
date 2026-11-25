@@ -230,7 +230,10 @@ test('dist rewrites ./modules/ assets and emits all module files for basketball,
       true,
       `${id}.css should exist in dist`
     );
-    for (const file of ['rules.js', 'audio.js', 'renderer.js', 'main.js']) {
+    const expectedFiles = id === 'space'
+      ? ['rules.js', 'audio.js', 'renderer.js', 'boss.js', 'main.js']
+      : ['rules.js', 'audio.js', 'renderer.js', 'main.js'];
+    for (const file of expectedFiles) {
       assert.equal(
         fs.existsSync(path.join(dist, 'assets', 'v', mainMatch[1], 'games', id, 'modules', file)),
         true,
