@@ -494,3 +494,26 @@ export function stepLasers(lasers, bricks, dt) {
   }
   return { lasers: active, brickEvents };
 }
+
+export function stepCapsules(capsules, paddle, dt) {
+  const remaining = [];
+  const caught = [];
+  const paddleLeft = paddle.x - paddle.w / 2;
+  const paddleRight = paddle.x + paddle.w / 2;
+  for (const cap of capsules) {
+    const ny = cap.y + cap.vy * dt;
+    if (
+      ny + 9 >= PADDLE_Y &&
+      ny - 9 <= PADDLE_Y + PADDLE_HEIGHT &&
+      cap.x + 15 >= paddleLeft &&
+      cap.x - 15 <= paddleRight
+    ) {
+      caught.push({ ...cap, y: ny });
+      continue;
+    }
+    if (ny - 12 <= H) {
+      remaining.push({ ...cap, y: ny });
+    }
+  }
+  return { capsules: remaining, caught };
+}

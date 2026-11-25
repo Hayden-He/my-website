@@ -393,6 +393,17 @@ async function verifyGamePage(session, gameId) {
     await session.evaluate('document.querySelector("#overlay.show #overlay-btn")?.click()');
     await session.waitUntil('!document.getElementById("overlay").classList.contains("show")', 3000, 'breakout overlay hidden');
     await assertCanvasAnimates(session, '#canvas');
+    await session.evaluate(`(() => {
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true }));
+      const canvas = document.getElementById('canvas');
+      const rect = canvas.getBoundingClientRect();
+      for (let i = 0; i <= 4; i += 1) {
+        const x = rect.left + rect.width * (0.2 + 0.15 * i);
+        canvas.dispatchEvent(new PointerEvent('pointermove', { clientX: x, clientY: rect.top + rect.height * 0.8, pointerType: 'mouse', bubbles: true }));
+      }
+    })()`);
+    await new Promise((resolve) => setTimeout(resolve, 900));
+    await assertCanvasAnimates(session, '#canvas');
     await session.evaluate('document.querySelector(".skin-pill[data-skin=\\"retro\\"]")?.click()');
     await session.waitUntil('document.querySelector(".skin-pill[data-skin=\\"retro\\"]")?.classList.contains("active")', 2000, 'breakout skin switches');
     await session.evaluate('document.getElementById("pause-btn")?.click()');

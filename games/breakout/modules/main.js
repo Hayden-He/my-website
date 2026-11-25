@@ -3,7 +3,7 @@ import {
   BALL_RADIUS, BASE_BALL_SPEED, MAX_BALLS, START_LIVES, MAX_LIVES,
   ENDLESS_PUSH_INTERVAL, MAX_PARTICLES, EFFECT_DURATIONS, SKINS, POWERUP_META,
   clamp, buildClassicLevel, buildEndlessInitialBricks, pushEndlessRow,
-  countClearableBricks, createBall, stepBallSubstepped, stepLasers, rollPowerupDrop,
+  countClearableBricks, createBall, stepBallSubstepped, stepLasers, stepCapsules, rollPowerupDrop,
 } from './rules.js';
 import { createBreakoutAudio } from './audio.js';
 import { createBreakoutRenderer } from './renderer.js';
@@ -329,12 +329,12 @@ function launchStuckBalls() {
   return launched;
 }
 
-function fireLasers() {
+function fireLasers(cooldownSeconds = 0.24) {
   if (phase !== 'playing' || effects.laser <= 0 || laserCooldown > 0) return false;
   const left = paddle.x - paddle.w / 2;
   lasers.push({ x: left + 10, y: PADDLE_Y - 8 });
   lasers.push({ x: left + paddle.w - 10, y: PADDLE_Y - 8 });
-  laserCooldown = 0.28;
+  laserCooldown = cooldownSeconds;
   audio.playLaser();
   return true;
 }
@@ -486,6 +486,9 @@ function step(dt) {
     }
   }
 
+  if (effects.laser > 0 && laserCooldown <= 0) {
+    fireLasers(0.42);
+  }
   if (lasers.length > 0) {
     const laserRes = stepLasers(lasers, bricks, dt);
     lasers = laserRes.lasers;
@@ -495,21 +498,13 @@ function step(dt) {
     }
   }
 
-  for (let i = capsules.length - 1; i >= 0; i -= 1) {
-    const cap = capsules[i];
-    cap.y += cap.vy * dt;
-    if (
-      cap.y + 9 >= PADDLE_Y &&
-      cap.y - 9 <= PADDLE_Y + PADDLE_HEIGHT &&
-      cap.x + 15 >= paddle.x - paddle.w / 2 &&
-      cap.x - 15 <= paddle.x + paddle.w / 2
-    ) {
-      capsules.splice(i, 1);
+  const capsuleRes = stepCapsules(capsules, paddle, dt);
+  capsules = capsuleRes.capsules;
+  if (capsuleRes.caught.length > 0) {
+    for (const cap of capsuleRes.caught) {
       applyPowerup(cap.kind);
-      hudDirty = true;
-      continue;
     }
-    if (cap.y - 12 > H) capsules.splice(i, 1);
+    hudDirty = true;
   }
 
   const nextBalls = [];
@@ -518,7 +513,7 @@ function step(dt) {
       ball.trail.push({ x: ball.x, y: ball.y });
       if (ball.trail.length > 6) ball.trail.shift();
     }
-    const res = stepBallSubstepped(ball, paddle, bricks, effects, dt, { combo });
+    const res = stepBallSubstepped(ball, paddle, bricks, effects, dt);
     if (res.wallHit) audio.playWallHit();
     if (res.magnetCatch) {
       combo = 0;
@@ -548,6 +543,7 @@ function step(dt) {
     effects.laser = 0;
     effects.magnet = 0;
     paddle.w = PADDLE_BASE_WIDTH;
+    movePaddleTo(paddle.x);
     if (lives <= 0) {
       endGame('lost');
       return;
@@ -581,12 +577,12 @@ function step(dt) {
 }
 
 function loop(timestamp) {
+  requestAnimationFrame(loop);
   if (!lastFrameAt) lastFrameAt = timestamp;
   const dt = Math.min(0.05, Math.max(0, (timestamp - lastFrameAt) / 1000));
   lastFrameAt = timestamp;
   step(dt);
   renderer.renderFrame();
-  requestAnimationFrame(loop);
 }
 
 function togglePause() {
@@ -657,7 +653,7 @@ canvas.addEventListener('pointerdown', (event) => {
 
 canvas.addEventListener('pointermove', (event) => {
   if (activePointer && activePointer.id === event.pointerId) {
-    if (Math.abs(event.clientX - activePointer.startX) > 6) activePointer.moved = true;
+    if (Math.abs(event.clientX - activePointer.startX) > 14) activePointer.moved = true;
     if (phase === 'playing') movePaddleTo(canvasPointFromEvent(event));
   } else if (event.pointerType === 'mouse' && phase === 'playing') {
     movePaddleTo(canvasPointFromEvent(event));

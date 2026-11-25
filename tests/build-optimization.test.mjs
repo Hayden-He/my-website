@@ -239,3 +239,64 @@ test('dist rewrites ./modules/ assets and emits all module files for basketball,
     }
   }
 });
+
+test('every game module referencing ./rules.js exports imports or declares them cleanly', () => {
+  const gamesDir = path.join(root, 'games');
+  for (const gameId of fs.readdirSync(gamesDir)) {
+    const modDir = path.join(gamesDir, gameId, 'modules');
+    const rulesPath = path.join(modDir, 'rules.js');
+    if (!fs.existsSync(rulesPath)) continue;
+
+    const rulesSource = fs.readFileSync(rulesPath, 'utf8');
+    const rulesExports = new Set();
+    for (const m of rulesSource.matchAll(/export\s+(?:async\s+)?(?:function|const|let|var|class)\s+([A-Za-z_$][\w$]*)/g)) {
+      rulesExports.add(m[1]);
+    }
+    for (const m of rulesSource.matchAll(/export\s*\{([^}]+)\}/g)) {
+      for (const part of m[1].split(',')) {
+        const alias = part.trim().split(/\s+as\s+/).pop()?.trim();
+        if (alias) rulesExports.add(alias);
+      }
+    }
+
+    for (const fileName of fs.readdirSync(modDir)) {
+      if (!fileName.endsWith('.js') || fileName === 'rules.js') continue;
+      const src = fs.readFileSync(path.join(modDir, fileName), 'utf8');
+
+      const importedFromRules = new Set();
+      for (const m of src.matchAll(/import\s*\{([^}]+)\}\s*from\s*['"]\.\/rules\.js['"]/g)) {
+        for (const spec of m[1].split(',')) {
+          const [orig, alias] = spec.trim().split(/\s+as\s+/).map((s) => s.trim());
+          if (orig) importedFromRules.add(orig);
+          if (alias) importedFromRules.add(alias);
+        }
+      }
+
+      // Strip comments, string/template literals, import statements, member accesses, and object keys
+      const stripped = src
+        .replace(/\/\*[\s\S]*?\*\//g, ' ')
+        .replace(/\/\/[^\n]*/g, ' ')
+        .replace(/import\s+[\s\S]*?from\s*['"][^'"]+['"]\s*;?/g, ' ')
+        .replace(/`(?:\\[\s\S]|[^`\\])*`/g, ' ')
+        .replace(/'(?:\\.|[^'\\])*'/g, ' ')
+        .replace(/"(?:\\.|[^"\\])*"/g, ' ')
+        .replace(/\.[A-Za-z_$][\w$]*/g, ' ')
+        .replace(/([A-Za-z_$][\w$]*)\s*:/g, ' ');
+
+      const localDecls = new Set();
+      for (const m of stripped.matchAll(/(?:function|class|const|let|var)\s+([A-Za-z_$][\w$]*)/g)) {
+        localDecls.add(m[1]);
+      }
+
+      for (const expName of rulesExports) {
+        if (importedFromRules.has(expName) || localDecls.has(expName)) continue;
+        const usedRe = new RegExp(`\\b${expName}\\b`);
+        assert.equal(
+          usedRe.test(stripped),
+          false,
+          `games/${gameId}/modules/${fileName} references ${expName} from ./rules.js without importing it`
+        );
+      }
+    }
+  }
+});

@@ -1,12 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  W, H, PADDLE_Y, PADDLE_BASE_WIDTH, BALL_RADIUS, MAX_BALLS,
+  W, H, PADDLE_Y, PADDLE_HEIGHT, PADDLE_BASE_WIDTH, BALL_RADIUS, MAX_BALLS,
   SKINS, POWERUP_META, LEVELS,
   buildClassicLevel, buildEndlessInitialBricks, pushEndlessRow,
   countClearableBricks, createBall, reflectFromPaddle,
   enforceVerticalComponent, collideBallWithBrick, detonateBombBrick,
-  rollPowerupDrop, stepBallSubstepped, stepLasers, createBrick,
+  rollPowerupDrop, stepBallSubstepped, stepLasers, stepCapsules, createBrick,
 } from '../games/breakout/modules/rules.js';
 import { createBreakoutAudio } from '../games/breakout/modules/audio.js';
 import { createBreakoutRenderer } from '../games/breakout/modules/renderer.js';
@@ -137,6 +137,31 @@ test('stepLasers damages bricks and stops on gold walls', () => {
   assert.equal(res.lasers.length, 0);
   assert.equal(b1.hp, 0);
   assert.equal(g1.hp, 99);
+});
+
+test('stepCapsules advances capsules, catches all 6 powerups on paddle overlap, and drops off-screen capsules', () => {
+  const paddle = { x: W / 2, w: PADDLE_BASE_WIDTH };
+  const kinds = Object.keys(POWERUP_META);
+  assert.equal(kinds.length, 6);
+
+  // Mid-air capsules remain in flight
+  const flying = stepCapsules([{ x: paddle.x, y: 200, vy: 135, kind: kinds[0] }], paddle, 0.1);
+  assert.equal(flying.caught.length, 0);
+  assert.equal(flying.capsules.length, 1);
+  assert.ok(flying.capsules[0].y > 200);
+
+  // Every capsule kind is caught cleanly across center & edge overlap without throwing
+  const toCatch = kinds.map((kind, idx) => ({
+    x: idx === 0 ? paddle.x - paddle.w / 2 - 14 : idx === kinds.length - 1 ? paddle.x + paddle.w / 2 + 14 : paddle.x,
+    y: PADDLE_Y + PADDLE_HEIGHT / 2 - 2,
+    vy: 135,
+    kind,
+  }));
+  // Include an off-screen capsule that should be pruned
+  const withOffscreen = [...toCatch, { x: paddle.x, y: H + 20, vy: 135, kind: 'wide' }];
+  const res = stepCapsules(withOffscreen, paddle, 0.016);
+  assert.deepEqual(res.caught.map((c) => c.kind), kinds);
+  assert.equal(res.capsules.length, 0);
 });
 
 test('breakout renderer and audio run cleanly across all 3 skins and states', () => {
