@@ -10,3 +10,6 @@
 
 /assets/og-image.jpg
   Cache-Control: public, max-age=0, must-revalidate
+
+/version.json
+  Cache-Control: no-cache, no-store, must-revalidate

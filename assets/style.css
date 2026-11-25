@@ -1073,6 +1073,98 @@ body:has(#site-footer) > main {
   transform: translate(-50%, 0);
 }
 
+/* 顶部非阻塞新版本轻提示条 */
+.site-update-banner {
+  position: fixed;
+  top: calc(env(safe-area-inset-top, 0px) + 12px);
+  left: 50%;
+  z-index: 260;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: calc(100% - 24px);
+  padding: 7px 10px 7px 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.84rem;
+  font-weight: 600;
+  line-height: 1.25;
+  white-space: nowrap;
+  box-shadow: var(--shadow-md);
+  transform: translateX(-50%);
+}
+
+.site-update-banner.has-site-header {
+  top: calc(env(safe-area-inset-top, 0px) + 74px);
+}
+
+.site-update-banner[hidden] {
+  display: none;
+}
+
+body.mobile-game-immersive .site-update-banner {
+  display: none !important;
+}
+
+.site-update-banner-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.site-update-banner-refresh {
+  flex: 0 0 auto;
+  padding: 5px 11px;
+  border: none;
+  border-radius: 999px;
+  background: var(--primary);
+  color: #ffffff;
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1.2;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.site-update-banner-refresh:hover {
+  background: var(--primary-hover);
+}
+
+.site-update-banner-close {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 1.05rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.site-update-banner-close:hover {
+  background: var(--surface-muted);
+  color: var(--text);
+}
+
+.site-update-banner-refresh:focus-visible,
+.site-update-banner-close:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+@media (max-width: 600px) {
+  .site-update-banner.has-site-header {
+    top: calc(env(safe-area-inset-top, 0px) + 64px);
+  }
+}
+
 /* 语言切换按钮（站点头部 / 游戏顶栏共用一套视觉） */
 .nav-lang-btn,
 .lang-btn,

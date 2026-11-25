@@ -204,3 +204,318 @@ test('SiteData.importData rolls back existing managed keys if storage write fail
   assert.equal(storage.get('game_best_2048_4'), undefined);
   assert.equal(storage.get('site_theme'), 'light');
 });
+
+function createUpdateHarness({
+  currentBuild = 'aaaa1111bbbb2222',
+  isGame = false,
+  hasSiteHeader = true,
+  online = true,
+  fetchImpl,
+  nowStart = 1_000_000,
+} = {}) {
+  let now = nowStart;
+  const session = new Map();
+  const docListeners = new Map();
+  const replacedUrls = [];
+  const dialogEvents = [];
+
+  function makeEl(tag) {
+    const classes = new Set();
+    const attrs = new Map();
+    const listeners = new Map();
+    const el = {
+      tagName: tag.toUpperCase(),
+      children: [],
+      style: {},
+      hidden: false,
+      disabled: false,
+      textContent: '',
+      title: '',
+      id: '',
+      get className() { return Array.from(classes).join(' '); },
+      set className(val) {
+        classes.clear();
+        for (const c of String(val || '').split(/\s+/).filter(Boolean)) classes.add(c);
+      },
+      classList: {
+        add(...cs) { cs.forEach((c) => classes.add(c)); },
+        remove(...cs) { cs.forEach((c) => classes.delete(c)); },
+        contains(c) { return classes.has(c); },
+        toggle(c, force) {
+          const next = force === undefined ? !classes.has(c) : Boolean(force);
+          if (next) classes.add(c);
+          else classes.delete(c);
+          return next;
+        },
+      },
+      setAttribute(k, v) { attrs.set(k, String(v)); },
+      getAttribute(k) { return attrs.has(k) ? attrs.get(k) : null; },
+      appendChild(child) {
+        this.children.push(child);
+        return child;
+      },
+      remove() {
+        const idx = body.children.indexOf(this);
+        if (idx >= 0) body.children.splice(idx, 1);
+      },
+      addEventListener(type, fn) {
+        if (!listeners.has(type)) listeners.set(type, []);
+        listeners.get(type).push(fn);
+      },
+      click() {
+        for (const fn of listeners.get('click') || []) fn({ target: this, preventDefault() {} });
+      },
+      focus() {},
+      querySelector(sel) {
+        return findFirst(this, sel);
+      },
+      querySelectorAll(sel) {
+        const out = [];
+        collectAll(this, sel, out);
+        return out;
+      },
+    };
+    return el;
+  }
+
+  function matchesSel(el, sel) {
+    if (sel.startsWith('.')) return el.classList.contains(sel.slice(1));
+    if (sel === 'button:not([disabled])') return el.tagName === 'BUTTON' && !el.disabled;
+    return false;
+  }
+
+  function collectAll(node, sel, out) {
+    for (const child of node.children || []) {
+      if (matchesSel(child, sel)) out.push(child);
+      collectAll(child, sel, out);
+    }
+  }
+
+  function findFirst(node, sel) {
+    for (const child of node.children || []) {
+      if (matchesSel(child, sel)) return child;
+      const found = findFirst(child, sel);
+      if (found) return found;
+    }
+    return null;
+  }
+
+  const body = makeEl('body');
+  const origin = 'https:' + '//example.test';
+
+  const document = {
+    readyState: 'complete',
+    hidden: false,
+    title: '小游乐场',
+    currentScript: null,
+    activeElement: null,
+    body,
+    documentElement: {
+      lang: 'zh-CN',
+      setAttribute() {},
+      getAttribute() { return null; },
+    },
+    createElement: makeEl,
+    getElementById(id) {
+      if (id === 'site-header' && hasSiteHeader) return { id: 'site-header' };
+      return null;
+    },
+    querySelector(sel) {
+      if (sel === 'meta[name="site-build"]') {
+        return currentBuild ? { content: currentBuild } : null;
+      }
+      if (sel === 'main.game-wrap, [data-site-footer-mount]') {
+        return isGame ? { tagName: 'MAIN' } : null;
+      }
+      return findFirst(body, sel);
+    },
+    querySelectorAll(sel) {
+      const out = [];
+      collectAll(body, sel, out);
+      return out;
+    },
+    addEventListener(type, fn) {
+      if (!docListeners.has(type)) docListeners.set(type, []);
+      docListeners.get(type).push(fn);
+    },
+    dispatchEvent(event) {
+      if (event.type === 'site:dialogopen' || event.type === 'site:dialogclose') {
+        dialogEvents.push(event.type);
+      }
+      for (const fn of docListeners.get(event.type) || []) fn(event);
+      return true;
+    },
+  };
+
+  class CustomEvent {
+    constructor(type, init = {}) {
+      this.type = type;
+      this.detail = init.detail;
+    }
+  }
+
+  class MockDOMParser {
+    parseFromString(html) {
+      const m = String(html || '').match(/<meta name="site-build" content="([^"]+)"/);
+      return {
+        querySelector(sel) {
+          if (sel === 'meta[name="site-build"]' && m) return { content: m[1] };
+          return null;
+        },
+      };
+    }
+  }
+
+  const FakeDate = class extends Date {
+    static now() { return now; }
+  };
+
+  const sandbox = {
+    document,
+    Date: FakeDate,
+    URL,
+    CustomEvent,
+    DOMParser: MockDOMParser,
+    fetch: fetchImpl,
+    setTimeout(fn) {
+      const id = { fn, unref() {} };
+      return id;
+    },
+    clearTimeout() {},
+    requestAnimationFrame(fn) { fn(); },
+    location: {
+      origin,
+      href: origin + (isGame ? '/games/breakout/' : '/'),
+      replace(u) { replacedUrls.push(String(u)); },
+    },
+    localStorage: {
+      length: 0,
+      key() { return null; },
+      getItem() { return null; },
+      setItem() {},
+      removeItem() {},
+    },
+    sessionStorage: {
+      getItem(k) { return session.has(k) ? session.get(k) : null; },
+      setItem(k, v) { session.set(k, String(v)); },
+    },
+    navigator: { userAgent: '', onLine: online },
+    performance: { now: () => 0 },
+  };
+  sandbox.window = sandbox;
+
+  vm.runInNewContext(i18nEnSource, sandbox, { filename: 'assets/i18n-en.js' });
+  vm.runInNewContext(i18nSource, sandbox, { filename: 'assets/i18n.js' });
+  vm.runInNewContext(siteDataSource, sandbox, { filename: 'assets/site-data.js' });
+
+  return {
+    SiteData: sandbox.SiteData,
+    body,
+    session,
+    replacedUrls,
+    dialogEvents,
+    advanceTime(ms) { now += ms; },
+    getBanner() { return findFirst(body, '.site-update-banner'); },
+    getToast() { return findFirst(body, '.site-toast'); },
+    getDialog() { return findFirst(body, '.site-dialog'); },
+  };
+}
+
+test('SiteData.checkForUpdate shows top banner on new version, throttles within 5m, and remembers dismissal with toast', async () => {
+  let remoteBuild = 'aaaa1111bbbb2222';
+  let fetchCount = 0;
+  const h = createUpdateHarness({
+    currentBuild: 'aaaa1111bbbb2222',
+    isGame: false,
+    hasSiteHeader: true,
+    fetchImpl: async () => {
+      fetchCount += 1;
+      return { ok: true, json: async () => ({ build: remoteBuild }) };
+    },
+  });
+
+  // Same build: no banner
+  const r1 = await h.SiteData.checkForUpdate({ silent: true });
+  assert.equal(r1.status, 'latest');
+  assert.equal(h.getBanner(), null);
+  assert.equal(fetchCount, 1);
+
+  // Within 5-minute cooldown: skipped without fetch
+  h.advanceTime(60_000);
+  const r2 = await h.SiteData.checkForUpdate({ silent: true });
+  assert.equal(r2.status, 'skipped');
+  assert.equal(r2.reason, 'cooldown');
+  assert.equal(fetchCount, 1);
+
+  // After 5-minute cooldown with newer build: banner appears below site header
+  remoteBuild = 'cccc3333dddd4444';
+  h.advanceTime(h.SiteData.UPDATE_CHECK_COOLDOWN_MS);
+  const r3 = await h.SiteData.checkForUpdate({ silent: true });
+  assert.equal(r3.status, 'update');
+  const banner = h.getBanner();
+  assert.ok(banner && !banner.hidden);
+  assert.equal(banner.classList.contains('has-site-header'), true);
+
+  // Dismissing hides banner, records build, and shows toast hint
+  banner.querySelector('.site-update-banner-close').click();
+  assert.equal(banner.hidden, true);
+  assert.equal(h.session.get('site_update_dismissed_build'), 'cccc3333dddd4444');
+  assert.equal(h.getToast()?.textContent, '可随时在页面底部检查更新');
+
+  // Same dismissed build does not re-show banner after next cooldown
+  h.advanceTime(h.SiteData.UPDATE_CHECK_COOLDOWN_MS + 1000);
+  const r4 = await h.SiteData.checkForUpdate({ silent: true });
+  assert.equal(r4.status, 'update');
+  assert.equal(banner.hidden, true);
+
+  // An even newer build re-shows the banner
+  remoteBuild = 'eeee5555ffff6666';
+  h.advanceTime(h.SiteData.UPDATE_CHECK_COOLDOWN_MS + 1000);
+  const r5 = await h.SiteData.checkForUpdate({ silent: true });
+  assert.equal(r5.status, 'update');
+  assert.equal(banner.hidden, false);
+
+  // Lobby page refresh reloads directly without confirmDialog
+  banner.querySelector('.site-update-banner-refresh').click();
+  assert.equal(h.dialogEvents.length, 0);
+  assert.equal(h.replacedUrls.length, 1);
+  assert.match(h.replacedUrls[0], /\?fresh=\d+/);
+});
+
+test('SiteData update banner on game page opens confirmDialog (pausing game) and falls back to HTML when version.json fails', async () => {
+  const h = createUpdateHarness({
+    currentBuild: '1111222233334444',
+    isGame: true,
+    hasSiteHeader: false,
+    fetchImpl: async (url) => {
+      if (String(url).includes('/version.json')) {
+        return { ok: false, status: 404 };
+      }
+      return {
+        ok: true,
+        status: 200,
+        text: async () => '<html><head><meta name="site-build" content="9999888877776666" /></head></html>',
+      };
+    },
+  });
+
+  const res = await h.SiteData.checkForUpdate({ silent: true });
+  assert.equal(res.status, 'update');
+  assert.equal(res.next, '9999888877776666');
+
+  const banner = h.getBanner();
+  assert.ok(banner && !banner.hidden);
+  assert.equal(banner.classList.contains('has-site-header'), false);
+
+  // Clicking refresh on game page opens confirmDialog & dispatches site:dialogopen
+  banner.querySelector('.site-update-banner-refresh').click();
+  assert.deepEqual(h.dialogEvents, ['site:dialogopen']);
+  assert.equal(h.replacedUrls.length, 0);
+
+  const dialog = h.getDialog();
+  assert.ok(dialog);
+  dialog.querySelector('.primary').click();
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  assert.equal(h.replacedUrls.length, 1);
+  assert.match(h.replacedUrls[0], /\?fresh=\d+/);
+});

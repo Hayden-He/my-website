@@ -549,6 +549,201 @@
     return btn;
   }
 
+  const UPDATE_CHECK_COOLDOWN_MS = 5 * 60 * 1000;
+  const UPDATE_INITIAL_DELAY_MS = 3000;
+  const UPDATE_LAST_CHECK_KEY = 'site_update_last_check';
+  const UPDATE_DISMISSED_KEY = 'site_update_dismissed_build';
+
+  let lastUpdateCheckAt = 0;
+  let dismissedBuild = null;
+  let updateCheckInFlight = null;
+  let updateBannerEl = null;
+  let updateBannerBuild = null;
+
+  function readBuildVersion(page) {
+    return page.querySelector('meta[name="site-build"]')?.content || null;
+  }
+
+  function readLastUpdateCheckAt() {
+    let stored = 0;
+    try {
+      const raw = Number(sessionStorage.getItem(UPDATE_LAST_CHECK_KEY));
+      if (Number.isFinite(raw) && raw > 0) stored = raw;
+    } catch {}
+    return Math.max(lastUpdateCheckAt, stored);
+  }
+
+  function writeLastUpdateCheckAt(timestamp) {
+    lastUpdateCheckAt = timestamp;
+    try {
+      sessionStorage.setItem(UPDATE_LAST_CHECK_KEY, String(timestamp));
+    } catch {}
+  }
+
+  function readDismissedBuild() {
+    if (dismissedBuild) return dismissedBuild;
+    try {
+      return sessionStorage.getItem(UPDATE_DISMISSED_KEY) || null;
+    } catch {
+      return null;
+    }
+  }
+
+  function writeDismissedBuild(build) {
+    dismissedBuild = build;
+    try {
+      sessionStorage.setItem(UPDATE_DISMISSED_KEY, build);
+    } catch {}
+  }
+
+  function reloadWithFreshParam() {
+    const url = new URL(location.href);
+    url.searchParams.delete('check');
+    url.searchParams.set('fresh', Date.now());
+    location.replace(url);
+  }
+
+  function isGamePage() {
+    return Boolean(document.querySelector('main.game-wrap, [data-site-footer-mount]'));
+  }
+
+  async function fetchLatestBuild() {
+    if (typeof fetch !== 'function') return null;
+    const stamp = Date.now();
+    try {
+      const versionUrl = new URL('/version.json', location.origin);
+      versionUrl.searchParams.set('check', stamp);
+      const response = await fetch(versionUrl, { cache: 'no-store' });
+      if (response.ok) {
+        const data = await response.json();
+        if (data && typeof data.build === 'string' && data.build.trim()) {
+          return data.build.trim();
+        }
+      }
+    } catch {}
+
+    const pageUrl = new URL(location.href);
+    pageUrl.searchParams.set('check', stamp);
+    const response = await fetch(pageUrl, { cache: 'no-store' });
+    const isNotFoundPage = document.querySelector('meta[name="robots"][content="noindex"]');
+    if (!response.ok && (response.status !== 404 || !isNotFoundPage)) {
+      throw new Error('Update check failed');
+    }
+    const html = await response.text();
+    const nextPage = new DOMParser().parseFromString(html, 'text/html');
+    return readBuildVersion(nextPage);
+  }
+
+  function syncUpdateBannerLabels() {
+    if (!updateBannerEl) return;
+    const textEl = updateBannerEl.querySelector('.site-update-banner-text');
+    const refreshBtn = updateBannerEl.querySelector('.site-update-banner-refresh');
+    const closeBtn = updateBannerEl.querySelector('.site-update-banner-close');
+    if (textEl) textEl.textContent = t('发现新版本');
+    if (refreshBtn) refreshBtn.textContent = t('立即刷新');
+    if (closeBtn) {
+      closeBtn.setAttribute('aria-label', t('关闭'));
+      closeBtn.title = t('关闭');
+    }
+  }
+
+  function hideUpdateBanner() {
+    if (updateBannerEl) updateBannerEl.hidden = true;
+  }
+
+  function showUpdateBanner(nextBuild) {
+    if (!nextBuild || !document.body) return;
+    updateBannerBuild = nextBuild;
+    if (!updateBannerEl) {
+      const banner = document.createElement('div');
+      banner.className = 'site-update-banner';
+      banner.setAttribute('role', 'status');
+      banner.setAttribute('aria-live', 'polite');
+
+      const textEl = document.createElement('span');
+      textEl.className = 'site-update-banner-text';
+
+      const refreshBtn = document.createElement('button');
+      refreshBtn.type = 'button';
+      refreshBtn.className = 'site-update-banner-refresh';
+      refreshBtn.addEventListener('click', async () => {
+        if (isGamePage()) {
+          const confirmed = await confirmDialog({
+            title: t('发现新版本'),
+            message: t('刷新将加载新版本，未保存的进度会丢失。'),
+            confirmText: t('立即刷新'),
+            cancelText: t('稍后'),
+          });
+          if (!confirmed) return;
+        }
+        hideUpdateBanner();
+        reloadWithFreshParam();
+      });
+
+      const closeBtn = document.createElement('button');
+      closeBtn.type = 'button';
+      closeBtn.className = 'site-update-banner-close';
+      closeBtn.textContent = '×';
+      closeBtn.addEventListener('click', () => {
+        if (updateBannerBuild) writeDismissedBuild(updateBannerBuild);
+        hideUpdateBanner();
+        toast(t('可随时在页面底部检查更新'));
+      });
+
+      banner.appendChild(textEl);
+      banner.appendChild(refreshBtn);
+      banner.appendChild(closeBtn);
+      document.body.appendChild(banner);
+      updateBannerEl = banner;
+    }
+    updateBannerEl.classList.toggle('has-site-header', Boolean(document.getElementById('site-header')));
+    syncUpdateBannerLabels();
+    updateBannerEl.hidden = false;
+  }
+
+  async function checkForUpdate(options) {
+    const opts = options || {};
+    const silent = opts.silent !== false;
+    const force = Boolean(opts.force);
+    const current = readBuildVersion(document);
+    if (!current || typeof fetch !== 'function') {
+      return { status: 'skipped', reason: 'unavailable' };
+    }
+    if (silent && typeof navigator !== 'undefined' && navigator.onLine === false) {
+      return { status: 'skipped', reason: 'offline' };
+    }
+    const now = Date.now();
+    if (silent && !force) {
+      const last = readLastUpdateCheckAt();
+      if (last > 0 && now - last < UPDATE_CHECK_COOLDOWN_MS) {
+        return { status: 'skipped', reason: 'cooldown' };
+      }
+    }
+    if (updateCheckInFlight) return updateCheckInFlight;
+
+    writeLastUpdateCheckAt(now);
+    updateCheckInFlight = (async () => {
+      try {
+        const next = await fetchLatestBuild();
+        if (!next) return { status: 'error' };
+        if (next !== current) {
+          if (silent && readDismissedBuild() !== next) {
+            showUpdateBanner(next);
+          }
+          return { status: 'update', current, next };
+        }
+        hideUpdateBanner();
+        return { status: 'latest', current, next };
+      } catch {
+        return { status: 'error' };
+      } finally {
+        updateCheckInFlight = null;
+      }
+    })();
+
+    return updateCheckInFlight;
+  }
+
   function createUpdateButton() {
     const btn = document.createElement('button');
     btn.type = 'button';
@@ -559,16 +754,8 @@
       btn.disabled = true;
       btn.textContent = t('检查中…');
       try {
-        const url = new URL(location.href);
-        url.searchParams.set('check', Date.now());
-        const response = await fetch(url, { cache: 'no-store' });
-        const isNotFoundPage = document.querySelector('meta[name="robots"][content="noindex"]');
-        if (!response.ok && (response.status !== 404 || !isNotFoundPage)) throw new Error('Update check failed');
-        const html = await response.text();
-        const nextPage = new DOMParser().parseFromString(html, 'text/html');
-        const current = readBuildVersion(document);
-        const next = readBuildVersion(nextPage);
-        if (current && next && current !== next) {
+        const result = await checkForUpdate({ silent: false, force: true });
+        if (result.status === 'update') {
           const confirmed = await confirmDialog({
             title: t('发现新版本'),
             message: t('刷新将加载新版本，未保存的进度会丢失。'),
@@ -576,11 +763,10 @@
             cancelText: t('稍后'),
           });
           if (confirmed) {
-            url.searchParams.delete('check');
-            url.searchParams.set('fresh', Date.now());
-            location.replace(url);
+            hideUpdateBanner();
+            reloadWithFreshParam();
           }
-        } else if (current && next) {
+        } else if (result.status === 'latest') {
           toast(t('已是最新版本'));
         } else {
           toast(t('检查失败，请稍后重试'));
@@ -593,10 +779,6 @@
       }
     });
     return btn;
-  }
-
-  function readBuildVersion(page) {
-    return page.querySelector('meta[name="site-build"]')?.content || null;
   }
 
   // 作者标识：© 年份 站点名 · by Hayden-He（链接至作者仓库）
@@ -627,9 +809,10 @@
     getRecentGameId, recordRecentGame,
     getAudioContext, unlockAudio, withAudio,
     isDialogOpen, confirmDialog, alertDialog, toast,
+    checkForUpdate, UPDATE_CHECK_COOLDOWN_MS,
   };
 
-  // 语言切换时更新游戏页上已追加的作者标识与清除入口
+  // 语言切换时更新游戏页上已追加的作者标识、清除入口与新版本提示条
   document.addEventListener('i18n:change', () => {
     const title = (window.SITE_CONFIG && window.SITE_CONFIG.siteTitle) || '小游乐场';
     document.querySelectorAll('.credit-site').forEach((el) => {
@@ -644,6 +827,7 @@
     document.querySelectorAll('.update-check-btn').forEach((el) => {
       if (!el.disabled) el.textContent = t('检查更新');
     });
+    syncUpdateBannerLabels();
   });
 
   function ensureIconSprite() {
@@ -663,9 +847,25 @@
       .catch(() => {});
   }
 
+  function scheduleAutoUpdateChecks() {
+    if (!readBuildVersion(document) || typeof fetch !== 'function') return;
+    const timer = setTimeout(() => {
+      checkForUpdate({ silent: true });
+    }, UPDATE_INITIAL_DELAY_MS);
+    if (timer && typeof timer.unref === 'function') timer.unref();
+
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) checkForUpdate({ silent: true });
+    });
+    window.addEventListener?.('pageshow', (event) => {
+      if (event && event.persisted) checkForUpdate({ silent: true });
+    });
+  }
+
   // 游戏页：自动在页面底部追加入口（列表页由 app.js 在页脚渲染）
   document.addEventListener('DOMContentLoaded', () => {
     ensureIconSprite();
+    scheduleAutoUpdateChecks();
     const wrap = document.querySelector('main.game-wrap, [data-site-footer-mount]');
     if (!wrap) return;
     const box = document.createElement('div');

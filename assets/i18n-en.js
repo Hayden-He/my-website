@@ -233,6 +233,7 @@ window.I18N_EN = {
   '刷新将加载新版本，未保存的进度会丢失。': 'Reload to update. Any unsaved progress will be lost.',
   '立即刷新': 'Reload now',
   '稍后': 'Later',
+  '可随时在页面底部检查更新': 'You can check for updates anytime at the bottom of the page',
   '当前得分': 'Score',
   '最大方块': 'Max',
   '模式最高': 'Best',

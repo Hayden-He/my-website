@@ -312,6 +312,8 @@ for (const file of pages) {
   content.set(file, html);
 }
 
+content.set('version.json', Buffer.from(JSON.stringify({ build: buildId }) + '\n', 'utf8'));
+
 fs.rmSync(output, { recursive: true, force: true });
 for (const [file, bytes] of content) write(file, bytes);
 

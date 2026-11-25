@@ -358,6 +358,8 @@ checkFile('sitemap.xml', 'sitemap.xml');
 checkFile('robots.txt', 'robots.txt');
 checkContains(read('_headers'), '/assets/v/*', '_headers');
 checkContains(read('_headers'), 'max-age=31536000, immutable', '_headers');
+checkContains(read('_headers'), '/version.json', '_headers');
+checkContains(read('_headers'), 'no-cache', '_headers');
 const sitemap = read('sitemap.xml') || '';
 const robots = read('robots.txt') || '';
 const indexablePaths = [

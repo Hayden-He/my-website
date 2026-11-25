@@ -300,3 +300,15 @@ test('every game module referencing ./rules.js exports imports or declares them 
     }
   }
 });
+
+test('dist emits version.json matching meta site-build in built HTML pages', () => {
+  const versionPath = path.join(dist, 'version.json');
+  assert.equal(fs.existsSync(versionPath), true, 'dist/version.json should exist');
+  const payload = JSON.parse(fs.readFileSync(versionPath, 'utf8'));
+  assert.match(payload.build, /^[0-9a-f]{16}$/);
+
+  const indexHtml = fs.readFileSync(path.join(dist, 'index.html'), 'utf8');
+  const metaMatch = indexHtml.match(/<meta name="site-build" content="([0-9a-f]{16})" \/>/);
+  assert.ok(metaMatch, 'dist/index.html should include meta site-build');
+  assert.equal(payload.build, metaMatch[1]);
+});
