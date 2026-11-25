@@ -520,6 +520,7 @@ window.I18N_EN = {
   // ---- 极速切水果 ----
   '沉浸模式': 'Focus mode',
   '战机设置与图鉴': 'Flight settings & guide',
+  '挡板设置与图鉴': 'Paddle settings & guide',
   '退出沉浸': 'Exit focus mode',
   '怎么横屏玩？': 'How do I play in landscape?',
   'iPhone：在控制中心关闭「竖排方向锁定」，再横握手机。全面屏机型从右上角下滑打开控制中心。':
@@ -529,6 +530,8 @@ window.I18N_EN = {
     'Page stays upright in WeChat? Tap the top-right menu (…) and choose Open in Default Browser.',
   '找不到这个选项？复制游戏链接，用常用的手机浏览器打开。也可以用「沉浸模式」竖屏玩。':
     'No browser option? Copy the game link and open it in your usual mobile browser. You can also play in portrait using Focus mode.',
+  '找不到这个选项？复制游戏链接，用常用的手机浏览器打开。也可以先竖屏直接游玩。':
+    'No browser option? Copy the game link and open it in your usual mobile browser. You can also play directly in portrait.',
   '极速切水果': 'Fruit Slicer',
   '极速切水果 - 小游乐场': 'Fruit Slicer - Little Playground',
   '剩余时间': 'Time',

@@ -36,8 +36,10 @@ function makeMockCtx() {
     stroke: noop,
     fillRect: noop,
     fillText: noop,
+    strokeText: noop,
     setLineDash: noop,
     createLinearGradient: () => grad,
+    createRadialGradient: () => grad,
   };
 }
 
@@ -179,8 +181,11 @@ test('breakout renderer and audio run cleanly across all 3 skins and states', ()
       lasers: [{ x: 150, y: 250 }],
       particles: [{ x: 100, y: 120, size: 3, color: '#fff', life: 0.2, maxLife: 0.4 }],
       floatTexts: [{ x: 200, y: 200, text: '+60', color: '#fde047', life: 0.4 }],
+      shockwaves: [{ x: 180, y: 120, r: 28, maxR: 92, life: 0.2, maxLife: 0.36, color: '#fb923c' }],
       effects: { expand: 5, fire: 4, laser: 3, magnet: 2 },
       paddle: { x: 220, w: 120 },
+      paddleHitFlash: 0.5,
+      wallFlash: 0.5,
       shakeTimer: 0.1,
       shakeMag: 5,
       levelBannerTimer: 1.0,

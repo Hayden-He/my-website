@@ -723,6 +723,28 @@ GameKit.bindMobileLayout('tank-maze', immersiveButton, pauseForInterruption, {
     SiteData.alertDialog({
       title: t('横屏沉浸'),
       message: t('将手机转为横屏，再点「横屏沉浸」，即可把棋盘放到两个触控之间。'),
+      confirmText: t('知道了'),
+      renderExtra() {
+        const box = document.createElement('div');
+        box.className = 'tank-rotate-dialog-guide';
+        for (const line of [
+          'iPhone：在控制中心关闭「竖排方向锁定」，再横握手机。全面屏机型从右上角下滑打开控制中心。',
+          'Android：开启自动旋转，再横握手机。',
+          '微信里转不了？点右上角「…」，选「用默认浏览器打开」。',
+          '找不到这个选项？复制游戏链接，用常用的手机浏览器打开。也可以先竖屏直接游玩。',
+        ]) {
+          const p = document.createElement('p');
+          p.textContent = t(line);
+          box.appendChild(p);
+        }
+        const copyBtn = document.createElement('button');
+        copyBtn.type = 'button';
+        copyBtn.className = 'copy-link-btn';
+        copyBtn.dataset.copyLink = '/games/tank-maze/';
+        copyBtn.textContent = t('复制游戏链接');
+        box.appendChild(copyBtn);
+        return box;
+      },
     });
   },
   onRender(enabled) {

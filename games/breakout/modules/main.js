@@ -67,6 +67,7 @@ if (!SKINS[skin]) skin = 'neon';
 let soundEnabled = window.SiteData ? SiteData.getSound() : true;
 GameKit.bindSoundButton(soundBtn, soundEnabled, (on) => {
   soundEnabled = on;
+  blurGameControl();
 });
 
 const audio = createBreakoutAudio({ isEnabled: () => soundEnabled });
@@ -86,6 +87,8 @@ let levelBannerTimer = 0;
 let levelBannerText = '';
 let shakeTimer = 0;
 let shakeMag = 0;
+let paddleHitFlash = 0;
+let wallFlash = 0;
 let laserCooldown = 0;
 let lastFrameAt = 0;
 let nowMs = 0;
@@ -96,6 +99,7 @@ let capsules = [];
 let lasers = [];
 let particles = [];
 let floatTexts = [];
+let shockwaves = [];
 const effects = { expand: 0, fire: 0, laser: 0, magnet: 0 };
 const paddle = { x: W / 2, w: PADDLE_BASE_WIDTH };
 const keys = { left: false, right: false };
@@ -112,8 +116,11 @@ const renderer = createBreakoutRenderer({
     lasers,
     particles,
     floatTexts,
+    shockwaves,
     effects,
     paddle,
+    paddleHitFlash,
+    wallFlash,
     shakeTimer,
     shakeMag,
     levelBannerTimer,
@@ -172,6 +179,9 @@ function loadClassicStage(nextLevel) {
   ballSpeed = data.ballSpeed;
   capsules = [];
   lasers = [];
+  shockwaves = [];
+  paddleHitFlash = 0;
+  wallFlash = 0;
   effects.expand = 0;
   effects.fire = 0;
   effects.laser = 0;
@@ -192,6 +202,9 @@ function setupRound(startImmediately = false) {
   pushTimer = ENDLESS_PUSH_INTERVAL;
   particles = [];
   floatTexts = [];
+  shockwaves = [];
+  paddleHitFlash = 0;
+  wallFlash = 0;
   effects.expand = 0;
   effects.fire = 0;
   effects.laser = 0;
@@ -212,6 +225,7 @@ function setupRound(startImmediately = false) {
   }
 
   phase = startImmediately ? 'playing' : 'ready';
+  blurGameControl();
   updateHud();
   renderOverlay();
 }
@@ -339,7 +353,18 @@ function fireLasers(cooldownSeconds = 0.24) {
   return true;
 }
 
+function blurGameControl() {
+  const active = document.activeElement;
+  if (
+    active instanceof HTMLElement &&
+    active.matches('.overlay button, .mode-pill, .skin-pill, #launch-btn, #pause-btn, #sound-btn, #restart-btn')
+  ) {
+    active.blur();
+  }
+}
+
 function triggerPrimaryAction() {
+  blurGameControl();
   if (phase === 'ready') {
     phase = 'playing';
     launchStuckBalls();
@@ -412,6 +437,15 @@ function handleBrickEvents(events) {
       audio.playBombExplode();
       shakeTimer = 0.24;
       shakeMag = 6;
+      shockwaves.push({
+        x: cx,
+        y: cy,
+        r: 8,
+        maxR: 92,
+        life: 0.36,
+        maxLife: 0.36,
+        color: '#fb923c',
+      });
     }
     for (const dead of hitList) {
       combo += 1;
@@ -453,6 +487,18 @@ function step(dt) {
   if (shakeTimer > 0) shakeTimer = Math.max(0, shakeTimer - dt);
   if (levelBannerTimer > 0) levelBannerTimer = Math.max(0, levelBannerTimer - dt);
   if (laserCooldown > 0) laserCooldown = Math.max(0, laserCooldown - dt);
+  if (paddleHitFlash > 0) paddleHitFlash = Math.max(0, paddleHitFlash - dt * 5.5);
+  if (wallFlash > 0) wallFlash = Math.max(0, wallFlash - dt * 6);
+
+  for (let i = shockwaves.length - 1; i >= 0; i -= 1) {
+    const sw = shockwaves[i];
+    sw.life -= dt;
+    if (sw.life <= 0) {
+      shockwaves.splice(i, 1);
+      continue;
+    }
+    sw.r = sw.maxR * (1 - sw.life / sw.maxLife);
+  }
 
   for (let i = particles.length - 1; i >= 0; i -= 1) {
     const p = particles[i];
@@ -514,12 +560,17 @@ function step(dt) {
       if (ball.trail.length > 6) ball.trail.shift();
     }
     const res = stepBallSubstepped(ball, paddle, bricks, effects, dt);
-    if (res.wallHit) audio.playWallHit();
+    if (res.wallHit) {
+      wallFlash = 1;
+      audio.playWallHit();
+    }
     if (res.magnetCatch) {
+      paddleHitFlash = 1;
       combo = 0;
       audio.playPaddleHit(true);
       hudDirty = true;
     } else if (res.paddleHit) {
+      paddleHitFlash = 1;
       combo = 0;
       audio.playPaddleHit(false);
       hudDirty = true;
@@ -586,6 +637,7 @@ function loop(timestamp) {
 }
 
 function togglePause() {
+  blurGameControl();
   if (phase === 'playing') {
     phase = 'paused';
     renderOverlay();
@@ -623,6 +675,7 @@ async function confirmAbandonAndRun(action, { switching = false } = {}) {
 }
 
 function switchMode(next) {
+  blurGameControl();
   if (next === mode) return;
   confirmAbandonAndRun(() => {
     mode = next;
@@ -646,9 +699,16 @@ function canvasPointFromEvent(event) {
 let activePointer = null;
 canvas.addEventListener('pointerdown', (event) => {
   if (!event.isPrimary || event.button !== 0) return;
-  activePointer = { id: event.pointerId, startX: event.clientX, moved: false };
+  const isMouse = event.pointerType === 'mouse';
+  activePointer = { id: event.pointerId, startX: event.clientX, moved: false, consumedClick: false };
   canvas.setPointerCapture(event.pointerId);
-  if (phase === 'playing') movePaddleTo(canvasPointFromEvent(event));
+  if (phase === 'playing') {
+    movePaddleTo(canvasPointFromEvent(event));
+    if (isMouse) {
+      if (!launchStuckBalls()) fireLasers();
+      activePointer.consumedClick = true;
+    }
+  }
 });
 
 canvas.addEventListener('pointermove', (event) => {
@@ -662,7 +722,7 @@ canvas.addEventListener('pointermove', (event) => {
 
 canvas.addEventListener('pointerup', (event) => {
   if (!activePointer || activePointer.id !== event.pointerId) return;
-  const wasTap = !activePointer.moved;
+  const wasTap = !activePointer.moved && !activePointer.consumedClick;
   activePointer = null;
   if (wasTap && phase === 'playing') {
     if (!launchStuckBalls()) fireLasers();
@@ -686,7 +746,7 @@ document.addEventListener('keydown', (event) => {
   } else if (event.code === 'ArrowRight' || event.code === 'KeyD') {
     event.preventDefault();
     keys.right = true;
-  } else if (event.code === 'Space' || event.code === 'ArrowUp' || event.code === 'KeyW') {
+  } else if (event.code === 'Space' || event.key === ' ' || event.code === 'ArrowUp' || event.code === 'KeyW') {
     event.preventDefault();
     triggerPrimaryAction();
   } else if (event.code === 'KeyP') {
@@ -709,10 +769,14 @@ pauseBtn.addEventListener('click', togglePause);
 restartBtn.addEventListener('click', () => confirmAbandonAndRun(() => setupRound(false)));
 overlayBtn.addEventListener('click', triggerPrimaryAction);
 launchBtn.addEventListener('click', () => {
+  blurGameControl();
   if (!launchStuckBalls()) fireLasers();
 });
 skinBtns.forEach((btn) => {
-  btn.addEventListener('click', () => setSkin(btn.dataset.skin));
+  btn.addEventListener('click', () => {
+    setSkin(btn.dataset.skin);
+    blurGameControl();
+  });
 });
 
 GameKit.onHidden(() => {
@@ -762,8 +826,34 @@ function showTutorial(force) {
   });
 }
 
+function bindImmersiveLayout() {
+  const options = document.getElementById('breakout-options-content');
+  const controls = [
+    modeClassicBtn.parentElement, soundBtn, helpBtn, restartBtn,
+    skinBtns[0].parentElement, document.querySelector('.breakout-legend'),
+  ].map((control) => {
+    const anchor = document.createComment('breakout option');
+    control.before(anchor);
+    return { control, anchor };
+  });
+  let immersive = false;
+  GameKit.bindMobileLayout('breakout', immersiveBtn, () => {
+    if (phase === 'playing') togglePause();
+  }, {
+    portraitOnly: true,
+    onRender(active) {
+      if (active === immersive) return;
+      immersive = active;
+      for (const { control, anchor } of controls) {
+        if (active) options.appendChild(control);
+        else anchor.after(control);
+      }
+    },
+  });
+}
+
 helpBtn.addEventListener('click', () => showTutorial(true));
-GameKit.bindMobileLayout('breakout', immersiveBtn, () => {});
+bindImmersiveLayout();
 setupRound(false);
 showTutorial(false);
 requestAnimationFrame(loop);

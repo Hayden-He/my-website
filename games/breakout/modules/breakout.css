@@ -1,5 +1,6 @@
 .game-wrap {
   --game-width: 500px;
+  --mobile-stage-ratio: 460 / 560;
 }
 
 .hud {
@@ -57,11 +58,13 @@
   border-radius: 50%;
   background: #22c55e;
   border: 1px solid #15803d;
+  box-shadow: 0 0 6px rgba(34, 197, 94, 0.38);
 }
 
 .life-pip.lost {
   background: transparent;
   border-color: #94a3b8;
+  box-shadow: none;
 }
 
 .status-badge {
@@ -145,7 +148,7 @@
   border-radius: 18px;
   overflow: hidden;
   border: 1px solid #1e293b;
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-md), 0 0 28px -12px rgba(56, 189, 248, 0.35);
   background: #060a1f;
 }
 
@@ -280,6 +283,87 @@ canvas {
   color: #fff;
   font-size: 0.65rem;
   font-weight: 800;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.24);
+}
+
+#breakout-options {
+  display: none;
+}
+
+.mobile-game-immersive #breakout-options {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+}
+
+#breakout-options summary {
+  cursor: pointer;
+  padding: 6px 8px;
+  color: #bfdbfe;
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+#breakout-options-content {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  padding-top: 6px;
+}
+
+.mobile-game-immersive #breakout-options-content .breakout-legend {
+  background: rgba(15, 23, 42, 0.72);
+  border-color: rgba(148, 163, 184, 0.28);
+  padding: 10px;
+  text-align: left;
+  box-shadow: none;
+}
+
+.mobile-game-immersive #breakout-options-content .legend-title {
+  color: #cbd5e1;
+  margin-bottom: 6px;
+}
+
+.mobile-game-immersive #breakout-options-content .legend-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 5px 8px;
+}
+
+.mobile-game-immersive #breakout-options-content .legend-item {
+  color: #e2e8f0;
+  font-size: 0.72rem;
+}
+
+.mobile-game-immersive #breakout-options-content .skin-pills {
+  background: rgba(15, 23, 42, 0.72);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+}
+
+.mobile-game-immersive #breakout-options-content .skin-pill {
+  color: #cbd5e1;
+}
+
+.mobile-game-immersive #breakout-options-content .skin-pill.active {
+  background: rgba(56, 189, 248, 0.22);
+  color: #f8fafc;
+}
+
+@media (min-width: 640px) and (max-height: 860px) {
+  body:not(.mobile-game-immersive) .game-wrap {
+    margin: 10px auto 24px;
+    gap: 8px;
+  }
+
+  body:not(.mobile-game-immersive) .hud-box {
+    padding: 6px 8px;
+  }
+
+  body:not(.mobile-game-immersive) .stage-box {
+    width: min(100%, max(340px, calc((100dvh - 280px) * (460 / 560))));
+    margin-inline: auto;
+  }
 }
 
 .mobile-game-immersive .game-wrap {
@@ -321,10 +405,14 @@ canvas {
   font-size: 0.74rem;
 }
 
+.mobile-game-immersive #pause-btn {
+  min-inline-size: 4.5rem;
+}
+
 .mobile-game-immersive .status-strip {
   grid-column: 1 / -1;
   grid-row: 2;
-  padding-block: 3px;
+  padding: 4px 10px;
 }
 
 .mobile-game-immersive .mobile-game-stage {
@@ -334,6 +422,7 @@ canvas {
 
 .mobile-game-immersive .stage-box {
   width: min(100%, calc((100vh - 175px) * (460 / 560)));
+  width: min(100%, max(1px, calc((100cqh - 2px) * (460 / 560) + 2px)));
 }
 
 .mobile-game-immersive .action-bar {
@@ -342,8 +431,12 @@ canvas {
   justify-content: center;
 }
 
-.mobile-game-immersive .hint,
-.mobile-game-immersive .breakout-legend {
+.mobile-game-immersive .launch-btn {
+  min-height: 44px;
+  min-width: 170px;
+}
+
+.mobile-game-immersive .hint {
   display: none;
 }
 
