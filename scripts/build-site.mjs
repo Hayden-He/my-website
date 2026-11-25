@@ -172,10 +172,16 @@ function replaceOnce(file, html, placeholder, replacement) {
   return html.replace(placeholder, () => replacement);
 }
 
-function injectShell(file, html) {
+function readSitePageKey(html) {
+  const attr = html.match(/<body[^>]*\bdata-site-page="([^"]*)"/);
+  if (attr) return attr[1];
   const call = html.match(/initSitePage\('([^']*)'\)/);
-  if (!call) return html; // 游戏页等不使用公共外壳渲染
-  const activeKey = call[1];
+  return call ? call[1] : null;
+}
+
+function injectShell(file, html) {
+  const activeKey = readSitePageKey(html);
+  if (activeKey === null) return html; // 游戏页等不使用公共外壳渲染
   html = replaceOnce(file, html, PLACEHOLDERS.header, '<header id="site-header" class="site-header">' + headerHtml(activeKey) + '</header>');
   html = replaceOnce(file, html, PLACEHOLDERS.footer, '<footer id="site-footer" class="site-footer">' + footerHtml(activeKey) + '</footer>');
   if (html.includes(PLACEHOLDERS.grid)) {
@@ -193,9 +199,8 @@ function injectShell(file, html) {
 
 // 构建后校验：静态卡片与 games.js 一致，且不存在遗留空占位。
 function verifyShell(file, html) {
-  const call = html.match(/initSitePage\('([^']*)'\)/);
-  if (!call) return;
-  const activeKey = call[1];
+  const activeKey = readSitePageKey(html);
+  if (activeKey === null) return;
   const problems = [];
   for (const placeholder of Object.values(PLACEHOLDERS)) {
     if (html.includes(placeholder)) problems.push('仍有空占位 ' + placeholder);
@@ -234,11 +239,12 @@ function collectPageIcons(html, moduleTexts) {
     needed.add('sound-on');
     needed.add('sound-off');
   }
-  if (stripped.includes('initSitePage(') || haystack.includes('showTutorial')) {
+  if (readSitePageKey(stripped) !== null || haystack.includes('showTutorial')) {
     needed.add('brand');
   }
 
-  const moreMatch = haystack.match(/GameKit\.mountMoreGames\(\s*['"]([a-z0-9-]+)['"]/);
+  const moreMatch = haystack.match(/data-more-games="([a-z0-9-]+)"/) ||
+    haystack.match(/GameKit\.mountMoreGames\(\s*['"]([a-z0-9-]+)['"]/);
   if (moreMatch) {
     const current = config.games.findIndex((g) => g.id === moreMatch[1]);
     if (current >= 0) {

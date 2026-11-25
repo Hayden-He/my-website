@@ -93,8 +93,19 @@ function resolveDistFile(requestPath) {
   return null;
 }
 
+function readDistCsp() {
+  try {
+    const raw = fs.readFileSync(path.join(distDir, '_headers'), 'utf8');
+    const match = raw.match(/^\s*Content-Security-Policy:\s*(.+)$/m);
+    return match ? match[1].trim() : null;
+  } catch {
+    return null;
+  }
+}
+
 function startStaticServer() {
   const notFound = [];
+  const cspHeader = readDistCsp();
   const server = http.createServer((req, res) => {
     try {
       const pathname = decodeURIComponent(new URL(req.url, 'http://127.0.0.1').pathname);
@@ -105,7 +116,9 @@ function startStaticServer() {
         return;
       }
       const ext = path.extname(filePath).toLowerCase();
-      res.writeHead(200, { 'Content-Type': MIME[ext] || 'application/octet-stream' });
+      const headers = { 'Content-Type': MIME[ext] || 'application/octet-stream' };
+      if (ext === '.html' && cspHeader) headers['Content-Security-Policy'] = cspHeader;
+      res.writeHead(200, headers);
       res.end(fs.readFileSync(filePath));
     } catch {
       res.writeHead(500).end('Server error');

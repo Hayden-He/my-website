@@ -132,7 +132,7 @@ for (const category of categories) {
   checkFile(categoryPath + '.html', `分类页 ${category.url}`);
   const categoryPage = read(categoryPath + '.html');
   if (categoryPage) {
-    checkContains(categoryPage, "initSitePage('" + category.id + "')", `分类页 ${category.url}`);
+    checkContains(categoryPage, 'data-site-page="' + category.id + '"', `分类页 ${category.url}`);
     checkContains(categoryPage, 'id="games-grid"', `分类页 ${category.url}`);
     checkContains(categoryPage, 'assets/style.css', `分类页 ${category.url}`);
     checkContains(categoryPage, 'assets/theme.js', `分类页 ${category.url}`);
@@ -289,7 +289,7 @@ for (const game of games) {
   checkContains(page, 'assets/games.js', pagePath);
   checkContains(page, 'assets/game-kit.js', pagePath);
   checkContains(page, 'id="more-games"', pagePath);
-  checkContains(page, 'GameKit.mountMoreGames(', pagePath);
+  checkContains(page, `data-more-games="${game.id}"`, pagePath);
   if (game.title) checkContains(page, escapeHtml(game.title), pagePath);
   if (page.includes('user-scalable=no') || page.includes('maximum-scale=1')) {
     fail(`${pagePath} 重新引入了禁止缩放的 viewport 设置`);
@@ -308,7 +308,7 @@ try {
 }
 
 // ---------- 首页 / 404 / 公共资源 ----------
-checkContains(read('index.html'), "initSitePage('all')", 'index.html');
+checkContains(read('index.html'), 'data-site-page="all"', 'index.html');
 checkContains(read('index.html'), 'id="games-grid"', 'index.html');
 checkContains(read('index.html'), 'assets/theme.js', 'index.html');
 checkContains(read('index.html'), 'assets/i18n.js', 'index.html');
@@ -360,6 +360,8 @@ checkContains(read('_headers'), '/assets/v/*', '_headers');
 checkContains(read('_headers'), 'max-age=31536000, immutable', '_headers');
 checkContains(read('_headers'), '/version.json', '_headers');
 checkContains(read('_headers'), 'no-cache', '_headers');
+checkContains(read('_headers'), 'Content-Security-Policy:', '_headers');
+checkContains(read('_headers'), "script-src 'self'", '_headers');
 const sitemap = read('sitemap.xml') || '';
 const robots = read('robots.txt') || '';
 const indexablePaths = [
@@ -406,11 +408,20 @@ for (const asset of [
   checkFile(asset, asset);
 }
 
-// ---------- 旧版 ?v= 参数清理与模板基线校验 ----------
+// ---------- 旧版 ?v= 参数与无内联脚本/样式 CSP 基线校验 ----------
 for (const { file: relative } of sitePages({ ...config, games, categories })) {
   const html = read(relative) || '';
   if (/\?v=\d+/.test(html)) {
     fail(`${relative} 仍残留 ?v= 旧版资源查询参数`);
+  }
+  if (/<script(?![^>]*\bsrc=)[^>]*>/i.test(html)) {
+    fail(`${relative} 存在内联 <script>，违反 CSP script-src 'self' 基线`);
+  }
+  if (/<style\b/i.test(html)) {
+    fail(`${relative} 存在内联 <style>，请拆分到外部样式文件`);
+  }
+  if (/\son[a-z]+\s*=/i.test(html)) {
+    fail(`${relative} 存在内联事件属性（on*=），违反严格 CSP 基线`);
   }
 }
 

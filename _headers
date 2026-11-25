@@ -1,9 +1,10 @@
 # Cloudflare Pages 响应头
-# 说明：站点为纯静态页面，未启用 CSP（页面含内联脚本）；如需更严格策略，先拆分内联脚本再逐步收紧。
+# 全站生产页面已清零内联脚本，启用严格 script-src 'self' CSP 策略。
 /*
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: geolocation=(), microphone=(), camera=()
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; font-src 'self'; manifest-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'
 
 /assets/v/*
   Cache-Control: public, max-age=31536000, immutable

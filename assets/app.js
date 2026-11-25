@@ -799,4 +799,15 @@
     getTetrisResume,
     getBlockWorkshopProjectCount,
   };
+
+  function bootFromBody() {
+    if (!document.body || !document.body.hasAttribute('data-site-page')) return;
+    window.initSitePage(document.body.getAttribute('data-site-page') || '');
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', bootFromBody);
+  } else {
+    bootFromBody();
+  }
 })();

@@ -438,4 +438,17 @@
     showTutorial,
     isTutorialOpen: () => tutorialOpen,
   };
+
+  function autoMountMoreGames() {
+    document.querySelectorAll('[data-more-games]').forEach((container) => {
+      const id = container.getAttribute('data-more-games');
+      if (id) mountMoreGames(id, container);
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', autoMountMoreGames);
+  } else {
+    autoMountMoreGames();
+  }
 })();
