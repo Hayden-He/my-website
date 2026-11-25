@@ -7,10 +7,13 @@
  *
  * 校验内容：
  * - 启动临时本地静态服务挂载 dist/（兼容 /categories/<id> 无扩展名路由）
- * - 遍历首页、分类页及全部游戏页：
+ * - 桌面端（1280×820）遍历首页、分类页及全部游戏页：
  *   1) 0 未捕获 JS 异常、0 console.error、0 HTTP>=400 / 失败资源请求
  *   2) 首页检验卡片数量、战绩总览弹窗开关/筛选、中英文切换按需加载词典
  *   3) 游戏页关闭首次教学后触发真实开局交互，并验证画布动画帧持续推进
+ * - 移动端竖屏（390×844）与横屏（844×390，启用触控仿真）：
+ *   4) 全部页面无横向溢出、核心画布/棋盘可见且尺寸正常
+ *   5) 校验各游戏竖屏/横屏沉浸入口可见性与切换闭环
  */
 import fs from 'node:fs';
 import http from 'node:http';
@@ -218,7 +221,30 @@ async function launchChrome(chromePath, profileDir) {
   }
 }
 
-async function createSession(cdp) {
+const DESKTOP_VIEWPORT = {
+  width: 1280,
+  height: 820,
+  deviceScaleFactor: 1,
+  mobile: false,
+};
+
+const MOBILE_PORTRAIT_VIEWPORT = {
+  width: 390,
+  height: 844,
+  deviceScaleFactor: 2,
+  mobile: true,
+  screenOrientation: { type: 'portraitPrimary', angle: 0 },
+};
+
+const MOBILE_LANDSCAPE_VIEWPORT = {
+  width: 844,
+  height: 390,
+  deviceScaleFactor: 2,
+  mobile: true,
+  screenOrientation: { type: 'landscapePrimary', angle: 90 },
+};
+
+async function createSession(cdp, viewport = DESKTOP_VIEWPORT) {
   const { browserContextId } = await cdp.send('Target.createBrowserContext');
   const { targetId } = await cdp.send('Target.createTarget', { url: 'about:blank', browserContextId });
   const { sessionId } = await cdp.send('Target.attachToTarget', { targetId, flatten: true });
@@ -248,12 +274,10 @@ async function createSession(cdp) {
   await send('Page.enable');
   await send('Runtime.enable');
   await send('Network.enable');
-  await send('Emulation.setDeviceMetricsOverride', {
-    width: 1280,
-    height: 820,
-    deviceScaleFactor: 1,
-    mobile: false,
-  });
+  await send('Emulation.setDeviceMetricsOverride', viewport);
+  if (viewport.mobile) {
+    await send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
+  }
 
   async function evaluate(expression) {
     const result = await send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true });
@@ -490,52 +514,236 @@ async function verifyGamePage(session, gameId) {
   }
 }
 
+const MOBILE_GAME_CONFIG = {
+  basketball: { surface: '#court', isCanvas: true, immersiveBtn: '#immersive-btn', immersiveMode: 'both' },
+  snake: { surface: '#board', isCanvas: true, immersiveBtn: '#immersive-btn', immersiveMode: 'both' },
+  fruit: { surface: '#canvas', isCanvas: true, immersiveBtn: '#immersive-btn', immersiveMode: 'both' },
+  space: { surface: '#canvas', isCanvas: true, immersiveBtn: '#immersive-btn', immersiveMode: 'portrait' },
+  breakout: { surface: '#canvas', isCanvas: true, immersiveBtn: '#immersive-btn', immersiveMode: 'portrait' },
+  'tank-maze': { surface: '#tank-board', isCanvas: true, immersiveBtn: '#tank-immersive', immersiveMode: 'landscape' },
+  2048: { surface: '#tile-layer', isCanvas: false, immersiveMode: 'none' },
+  minesweeper: { surface: '#mine-grid', isCanvas: false, immersiveMode: 'none' },
+  slide: { surface: '#slide-board', isCanvas: false, immersiveMode: 'none' },
+  memory: { surface: '#memory-board', isCanvas: false, immersiveMode: 'none' },
+  'block-workshop': { surface: '#world', fallback: '#graphics-error', isCanvas: true, immersiveBtn: '#workshop-immersive', immersiveMode: 'portrait' },
+  tetris: { surface: '#tetris-canvas', isCanvas: true, immersiveBtn: '#immersive-btn', immersiveMode: 'portrait' },
+};
+
+async function waitTwoFrames(session) {
+  await session.evaluate('new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)))');
+}
+
+async function assertNoHorizontalOverflow(session, label) {
+  const metrics = await session.evaluate('({ scrollWidth: document.documentElement.scrollWidth, innerWidth: window.innerWidth })');
+  if (metrics.scrollWidth > metrics.innerWidth + 1) {
+    throw new Error(`${label} 存在横向溢出（scrollWidth=${metrics.scrollWidth} > innerWidth=${metrics.innerWidth}）`);
+  }
+}
+
+async function assertVisibleSurface(session, cfg, label) {
+  const state = await session.evaluate(`(() => {
+    const el = document.querySelector(${JSON.stringify(cfg.surface)});
+    const fb = ${cfg.fallback ? `document.querySelector(${JSON.stringify(cfg.fallback)})` : 'null'};
+    const fallbackActive = Boolean(fb && !fb.hidden && fb.textContent.trim());
+    const rect = el && !el.hidden ? el.getBoundingClientRect() : null;
+    return {
+      fallbackActive,
+      innerWidth: window.innerWidth,
+      rect: rect ? { width: rect.width, height: rect.height, left: rect.left, right: rect.right } : null,
+    };
+  })()`);
+  if (state.fallbackActive) return;
+  if (!state.rect || state.rect.width <= 0 || state.rect.height <= 0) {
+    throw new Error(`${label} 主画布/棋盘 ${cfg.surface} 未可见渲染`);
+  }
+  if (cfg.isCanvas && state.rect.right > state.innerWidth + 1.5) {
+    throw new Error(`${label} 画布 ${cfg.surface} 右边界超出视口（right=${Math.round(state.rect.right)} > ${state.innerWidth}）`);
+  }
+}
+
+async function assertButtonVisible(session, selector, label) {
+  const info = await session.evaluate(`(() => {
+    const btn = document.querySelector(${JSON.stringify(selector)});
+    if (!btn || btn.hidden) return { visible: false };
+    const r = btn.getBoundingClientRect();
+    return { visible: r.width > 0 && r.height > 0 };
+  })()`);
+  if (!info.visible) throw new Error(`${label} 沉浸按钮 ${selector} 未显示`);
+}
+
+async function verifyMobilePortraitPage(session, config, entry) {
+  if (entry.url === '/') {
+    await session.waitUntil(
+      `document.querySelectorAll('#games-grid .game-card').length === ${config.games.length}`,
+      4000,
+      'mobile lobby cards rendered'
+    );
+    await assertNoHorizontalOverflow(session, '首页竖屏');
+    return;
+  }
+  if (entry.url.startsWith('/categories/')) {
+    await verifyCategoryPage(session, config, entry.url);
+    await assertNoHorizontalOverflow(session, `${entry.url} 竖屏`);
+    return;
+  }
+
+  const gameId = entry.url.split('/').filter(Boolean).pop();
+  const cfg = MOBILE_GAME_CONFIG[gameId];
+  if (!cfg) throw new Error(`未登记移动端冒烟配置：${gameId}`);
+
+  await dismissTutorialIfPresent(session);
+  if (gameId === 'block-workshop') {
+    await session.evaluate('document.getElementById("workshop-dismiss-tip")?.click()');
+  }
+  await waitTwoFrames(session);
+  await assertNoHorizontalOverflow(session, `${gameId} 竖屏`);
+  await assertVisibleSurface(session, cfg, `${gameId} 竖屏`);
+
+  if (cfg.immersiveBtn) {
+    await assertButtonVisible(session, cfg.immersiveBtn, `${gameId} 竖屏`);
+    if (cfg.immersiveMode === 'portrait' || cfg.immersiveMode === 'both') {
+      await session.evaluate(`document.querySelector(${JSON.stringify(cfg.immersiveBtn)})?.click()`);
+      await session.waitUntil('document.body.classList.contains("mobile-game-immersive")', 3000, `${gameId} 竖屏进入沉浸模式`);
+      await waitTwoFrames(session);
+      await assertNoHorizontalOverflow(session, `${gameId} 竖屏沉浸`);
+      await assertVisibleSurface(session, cfg, `${gameId} 竖屏沉浸`);
+      await session.evaluate(`document.querySelector(${JSON.stringify(cfg.immersiveBtn)})?.click()`);
+      await session.waitUntil('!document.body.classList.contains("mobile-game-immersive")', 3000, `${gameId} 竖屏退出沉浸模式`);
+      await waitTwoFrames(session);
+      await assertNoHorizontalOverflow(session, `${gameId} 竖屏退出沉浸`);
+    }
+  }
+}
+
+async function verifyMobileLandscapePage(session, config, entry) {
+  if (entry.url === '/') {
+    await session.waitUntil(
+      `document.querySelectorAll('#games-grid .game-card').length === ${config.games.length}`,
+      4000,
+      'mobile landscape lobby cards rendered'
+    );
+    await assertNoHorizontalOverflow(session, '首页横屏');
+    return;
+  }
+
+  const gameId = entry.url.split('/').filter(Boolean).pop();
+  const cfg = MOBILE_GAME_CONFIG[gameId];
+  await dismissTutorialIfPresent(session);
+  if (gameId === 'block-workshop') {
+    await session.evaluate('document.getElementById("workshop-dismiss-tip")?.click()');
+  }
+  await waitTwoFrames(session);
+  await assertNoHorizontalOverflow(session, `${gameId} 横屏`);
+  await assertVisibleSurface(session, cfg, `${gameId} 横屏`);
+
+  if (cfg.immersiveMode === 'both') {
+    await session.waitUntil('document.body.classList.contains("mobile-game-immersive")', 3000, `${gameId} 横屏默认沉浸`);
+    await assertButtonVisible(session, cfg.immersiveBtn, `${gameId} 横屏`);
+    await session.evaluate(`document.querySelector(${JSON.stringify(cfg.immersiveBtn)})?.click()`);
+    await session.waitUntil('!document.body.classList.contains("mobile-game-immersive")', 3000, `${gameId} 横屏退出沉浸`);
+    await waitTwoFrames(session);
+    await assertNoHorizontalOverflow(session, `${gameId} 横屏退出沉浸`);
+  } else if (cfg.immersiveMode === 'landscape') {
+    await assertButtonVisible(session, cfg.immersiveBtn, `${gameId} 横屏`);
+    await session.evaluate(`document.querySelector(${JSON.stringify(cfg.immersiveBtn)})?.click()`);
+    await session.waitUntil('document.body.classList.contains("mobile-game-immersive")', 3000, `${gameId} 横屏进入沉浸`);
+    await waitTwoFrames(session);
+    await assertNoHorizontalOverflow(session, `${gameId} 横屏沉浸`);
+    await assertVisibleSurface(session, cfg, `${gameId} 横屏沉浸`);
+    await session.evaluate(`document.querySelector(${JSON.stringify(cfg.immersiveBtn)})?.click()`);
+    await session.waitUntil('!document.body.classList.contains("mobile-game-immersive")', 3000, `${gameId} 横屏退出沉浸`);
+  } else if (cfg.immersiveMode === 'portrait') {
+    const stuck = await session.evaluate('document.body.classList.contains("mobile-game-immersive")');
+    if (stuck) throw new Error(`${gameId} 仅支持竖屏沉浸，横屏不应处于 mobile-game-immersive`);
+  }
+}
+
+async function runSingleCheck(cdp, { label, url, viewport, verify }) {
+  const session = await createSession(cdp, viewport);
+  const routeFailures = [];
+  try {
+    await session.navigateAndWait(url);
+    await verify(session);
+  } catch (error) {
+    routeFailures.push(error.message);
+  }
+
+  const { exceptions, consoleErrors, httpErrors, failedRequests } = session.errors();
+  if (exceptions.length) routeFailures.push(`未捕获异常: ${exceptions.join(' | ')}`);
+  if (consoleErrors.length) routeFailures.push(`console.error: ${consoleErrors.join(' | ')}`);
+  if (httpErrors.length) routeFailures.push(`HTTP 错误: ${httpErrors.join(' | ')}`);
+  if (failedRequests.length) routeFailures.push(`请求失败: ${failedRequests.join(' | ')}`);
+
+  await session.dispose();
+
+  if (routeFailures.length > 0) {
+    console.error(`✗ ${label}\n  - ${routeFailures.join('\n  - ')}`);
+    return false;
+  }
+  console.log(`✓ ${label}`);
+  return true;
+}
+
 const config = readSiteConfig();
 const pages = sitePages(config).filter((entry) => entry.url);
+const landscapePages = pages.filter((entry) => {
+  if (entry.url === '/') return true;
+  if (!entry.url.startsWith('/games/')) return false;
+  const gameId = entry.url.split('/').filter(Boolean).pop();
+  return MOBILE_GAME_CONFIG[gameId]?.immersiveMode !== 'none';
+});
+const totalChecks = pages.length * 2 + landscapePages.length;
 const chromePath = findChrome();
 const profileDir = fs.mkdtempSync(path.join(os.tmpdir(), 'site-smoke-'));
 const { server, port, notFound } = await startStaticServer();
 let cdp = null;
 
-console.log(`浏览器冒烟校验（${pages.length} 个页面，Chrome: ${path.basename(chromePath)}）`);
+console.log(`浏览器冒烟校验（桌面 ${pages.length} + 移动竖屏 ${pages.length} + 移动横屏 ${landscapePages.length}，共 ${totalChecks} 项，Chrome: ${path.basename(chromePath)}）`);
 
 let failures = 0;
 try {
   cdp = await launchChrome(chromePath, profileDir);
+  let baseOrigin = '';
 
   for (const entry of pages) {
-    const session = await createSession(cdp);
     const url = `http://127.0.0.1:${port}${entry.url}`;
-    const routeFailures = [];
+    if (!baseOrigin) baseOrigin = new URL(url).origin;
+    const ok = await runSingleCheck(cdp, {
+      label: `[desktop] ${entry.url}`,
+      url,
+      viewport: DESKTOP_VIEWPORT,
+      verify: async (session) => {
+        if (entry.url === '/') {
+          await verifyLobbyPage(session, config);
+        } else if (entry.url.startsWith('/categories/')) {
+          await verifyCategoryPage(session, config, entry.url);
+        } else if (entry.url.startsWith('/games/')) {
+          const gameId = entry.url.split('/').filter(Boolean).pop();
+          await verifyGamePage(session, gameId);
+        }
+      },
+    });
+    if (!ok) failures += 1;
+  }
 
-    try {
-      await session.navigateAndWait(url);
-      if (entry.url === '/') {
-        await verifyLobbyPage(session, config);
-      } else if (entry.url.startsWith('/categories/')) {
-        await verifyCategoryPage(session, config, entry.url);
-      } else if (entry.url.startsWith('/games/')) {
-        const gameId = entry.url.split('/').filter(Boolean).pop();
-        await verifyGamePage(session, gameId);
-      }
-    } catch (error) {
-      routeFailures.push(error.message);
-    }
+  for (const entry of pages) {
+    const ok = await runSingleCheck(cdp, {
+      label: `[mobile-portrait] ${entry.url}`,
+      url: new URL(entry.url, baseOrigin).href,
+      viewport: MOBILE_PORTRAIT_VIEWPORT,
+      verify: (session) => verifyMobilePortraitPage(session, config, entry),
+    });
+    if (!ok) failures += 1;
+  }
 
-    const { exceptions, consoleErrors, httpErrors, failedRequests } = session.errors();
-    if (exceptions.length) routeFailures.push(`未捕获异常: ${exceptions.join(' | ')}`);
-    if (consoleErrors.length) routeFailures.push(`console.error: ${consoleErrors.join(' | ')}`);
-    if (httpErrors.length) routeFailures.push(`HTTP 错误: ${httpErrors.join(' | ')}`);
-    if (failedRequests.length) routeFailures.push(`请求失败: ${failedRequests.join(' | ')}`);
-
-    await session.dispose();
-
-    if (routeFailures.length > 0) {
-      failures += 1;
-      console.error(`✗ ${entry.url}\n  - ${routeFailures.join('\n  - ')}`);
-    } else {
-      console.log(`✓ ${entry.url}`);
-    }
+  for (const entry of landscapePages) {
+    const ok = await runSingleCheck(cdp, {
+      label: `[mobile-landscape] ${entry.url}`,
+      url: new URL(entry.url, baseOrigin).href,
+      viewport: MOBILE_LANDSCAPE_VIEWPORT,
+      verify: (session) => verifyMobileLandscapePage(session, config, entry),
+    });
+    if (!ok) failures += 1;
   }
 
   if (notFound.length > 0) {
@@ -560,4 +768,4 @@ if (failures > 0) {
   console.error(`\n✗ 浏览器冒烟校验未通过（失败页面/项：${failures}）`);
   process.exit(1);
 }
-console.log(`\n✓ 全部 ${pages.length} 个页面通过真实浏览器冒烟校验`);
+console.log(`\n✓ 全部 ${totalChecks} 项桌面与移动端浏览器冒烟校验通过`);
