@@ -1,0 +1,158 @@
+.play-area {
+  display: grid;
+  width: 100%;
+  justify-items: center;
+  gap: 8px;
+}
+.stage-box {
+  position: relative;
+  width: 100%;
+  max-width: 520px;
+  border-radius: 18px;
+  overflow: hidden;
+  border: 2px solid #86efac;
+  box-shadow: var(--shadow-md);
+  background: #ecfdf5;
+  transition: border-color 0.2s ease;
+}
+
+.stage-box.wrap-mode {
+  border-style: dashed;
+  border-color: #38bdf8;
+}
+
+canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1 / 1;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: pointer;
+}
+
+.dpad {
+  display: none;
+  grid-template-columns: repeat(3, 60px);
+  grid-template-rows: repeat(2, 50px);
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.dpad-btn {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: 12px;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text);
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+  transition: background 0.08s ease, transform 0.08s ease;
+}
+
+.dpad-btn:active {
+  background: #dbeafe;
+  transform: scale(0.95);
+}
+
+.dpad-empty {
+  visibility: hidden;
+}
+
+.slow-status {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 1.3rem;
+  visibility: hidden;
+  color: #075985;
+  font-size: 0.85rem;
+}
+
+.slow-status.active { visibility: visible; }
+.slow-status progress { width: 72px; height: 8px; accent-color: #0284c7; }
+
+:root[data-theme="dark"] .stage-box {
+  background: #0f1f1c;
+  border-color: #166534;
+}
+
+:root[data-theme="dark"] .stage-box.wrap-mode {
+  border-color: #38bdf8;
+}
+
+:root[data-theme="dark"] .dpad-btn:active {
+  background: var(--primary-soft);
+  border-color: var(--primary);
+}
+
+:root[data-theme="dark"] .slow-status {
+  color: #38bdf8;
+}
+
+:root[data-theme="dark"] .slow-status progress {
+  accent-color: #38bdf8;
+}
+
+.game-wrap { --mobile-stage-ratio: 1; }
+.hud { grid-template-columns: 1fr 1fr auto auto; max-width: 520px; order: -2; }
+.toolbar { max-width: 520px; order: -1; }
+
+@media (any-pointer: coarse), (max-width: 600px) {
+  .game-wrap { margin-top: 8px; gap: 8px; }
+  .toolbar { order: 1; }
+  .dpad { display: grid; }
+  .stage-box { max-width: clamp(160px, 100svh - 268px, 520px); }
+}
+
+@media (any-pointer: coarse) and (orientation: landscape),
+       (orientation: landscape) and (max-height: 450px) and (max-width: 900px) {
+  .game-wrap { --game-width: 660px; margin-top: 8px; gap: 8px; }
+  .toolbar { order: 1; }
+  .play-area { grid-template-columns: minmax(0, 1fr) auto; align-items: center; }
+  .dpad { display: grid; }
+  .stage-box { max-width: clamp(120px, 100svh - 178px, 520px); }
+}
+
+.mobile-game-immersive .hint-text,
+.mobile-game-immersive #help-btn,
+.mobile-game-immersive .mode-pills { display: none; }
+.mobile-game-immersive .toolbar { order: 0; justify-content: center; }
+.mobile-game-immersive .play-area { height: 100%; align-content: start; }
+
+@media (orientation: portrait) {
+  .mobile-game-immersive .stage-box {
+    max-width: clamp(160px, min(100%, 100cqh - 116px), 520px);
+  }
+}
+
+@media (orientation: landscape) {
+  .mobile-game-immersive .mobile-game-controls {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .mobile-game-immersive :is(.hud, .toolbar, .btn-group) { display: contents; }
+  .mobile-game-immersive .hud-box { min-width: 0; }
+  .mobile-game-immersive .hud-box:nth-child(-n + 2) { order: -3; }
+  .mobile-game-immersive .slow-status { order: -2; }
+  .mobile-game-immersive #pause-btn,
+  .mobile-game-immersive #immersive-btn { order: -1; }
+  .mobile-game-immersive #restart-btn,
+  .mobile-game-immersive #sound-btn { order: 0; }
+  .mobile-game-immersive .play-area {
+    width: 100%;
+    height: 100%;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    justify-items: center;
+  }
+  .mobile-game-immersive .stage-box {
+    width: min(100%, calc((100cqh - 4px) * var(--mobile-stage-ratio)));
+    max-width: none;
+  }
+}

@@ -313,8 +313,8 @@ test('dist emits version.json matching meta site-build in built HTML pages', () 
   assert.equal(payload.build, metaMatch[1]);
 });
 
-test('dist rewrites ./modules/ assets for migrated classic games (slide, memory, 2048, minesweeper)', () => {
-  for (const id of ['slide', 'memory', '2048', 'minesweeper']) {
+test('dist rewrites ./modules/ assets for migrated classic games (slide, memory, 2048, minesweeper, snake)', () => {
+  for (const id of ['slide', 'memory', '2048', 'minesweeper', 'snake']) {
     const html = fs.readFileSync(path.join(dist, 'games', id, 'index.html'), 'utf8');
     assert.doesNotMatch(html, /['"]\.\/modules\//, `${id} built HTML must not leave unrewritten ./modules/ paths`);
 
