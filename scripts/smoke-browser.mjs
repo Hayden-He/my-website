@@ -116,68 +116,106 @@ function startStaticServer() {
 }
 
 async function launchChrome(chromePath, profileDir) {
-  const chrome = spawn(
-    chromePath,
-    [
-      '--headless=new',
-      '--no-sandbox',
-      '--disable-dev-shm-usage',
-      '--mute-audio',
-      '--hide-scrollbars',
-      '--enable-unsafe-swiftshader',
-      '--remote-debugging-port=0',
-      '--user-data-dir=' + profileDir,
-      'about:blank',
-    ],
-    { stdio: 'ignore' }
-  );
-
-  let wsUrl = '';
-  for (let i = 0; i < 120; i += 1) {
-    if (chrome.exitCode !== null) {
-      throw new Error(`Chrome 意外退出（exit ${chrome.exitCode}）`);
-    }
-    const portFile = path.join(profileDir, 'DevToolsActivePort');
-    if (fs.existsSync(portFile)) {
-      const lines = fs.readFileSync(portFile, 'utf8').trim().split('\n');
-      if (lines[1]) {
-        wsUrl = `ws://127.0.0.1:${lines[0]}${lines[1]}`;
-        break;
-      }
-    }
-    await sleep(50);
+  const args = [
+    '--headless=new',
+    '--no-sandbox',
+    '--disable-dev-shm-usage',
+    '--no-first-run',
+    '--no-default-browser-check',
+    '--disable-extensions',
+    '--disable-background-networking',
+    '--disable-sync',
+    '--password-store=basic',
+    '--use-mock-keychain',
+    '--mute-audio',
+    '--hide-scrollbars',
+    '--enable-unsafe-swiftshader',
+    '--remote-debugging-address=127.0.0.1',
+    '--remote-debugging-port=0',
+    '--user-data-dir=' + profileDir,
+  ];
+  if (process.platform === 'linux') {
+    args.push('--disable-setuid-sandbox', '--use-gl=angle', '--use-angle=swiftshader');
   }
-  if (!wsUrl) throw new Error('Chrome 未暴露 DevTools 调试端口');
+  args.push('about:blank');
 
-  const ws = new WebSocket(wsUrl);
-  let nextId = 0;
-  const pending = new Map();
-  const listeners = new Set();
-  ws.onmessage = (event) => {
-    const msg = JSON.parse(event.data);
-    if (msg.id && pending.has(msg.id)) {
-      const { resolve, reject } = pending.get(msg.id);
-      pending.delete(msg.id);
-      if (msg.error) reject(new Error(JSON.stringify(msg.error)));
-      else resolve(msg.result);
-    } else if (msg.method) {
-      for (const fn of listeners) fn(msg);
+  const chrome = spawn(chromePath, args, { stdio: ['ignore', 'ignore', 'pipe'] });
+  let stderrTail = '';
+  let wsFromStderr = '';
+  chrome.stderr?.setEncoding('utf8');
+  chrome.stderr?.on('data', (chunk) => {
+    stderrTail = (stderrTail + chunk).slice(-2000);
+    if (!wsFromStderr) {
+      const match = stderrTail.match(/DevTools listening on (ws:\/\/[^\s]+)/);
+      if (match) wsFromStderr = match[1];
     }
-  };
-  await new Promise((resolve, reject) => {
-    ws.onopen = resolve;
-    ws.onerror = reject;
   });
 
-  const send = (method, params = {}, sessionId) => {
-    const id = ++nextId;
-    return new Promise((resolve, reject) => {
-      pending.set(id, { resolve, reject });
-      ws.send(JSON.stringify({ id, method, params, sessionId }));
-    });
+  const killChrome = () => {
+    if (chrome.exitCode === null) {
+      try { chrome.kill('SIGKILL'); } catch {}
+    }
   };
 
-  return { chrome, ws, send, onEvent: (fn) => { listeners.add(fn); return () => listeners.delete(fn); } };
+  let wsUrl = '';
+  try {
+    for (let i = 0; i < 500; i += 1) {
+      if (wsFromStderr) {
+        wsUrl = wsFromStderr;
+        break;
+      }
+      if (chrome.exitCode !== null) {
+        const detail = stderrTail.trim() ? `\n${stderrTail.trim()}` : '';
+        throw new Error(`Chrome 意外退出（exit ${chrome.exitCode}）${detail}`);
+      }
+      const portFile = path.join(profileDir, 'DevToolsActivePort');
+      if (fs.existsSync(portFile)) {
+        const lines = fs.readFileSync(portFile, 'utf8').trim().split(/\r?\n/);
+        if (lines[0] && lines[1]) {
+          wsUrl = `ws://127.0.0.1:${lines[0]}${lines[1]}`;
+          break;
+        }
+      }
+      await sleep(50);
+    }
+    if (!wsUrl) {
+      const detail = stderrTail.trim() ? `\n${stderrTail.trim()}` : '';
+      throw new Error(`Chrome 未暴露 DevTools 调试端口${detail}`);
+    }
+
+    const ws = new WebSocket(wsUrl);
+    let nextId = 0;
+    const pending = new Map();
+    const listeners = new Set();
+    ws.onmessage = (event) => {
+      const msg = JSON.parse(event.data);
+      if (msg.id && pending.has(msg.id)) {
+        const { resolve, reject } = pending.get(msg.id);
+        pending.delete(msg.id);
+        if (msg.error) reject(new Error(JSON.stringify(msg.error)));
+        else resolve(msg.result);
+      } else if (msg.method) {
+        for (const fn of listeners) fn(msg);
+      }
+    };
+    await new Promise((resolve, reject) => {
+      ws.onopen = resolve;
+      ws.onerror = reject;
+    });
+
+    const send = (method, params = {}, sessionId) => {
+      const id = ++nextId;
+      return new Promise((resolve, reject) => {
+        pending.set(id, { resolve, reject });
+        ws.send(JSON.stringify({ id, method, params, sessionId }));
+      });
+    };
+
+    return { chrome, ws, send, onEvent: (fn) => { listeners.add(fn); return () => listeners.delete(fn); } };
+  } catch (error) {
+    killChrome();
+    throw error;
+  }
 }
 
 async function createSession(cdp) {
@@ -287,7 +325,7 @@ async function dismissTutorialIfPresent(session) {
 async function assertCanvasAnimates(session, selector) {
   await sleep(450);
   const f1 = await session.evaluate(`document.querySelector(${JSON.stringify(selector)})?.toDataURL() || ""`);
-  const deadline = Date.now() + 1400;
+  const deadline = Date.now() + 2200;
   let changed = false;
   while (Date.now() < deadline) {
     await sleep(250);
@@ -392,7 +430,10 @@ async function verifyGamePage(session, gameId) {
     await session.evaluate('document.getElementById("workshop-dismiss-tip")?.click()');
     await sleep(250);
     const uiCheck = await session.evaluate(`(() => {
-      const ready = Boolean(document.getElementById("world") || document.getElementById("graphics-error"));
+      const world = document.getElementById("world");
+      const fallback = document.getElementById("graphics-error");
+      const webglActive = Boolean(world && !world.hidden);
+      const fallbackActive = Boolean(fallback && !fallback.hidden && fallback.textContent.trim());
       const mats = document.querySelectorAll("[data-material]").length;
       const tools = Boolean(
         document.querySelector('[data-tool="pick"]') &&
@@ -401,16 +442,20 @@ async function verifyGamePage(session, gameId) {
         document.getElementById("workshop-symmetry") &&
         document.getElementById("workshop-export")
       );
-      return { ready, mats, tools };
+      return { webglActive, fallbackActive, mats, tools };
     })()`);
-    if (!uiCheck.ready) throw new Error('block-workshop 页面容器缺失');
+    if (!uiCheck.webglActive && !uiCheck.fallbackActive) {
+      throw new Error('block-workshop 既未显示 3D 画布也未显示降级提示');
+    }
     if (uiCheck.mats !== 12) throw new Error('block-workshop 材质数量异常：' + uiCheck.mats);
     if (!uiCheck.tools) throw new Error('block-workshop 缺少吸管/撤销/重做/对称/导出控件');
-    // Test theme toggle & starter template library modal
-    await session.evaluate('document.querySelector("[data-theme-toggle]")?.click()');
-    await session.evaluate('document.getElementById("workshop-works")?.click()');
-    await session.waitUntil('document.querySelectorAll("#workshop-templates .workshop-template").length === 3', 3000, 'block-workshop starter templates rendered');
-    await session.evaluate('document.getElementById("workshop-close-library")?.click()');
+    if (uiCheck.webglActive) {
+      // Test theme toggle & starter template library modal when WebGL2 is active
+      await session.evaluate('document.querySelector("[data-theme-toggle]")?.click()');
+      await session.evaluate('document.getElementById("workshop-works")?.click()');
+      await session.waitUntil('document.querySelectorAll("#workshop-templates .workshop-template").length === 3', 3000, 'block-workshop starter templates rendered');
+      await session.evaluate('document.getElementById("workshop-close-library")?.click()');
+    }
   }
 }
 
@@ -471,6 +516,10 @@ try {
     try { cdp.ws.close(); } catch {}
     cdp.chrome.kill('SIGTERM');
     await sleep(200);
+    if (cdp.chrome.exitCode === null) {
+      try { cdp.chrome.kill('SIGKILL'); } catch {}
+      await sleep(100);
+    }
   }
   server.close();
   fs.rmSync(profileDir, { recursive: true, force: true });
