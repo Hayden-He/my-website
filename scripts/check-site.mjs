@@ -134,13 +134,11 @@ for (const category of categories) {
   if (categoryPage) {
     checkContains(categoryPage, "initSitePage('" + category.id + "')", `分类页 ${category.url}`);
     checkContains(categoryPage, 'id="games-grid"', `分类页 ${category.url}`);
+    checkContains(categoryPage, 'assets/style.css', `分类页 ${category.url}`);
     checkContains(categoryPage, 'assets/theme.js', `分类页 ${category.url}`);
     checkContains(categoryPage, 'assets/i18n.js', `分类页 ${category.url}`);
     checkContains(categoryPage, '<!-- inline-icons:start -->', `分类页 ${category.url}`);
     checkContains(categoryPage, '<!-- inline-icons:end -->', `分类页 ${category.url}`);
-    checkContains(categoryPage, 'assets/style.css', `分类页 ${category.url}`);
-    checkContains(categoryPage, 'assets/theme.js', `分类页 ${category.url}`);
-    checkContains(categoryPage, 'assets/i18n.js', `分类页 ${category.url}`);
     checkContains(categoryPage, 'site.webmanifest', `分类页 ${category.url}`);
     checkContains(categoryPage, 'assets/icon.svg', `分类页 ${category.url}`);
     checkContains(categoryPage, 'apple-touch-icon.png', `分类页 ${category.url}`);
@@ -257,9 +255,6 @@ for (const game of games) {
   checkContains(page, 'assets/i18n.js', pagePath);
   checkContains(page, '<!-- inline-icons:start -->', pagePath);
   checkContains(page, '<!-- inline-icons:end -->', pagePath);
-  checkContains(page, 'assets/style.css', pagePath);
-  checkContains(page, 'assets/theme.js', pagePath);
-  checkContains(page, 'assets/i18n.js', pagePath);
   checkContains(page, '<meta name="theme-color"', pagePath);
   const headEnd = page.indexOf('</head>');
   const headHtml = headEnd >= 0 ? page.slice(0, headEnd) : '';
@@ -346,6 +341,19 @@ if (notFoundPage && notFoundPage.includes('property="og:url"')) {
 
 // ---------- SEO：sitemap / robots / OG image ----------
 checkFile('assets/og-image.jpg', 'assets/og-image.jpg');
+checkFile('scripts/og-image.html', 'scripts/og-image.html');
+const ogTemplate = read('scripts/og-image.html');
+if (ogTemplate) {
+  checkContains(ogTemplate, `${games.length} 款小游戏 · ${games.length} mini games`, 'scripts/og-image.html');
+  const ogCards = ogTemplate.match(/<div class="card">/g) || [];
+  if (ogCards.length !== games.length) {
+    fail(`scripts/og-image.html 的游戏卡片数应为 ${games.length}，实际为 ${ogCards.length}`);
+  }
+  for (const game of games) {
+    checkContains(ogTemplate, `#game-${game.icon}`, 'scripts/og-image.html');
+    checkContains(ogTemplate, `>${escapeHtml(game.title)}<`, 'scripts/og-image.html');
+  }
+}
 checkFile('sitemap.xml', 'sitemap.xml');
 checkFile('robots.txt', 'robots.txt');
 checkContains(read('_headers'), '/assets/v/*', '_headers');
@@ -368,8 +376,9 @@ if (sitemapLocs.includes(SITE_URL + '/404.html')) fail('sitemap.xml 不应包含
 for (const loc of sitemapLocs) {
   if (!/^https:\/\/my-website-all\.pages\.dev\//.test(loc)) fail(`sitemap.xml 使用了非约定域名：${loc}`);
 }
-if (!/<lastmod>\d{4}-\d{2}-\d{2}<\/lastmod>/.test(sitemap)) {
-  fail('sitemap.xml 缺少 YYYY-MM-DD 格式的 lastmod');
+const sitemapLastmods = [...sitemap.matchAll(/<lastmod>\d{4}-\d{2}-\d{2}<\/lastmod>/g)];
+if (sitemapLastmods.length !== sitemapLocs.length) {
+  fail(`sitemap.xml 应为全部 ${sitemapLocs.length} 条记录提供 YYYY-MM-DD 格式的 lastmod，实际仅 ${sitemapLastmods.length} 条`);
 }
 checkContains(robots, 'Allow: /', 'robots.txt');
 checkContains(robots, `Sitemap: ${SITE_URL}/sitemap.xml`, 'robots.txt');
