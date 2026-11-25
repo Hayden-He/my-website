@@ -422,6 +422,8 @@ async function verifyGamePage(session, gameId) {
     await session.evaluate('document.getElementById("hint-btn")?.click()');
     await session.waitUntil('document.getElementById("hint-btn")?.textContent.includes("(1)")', 3000, 'minesweeper safe hint decrements counter');
   } else if (gameId === 'memory') {
+    await session.evaluate('document.getElementById("mode-6")?.click()');
+    await session.waitUntil('document.querySelectorAll("#memory-board .memory-card").length === 24', 3000, 'memory 6x4 deck rendered');
     await session.evaluate('(() => { const c = document.querySelectorAll("#memory-board .memory-card"); c[0]?.click(); c[1]?.click(); })()');
     await session.waitUntil('document.querySelectorAll("#memory-board .flipped, #memory-board .matched").length > 0', 3000, 'memory cards flipped');
   } else if (gameId === '2048') {
@@ -432,8 +434,10 @@ async function verifyGamePage(session, gameId) {
     await session.evaluate('document.getElementById("size-obstacle")?.click()');
     await session.waitUntil('document.querySelectorAll("#tile-layer .tile.obstacle").length === 1', 3000, '2048 obstacle mode renders stone obstacle');
   } else if (gameId === 'slide') {
-    await session.evaluate('document.dispatchEvent(new KeyboardEvent("keydown", { code: "ArrowLeft", key: "ArrowLeft", bubbles: true }))');
-    await session.waitUntil('document.querySelectorAll("#slide-board .slide-tile").length >= 8', 3000, 'slide tiles present');
+    await session.evaluate('document.getElementById("mode-5")?.click()');
+    await session.waitUntil('document.querySelectorAll("#slide-board .slide-tile:not(.blank)").length === 24', 3000, 'slide 5x5 board rendered');
+    await session.evaluate('document.querySelector("#slide-board .slide-tile.movable")?.click()');
+    await session.waitUntil('Number(document.getElementById("moves-el")?.textContent) >= 1 && Boolean(document.getElementById("slide-progress")?.textContent.trim())', 3000, 'slide move increments moves and updates progress');
   } else if (gameId === 'block-workshop') {
     await session.evaluate('document.getElementById("workshop-dismiss-tip")?.click()');
     await sleep(250);

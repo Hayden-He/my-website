@@ -69,6 +69,29 @@
     return result;
   }
 
+  function getSlideChain(size, blankIndex, tileIndex) {
+    const total = size * size;
+    if (blankIndex === tileIndex || blankIndex < 0 || blankIndex >= total || tileIndex < 0 || tileIndex >= total) {
+      return [];
+    }
+    const br = Math.floor(blankIndex / size);
+    const bc = blankIndex % size;
+    const tr = Math.floor(tileIndex / size);
+    const tc = tileIndex % size;
+    if (br !== tr && bc !== tc) return [];
+    const step = br === tr ? (tc > bc ? 1 : -1) : (tr > br ? size : -size);
+    const chain = [];
+    for (let idx = blankIndex + step; ; idx += step) {
+      chain.push(idx);
+      if (idx === tileIndex) break;
+    }
+    return chain;
+  }
+
+  function countSlideInPlace(board) {
+    return board.reduce((count, value, index) => (value > 0 && value === index + 1 ? count + 1 : count), 0);
+  }
+
   function slideDistance(size, board) {
     return board.reduce((distance, value, index) => {
       if (value === 0) return distance;
@@ -83,7 +106,7 @@
       const board = solvedSlideBoard(size);
       let blank = board.length - 1;
       let last = -1;
-      const steps = (beginner ? 10 : size === 3 ? 180 : 360) + Math.floor(random() * 2);
+      const steps = (beginner ? 10 : size === 3 ? 180 : size === 4 ? 360 : 600) + Math.floor(random() * 2);
       for (let i = 0; i < steps; i++) {
         const options = slideNeighbors(size, blank).filter((index) => index !== last);
         const pick = options[Math.floor(random() * options.length)];
@@ -286,7 +309,7 @@
 
   window.GameRules = {
     merge2048Line, canMove2048,
-    solvedSlideBoard, slideNeighbors, shuffleSlideBoard,
+    solvedSlideBoard, slideNeighbors, getSlideChain, countSlideInPlace, shuffleSlideBoard,
     scoreHoop, hoopBounce,
     mineNeighbors, createMineBoard, placeMinesOnBoard, revealMineSafeArea, findSafeMineCell,
     snakeRandomEmptyCell, snakeNextStep, snakeTickDelay,

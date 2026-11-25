@@ -4,13 +4,13 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>记忆翻牌 - 小游乐场</title>
-  <meta name="description" content="记忆翻牌：翻开两张相同图案配对，支持 4×4 与 5×4 牌桌，步数越少越好。" />
+  <meta name="description" content="记忆翻牌：翻开两张相同图案配对，支持 4×4、5×4 与 6×4 牌桌与连击统计，步数越少越好。" />
   <link rel="canonical" href="https://my-website-all.pages.dev/games/memory/" />
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="小游乐场" />
   <meta property="og:locale" content="zh_CN" />
   <meta property="og:title" content="记忆翻牌 · Little Playground" />
-  <meta property="og:description" content="记忆翻牌：翻开两张相同图案配对，支持 4×4 与 5×4 牌桌，步数越少越好。" />
+  <meta property="og:description" content="记忆翻牌：翻开两张相同图案配对，支持 4×4、5×4 与 6×4 牌桌与连击统计，步数越少越好。" />
   <meta property="og:url" content="https://my-website-all.pages.dev/games/memory/" />
   <meta property="og:image" content="https://my-website-all.pages.dev/assets/og-image.jpg" />
   <meta property="og:image:type" content="image/jpeg" />
@@ -19,7 +19,7 @@
   <meta property="og:image:alt" content="小游乐场 · Little Playground：11 款即开即玩的小游戏" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="记忆翻牌 · Little Playground" />
-  <meta name="twitter:description" content="记忆翻牌：翻开两张相同图案配对，支持 4×4 与 5×4 牌桌，步数越少越好。" />
+  <meta name="twitter:description" content="记忆翻牌：翻开两张相同图案配对，支持 4×4、5×4 与 6×4 牌桌与连击统计，步数越少越好。" />
   <meta name="twitter:image" content="https://my-website-all.pages.dev/assets/og-image.jpg" />
   <meta name="twitter:image:alt" content="小游乐场 · Little Playground：11 款即开即玩的小游戏" />
   <meta name="author" content="Hayden-He" />
@@ -35,8 +35,10 @@
   <link rel="stylesheet" href="/assets/game-shell.css" />
   <style>
     .game-wrap { --game-width: 460px; }
+    .game-wrap.wide { --game-width: 520px; }
 
     .hud { grid-template-columns: repeat(3, 1fr); }
+    .toolbar .mode-pills { flex-wrap: wrap; }
 
     .memory-stage {
       position: relative;
@@ -138,17 +140,26 @@
     .memory-card.matched .memory-front {
       background: #f0fdf4;
       border-color: #4ade80;
+      animation: match-pop 0.28s ease-out;
     }
-    .memory-card.mismatch .memory-front { background: #fff1f2; border-color: #fb7185; }
-    .memory-status { width: 100%; min-height: 1.4rem; }
 
     .memory-card.matched {
       cursor: default;
+      opacity: 0.92;
     }
 
-    .memory-card.matched .memory-front {
-      animation: match-pop 0.28s ease-out;
+    .memory-card.mismatch .memory-front {
+      background: #fff1f2;
+      border-color: #fb7185;
+      animation: mismatch-shake 0.3s ease-in-out;
     }
+
+    .memory-status { width: 100%; min-height: 1.4rem; }
+    .memory-status.combo-hot { color: var(--primary); font-weight: 700; }
+
+    .memory-board[data-mode="4"] { --cols: 4; }
+    .memory-board[data-mode="5"] { --cols: 5; }
+    .memory-board[data-mode="6"] { --cols: 6; }
 
     @keyframes match-pop {
       0% { transform: rotateY(180deg) scale(0.92); }
@@ -156,9 +167,10 @@
       100% { transform: rotateY(180deg) scale(1); }
     }
 
-    .memory-card.mismatch .memory-front {
-      background: #fff7ed;
-      border-color: #fdba74;
+    @keyframes mismatch-shake {
+      0%, 100% { transform: rotateY(180deg) translateX(0); }
+      25% { transform: rotateY(180deg) translateX(-4px); }
+      75% { transform: rotateY(180deg) translateX(4px); }
     }
 
     :root[data-theme="dark"] .memory-card.matched .memory-front {
@@ -167,8 +179,23 @@
     }
 
     :root[data-theme="dark"] .memory-card.mismatch .memory-front {
-      background: rgba(249, 115, 22, 0.2);
-      border-color: #fb923c;
+      background: rgba(244, 63, 94, 0.22);
+      border-color: #fb7185;
+    }
+
+    @media (max-width: 440px) {
+      .memory-board[data-mode="6"] {
+        --cols: 4;
+        gap: 6px;
+        padding: 10px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .memory-card.matched .memory-front,
+      .memory-card.mismatch .memory-front {
+        animation: none;
+      }
     }
   </style>
 </head>
@@ -208,8 +235,9 @@
 
     <div class="toolbar">
       <div class="mode-pills" role="group" aria-label="牌桌尺寸" data-i18n-attr="aria-label:牌桌尺寸">
-        <button id="mode-4" class="mode-pill active" data-i18n="4×4 轻松">4×4 轻松</button>
-        <button id="mode-5" class="mode-pill" data-i18n="5×4 标准">5×4 标准</button>
+        <button id="mode-4" class="mode-pill active" data-memory-mode="4" data-i18n="4×4 轻松">4×4 轻松</button>
+        <button id="mode-5" class="mode-pill" data-memory-mode="5" data-i18n="5×4 标准">5×4 标准</button>
+        <button id="mode-6" class="mode-pill" data-memory-mode="6" data-i18n="6×4 挑战">6×4 挑战</button>
       </div>
       <div class="btn-group">
         <button id="help-btn" class="btn-small secondary" type="button" title="查看玩法" data-i18n="玩法" data-i18n-attr="title:查看玩法">玩法</button>
@@ -231,7 +259,7 @@
       </div>
     </div>
 
-    <p class="hint-text" data-i18n="翻两张算一次尝试。找齐所有相同图案即可通关。">翻两张算一次尝试。找齐所有相同图案即可通关。</p>
+    <p class="hint-text" data-i18n="翻两张算一次尝试；按 P 预览、R 重开，方向键移动选牌。">翻两张算一次尝试；按 P 预览、R 重开，方向键移动选牌。</p>
 
     <div id="more-games" class="more-games"></div>
   </main>
@@ -245,6 +273,7 @@
     (function () {
       const t = (key, params) => (window.I18N ? I18N.t(key, params) : key);
       const BEST_PREFIX = 'game_best_memory_';
+      const BEST_COMBO_KEY = 'game_best_memory_combo';
       const MODE_KEY = 'game_mode_memory';
       const ICONS = [
         { id: 'apple', name: '苹果' },
@@ -257,12 +286,16 @@
         { id: 'kiwi', name: '猕猴桃' },
         { id: 'peach', name: '桃子' },
         { id: 'coconut', name: '椰子' },
+        { id: 'pineapple', name: '菠萝' },
+        { id: 'pear', name: '梨子' },
       ];
       const MODES = {
         4: { cols: 4, pairs: 8, label: '4×4 轻松' },
         5: { cols: 5, pairs: 10, label: '5×4 标准' },
+        6: { cols: 6, pairs: 12, label: '6×4 挑战' },
       };
 
+      const wrapEl = document.querySelector('.game-wrap');
       const boardEl = document.getElementById('memory-board');
       const movesEl = document.getElementById('moves-el');
       const timeEl = document.getElementById('time-el');
@@ -273,12 +306,12 @@
       const overlayDesc = document.getElementById('overlay-desc');
       const previewBtn = document.getElementById('preview-btn');
       const statusEl = document.getElementById('memory-status');
-      const mode4Btn = document.getElementById('mode-4');
-      const mode5Btn = document.getElementById('mode-5');
+      const modeBtns = document.querySelectorAll('[data-memory-mode]');
 
       let mode = 4;
       try {
-        if (localStorage.getItem(MODE_KEY) === '5') mode = 5;
+        const saved = Number(localStorage.getItem(MODE_KEY));
+        if (MODES[saved]) mode = saved;
       } catch {}
 
       let soundEnabled = window.SiteData ? SiteData.getSound() : true;
@@ -291,11 +324,17 @@
       let second = null;
       let moves = 0;
       let matches = 0;
+      let combo = 0;
+      let maxCombo = 0;
       let started = false;
       let ended = false;
       let lock = false;
+      let mismatchTimer = null;
+      let mismatchPair = null;
       let previewUsed = false;
       let previewing = false;
+      let previewTimer = null;
+      let previewRemain = 0;
       let elapsed = 0;
       let timerId = null;
       let dialogOpen = false;
@@ -328,16 +367,71 @@
         });
       }
 
+      function playComboChime(streak) {
+        if (!soundEnabled || !window.SiteData) return;
+        const base = 580 + Math.min(streak, 6) * 55;
+        SiteData.withAudio((ac) => {
+          try {
+            [base, base + 180].forEach((freq, i) => {
+              const osc = ac.createOscillator();
+              const gain = ac.createGain();
+              const start = ac.currentTime + i * 0.055;
+              osc.type = 'sine';
+              osc.frequency.value = freq;
+              gain.gain.setValueAtTime(0.065, start);
+              gain.gain.exponentialRampToValueAtTime(0.001, start + 0.11);
+              osc.connect(gain);
+              gain.connect(ac.destination);
+              osc.start(start);
+              osc.stop(start + 0.12);
+            });
+          } catch {}
+        });
+      }
+
+      function playVictoryFanfare() {
+        if (!soundEnabled || !window.SiteData) return;
+        SiteData.withAudio((ac) => {
+          try {
+            [523.25, 659.25, 783.99, 1046.5].forEach((freq, i) => {
+              const osc = ac.createOscillator();
+              const gain = ac.createGain();
+              const start = ac.currentTime + i * 0.07;
+              osc.type = 'triangle';
+              osc.frequency.value = freq;
+              gain.gain.setValueAtTime(0.001, start);
+              gain.gain.linearRampToValueAtTime(0.07, start + 0.015);
+              gain.gain.exponentialRampToValueAtTime(0.001, start + 0.22);
+              osc.connect(gain);
+              gain.connect(ac.destination);
+              osc.start(start);
+              osc.stop(start + 0.23);
+            });
+          } catch {}
+        });
+      }
+
       function updateHud() {
         movesEl.textContent = moves;
         timeEl.textContent = elapsed + 's';
         const best = readBest(mode);
         bestEl.textContent = best > 0 ? best + t(' 次') : '--';
         previewBtn.disabled = started || previewUsed;
-        if (previewing) statusEl.textContent = t('记住牌面，预览即将结束。');
-        else if (lock) statusEl.textContent = t('这两张牌不同。');
-        else if (previewUsed) statusEl.textContent = t('本局使用了预览，纪录单独计算。');
-        else statusEl.textContent = '';
+        const pairs = MODES[mode].pairs;
+        statusEl.classList.toggle('combo-hot', !previewing && !lock && combo >= 2);
+        if (previewing) {
+          statusEl.textContent = t('记住牌面（{sec}s）...', { sec: previewRemain });
+        } else if (lock) {
+          statusEl.textContent = t('这两张牌不同，点下一张可立即继续。');
+        } else if (started && combo >= 2) {
+          statusEl.textContent = t('已配对 {matches}/{pairs} · 连击 ×{combo}', { matches, pairs, combo });
+        } else if (started) {
+          statusEl.textContent = t('已配对 {matches}/{pairs}', { matches, pairs });
+        } else if (previewUsed) {
+          statusEl.textContent = t('本局使用了预览，纪录单独计算。');
+        } else {
+          statusEl.textContent = '';
+        }
       }
 
       function stopTimer() {
@@ -362,7 +456,8 @@
 
       function renderBoard() {
         boardEl.innerHTML = '';
-        boardEl.style.setProperty('--cols', String(MODES[mode].cols));
+        boardEl.dataset.mode = String(mode);
+        if (wrapEl) wrapEl.classList.toggle('wide', mode === 6);
         deck.forEach((card, index) => {
           const btn = document.createElement('button');
           btn.type = 'button';
@@ -399,21 +494,47 @@
         });
       }
 
+      function setCardBack(card) {
+        card.classList.remove('flipped', 'matched', 'mismatch');
+        card.setAttribute('aria-label', t('未翻开的牌'));
+      }
+
+      function clearMismatchPending() {
+        if (mismatchTimer) {
+          clearTimeout(mismatchTimer);
+          mismatchTimer = null;
+        }
+        if (mismatchPair) {
+          setCardBack(mismatchPair[0]);
+          setCardBack(mismatchPair[1]);
+          mismatchPair = null;
+        }
+        lock = false;
+      }
+
       function initGame() {
         gameId += 1;
         stopTimer();
-        mode4Btn.classList.toggle('active', mode === 4);
-        mode5Btn.classList.toggle('active', mode === 5);
-        mode4Btn.setAttribute('aria-pressed', String(mode === 4));
-        mode5Btn.setAttribute('aria-pressed', String(mode === 5));
+        clearMismatchPending();
+        if (previewTimer) {
+          clearInterval(previewTimer);
+          previewTimer = null;
+        }
+        previewRemain = 0;
+        modeBtns.forEach((btn) => {
+          const active = Number(btn.dataset.memoryMode) === mode;
+          btn.classList.toggle('active', active);
+          btn.setAttribute('aria-pressed', String(active));
+        });
         deck = buildDeck(mode);
         first = null;
         second = null;
         moves = 0;
         matches = 0;
+        combo = 0;
+        maxCombo = 0;
         started = false;
         ended = false;
-        lock = false;
         previewUsed = false;
         previewing = false;
         elapsed = 0;
@@ -421,11 +542,6 @@
         overlay.classList.remove('show');
         renderBoard();
         updateHud();
-      }
-
-      function setCardBack(card) {
-        card.classList.remove('flipped', 'matched', 'mismatch');
-        card.setAttribute('aria-label', t('未翻开的牌'));
       }
 
       function refreshCardAria() {
@@ -441,21 +557,45 @@
       }
 
       function previewCards() {
-        if (started || previewUsed) return;
+        if (started || previewUsed || previewing || ended) return;
         previewUsed = true;
         previewing = true;
+        previewRemain = 2;
         const currentGame = gameId;
         const cards = boardEl.querySelectorAll('.memory-card');
         cards.forEach((card) => card.classList.add('peeking'));
         refreshCardAria();
         updateHud();
-        setTimeout(() => {
-          if (currentGame !== gameId) return;
-          previewing = false;
-          cards.forEach((card) => card.classList.remove('peeking'));
-          refreshCardAria();
+        previewTimer = setInterval(() => {
+          if (currentGame !== gameId) {
+            clearInterval(previewTimer);
+            previewTimer = null;
+            return;
+          }
+          previewRemain -= 1;
+          if (previewRemain <= 0) {
+            clearInterval(previewTimer);
+            previewTimer = null;
+            previewing = false;
+            cards.forEach((card) => card.classList.remove('peeking'));
+            refreshCardAria();
+          }
           updateHud();
-        }, 2000);
+        }, 1000);
+      }
+
+      function formatFinishDesc() {
+        const pairs = MODES[mode].pairs;
+        const accuracy = moves > 0 ? Math.round((pairs / moves) * 100) : 100;
+        const best = readBest(mode);
+        return (newRecord ? t('新纪录！') : '') +
+          t('尝试 {moves} 次（准确率 {accuracy}% · 最高连击 ×{combo}）· 用时 {elapsed}s · 最少 {best} 次', {
+            moves,
+            accuracy,
+            combo: maxCombo,
+            elapsed,
+            best,
+          });
       }
 
       function finishGame() {
@@ -467,25 +607,25 @@
           GameKit.writeBest(bestKey(mode), moves);
           newRecord = true;
         }
-        const best = readBest(mode);
+        if (!previewUsed) {
+          GameKit.saveBestIfHigher(BEST_COMBO_KEY, maxCombo);
+        }
 
         setTimeout(() => {
           if (currentGame !== gameId) return;
           overlayTitle.textContent = t('全部配对！🎉');
-          overlayDesc.textContent = newRecord
-            ? t('尝试 {moves} 次 · 用时 {elapsed}s · 新纪录！', { moves, elapsed })
-            : t('尝试 {moves} 次 · 用时 {elapsed}s · 最少 {best} 次', { moves, elapsed, best });
+          overlayDesc.textContent = formatFinishDesc();
           overlay.classList.add('show');
           updateHud();
-          playTone(660, 0.12, 880);
-          setTimeout(() => playTone(880, 0.18, 1100), 90);
+          playVictoryFanfare();
         }, 380);
       }
 
       boardEl.addEventListener('click', (event) => {
         const card = event.target.closest('.memory-card');
-        if (!card || lock || previewing || ended) return;
+        if (!card || previewing || ended) return;
         if (card.classList.contains('flipped') || card.classList.contains('matched')) return;
+        if (lock) clearMismatchPending();
 
         if (!started) {
           started = true;
@@ -504,7 +644,6 @@
 
         second = card;
         moves += 1;
-        updateHud();
 
         if (GameRules.isMemoryPairMatch(first.dataset.icon, second.dataset.icon)) {
           const a = first;
@@ -516,26 +655,27 @@
           a.setAttribute('aria-label', t('已配对，{icon}', { icon: t(a.dataset.name) }));
           b.setAttribute('aria-label', t('已配对，{icon}', { icon: t(b.dataset.name) }));
           matches += 1;
-          playTone(700, 0.07, 900);
+          combo += 1;
+          maxCombo = Math.max(maxCombo, combo);
+          updateHud();
+          playComboChime(combo);
           if (matches === MODES[mode].pairs) finishGame();
           return;
         }
 
+        combo = 0;
         lock = true;
         const currentGame = gameId;
-        const a = first;
-        const b = second;
+        mismatchPair = [first, second];
         first = null;
         second = null;
-        a.classList.add('mismatch');
-        b.classList.add('mismatch');
+        mismatchPair[0].classList.add('mismatch');
+        mismatchPair[1].classList.add('mismatch');
         updateHud();
-        playTone(300, 0.06, 220);
-        setTimeout(() => {
+        playTone(300, 0.06, 210);
+        mismatchTimer = setTimeout(() => {
           if (currentGame !== gameId) return;
-          setCardBack(a);
-          setCardBack(b);
-          lock = false;
+          clearMismatchPending();
           updateHud();
         }, 720);
       });
@@ -549,19 +689,70 @@
         initGame();
       }
 
-      mode4Btn.addEventListener('click', () => switchMode(4));
-      mode5Btn.addEventListener('click', () => switchMode(5));
+      async function confirmAbandonAndRun(action, { switching = false } = {}) {
+        if (!started || ended) {
+          action();
+          return;
+        }
+        const ok = await window.SiteData.confirmDialog({
+          title: switching ? t('切换牌桌') : t('重开本局'),
+          message: switching
+            ? t('切换牌桌会清除当前翻牌进度。')
+            : t('当前翻牌进度将被清除，确定重开吗？'),
+          confirmText: switching ? t('切换') : t('重开'),
+          cancelText: t('继续本局'),
+          danger: true,
+        });
+        if (ok) action();
+      }
+
+      modeBtns.forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const next = Number(btn.dataset.memoryMode);
+          if (next !== mode) confirmAbandonAndRun(() => switchMode(next), { switching: true });
+        });
+      });
       previewBtn.addEventListener('click', previewCards);
-      document.getElementById('restart-btn').addEventListener('click', initGame);
+      document.getElementById('restart-btn').addEventListener('click', () => confirmAbandonAndRun(initGame));
       document.getElementById('overlay-btn').addEventListener('click', initGame);
+
+      document.addEventListener('keydown', (event) => {
+        if (GameKit.shouldIgnoreGameKey(event, { ignoreOnControl: true })) return;
+        if (window.SiteData && SiteData.isDialogOpen && SiteData.isDialogOpen()) return;
+        if (window.GameKit && GameKit.isTutorialOpen && GameKit.isTutorialOpen()) return;
+        const target = event.target;
+        if (target instanceof Element && target.closest('input, textarea, select, [contenteditable="true"]')) return;
+        if (event.code === 'KeyP') {
+          event.preventDefault();
+          previewCards();
+          return;
+        }
+        if (event.code === 'KeyR') {
+          event.preventDefault();
+          confirmAbandonAndRun(initGame);
+          return;
+        }
+        if (!boardEl.contains(document.activeElement)) return;
+        const cards = Array.from(boardEl.querySelectorAll('.memory-card'));
+        const idx = cards.indexOf(document.activeElement);
+        if (idx < 0) return;
+        const cols = getComputedStyle(boardEl).gridTemplateColumns.split(' ').length || MODES[mode].cols;
+        let nextIdx = -1;
+        if (event.code === 'ArrowLeft') nextIdx = idx > 0 ? idx - 1 : -1;
+        else if (event.code === 'ArrowRight') nextIdx = idx + 1 < cards.length ? idx + 1 : -1;
+        else if (event.code === 'ArrowUp') nextIdx = idx - cols >= 0 ? idx - cols : -1;
+        else if (event.code === 'ArrowDown') nextIdx = idx + cols < cards.length ? idx + cols : -1;
+        if (nextIdx >= 0) {
+          event.preventDefault();
+          cards[nextIdx].focus();
+        }
+      });
 
       document.addEventListener('i18n:change', () => {
         updateHud();
         refreshCardAria();
         if (overlay.classList.contains('show')) {
-          overlayDesc.textContent = newRecord
-            ? t('尝试 {moves} 次 · 用时 {elapsed}s · 新纪录！', { moves, elapsed })
-            : t('尝试 {moves} 次 · 用时 {elapsed}s · 最少 {best} 次', { moves, elapsed, best: readBest(mode) });
+          overlayDesc.textContent = formatFinishDesc();
         }
       });
 
@@ -577,8 +768,8 @@
           id: 'memory',
           force,
           steps: [
-            { icon: 'game-memory', title: t('翻牌找相同图案'), text: t('每次翻开两张牌，图案相同即可配对消除；用更少尝试次数完成全盘。') },
-            { icon: 'mem-apple', title: t('牌面预览与尺寸'), text: t('支持 4×4 与 5×4 牌桌。开局前可点「预览牌面」偷看 2 秒，使用预览的纪录单独计算。') },
+            { icon: 'game-memory', title: t('翻牌与连击'), text: t('每次翻开两张牌配对消除；连续配对会累计连击并提升清脆音效，不配对时直接点下一张即可继续。') },
+            { icon: 'mem-pineapple', title: t('三种牌桌与预览'), text: t('支持 4×4 轻松、5×4 标准与 6×4 挑战；开局前可按 P 或点「预览牌面」偷看 2 秒（纪录单独计算）。') },
           ],
         });
       }

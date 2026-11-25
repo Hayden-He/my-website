@@ -144,6 +144,8 @@ window.I18N_EN = {
   '数字华容道 - 小游乐场': 'Sliding Puzzle - Little Playground',
   '数字华容道：滑动数字方块，把 1–8 / 1–15 按顺序排好；支持 3×3 与 4×4 棋盘，步数越少越好。':
     'Sliding Puzzle: slide the numbered tiles back into order (1–8 or 1–15); 3×3 and 4×4 boards, fewer moves is better.',
+  '数字华容道：滑动数字方块，把 1–8 / 1–15 / 1–24 按顺序排好；支持整行整列滑动与 3×3、4×4、5×5 棋盘，步数越少越好。':
+    'Sliding Puzzle: slide rows or columns into order (1–8, 1–15, or 1–24) across 3×3, 4×4, and 5×5 boards.',
   '连点让球升空，停手让球落入篮筐。连续空心有加分。':
     'Tap to lift the ball, then let it drop through the hoop. Chain swishes for bonus points.',
   '吃掉果子与限时金星不断成长，还有冰果减速；支持经典撞墙与自由穿墙双模式。':
@@ -154,16 +156,25 @@ window.I18N_EN = {
     'Your first move is safe. Use the numbers to spot mines and reveal every safe tile.',
   '翻开两张牌找相同图案。试试用更少次数配完全部。':
     'Flip two cards to find a match. Try to clear the board in fewer attempts.',
+  '翻开两张牌配对消除，支持 4×4、5×4 与 6×4 牌桌及连击统计。试试用更少次数配完全部。':
+    'Flip pairs to match icons across 4×4, 5×4, and 6×4 boards with combo streaks. Clear in fewer attempts.',
   '滑动数字方块，把 1–8 / 1–15 按顺序排好；支持 3×3 与 4×4 棋盘，步数越少越好。':
     'Slide the numbered tiles back into order (1–8 or 1–15); 3×3 and 4×4 boards, fewer moves is better.',
+  '滑动数字方块，把 1–8 / 1–15 / 1–24 按顺序排好；支持整行整列滑动与 3×3、4×4、5×5 棋盘，步数越少越好。':
+    'Slide rows or columns into order (1–8, 1–15, or 1–24) across 3×3, 4×4, and 5×5 boards.',
   '9×9 最快: ': '9×9 fastest: ',
   '12×12 最快: ': '12×12 fastest: ',
   '16×16 最快: ': '16×16 fastest: ',
   '4×4 最少尝试: ': '4×4 fewest attempts: ',
   '5×4 最少尝试: ': '5×4 fewest attempts: ',
+  '6×4 最少尝试: ': '6×4 fewest attempts: ',
   '4×4 预览最少: ': '4×4 preview fewest: ',
   '5×4 预览最少: ': '5×4 preview fewest: ',
+  '6×4 预览最少: ': '6×4 preview fewest: ',
+  '最高连击: ': 'Best combo: ',
+  ' 连击': 'x',
   '3×3 最少步: ': '3×3 fewest: ',
+  '5×5 最少步: ': '5×5 fewest: ',
   '3×3 入门最少步: ': '3×3 Intro fewest: ',
   '最高分: ': 'Best: ',
   '经典模式最高: ': 'Classic best: ',
@@ -205,6 +216,8 @@ window.I18N_EN = {
   '记忆翻牌 - 小游乐场': 'Memory Match - Little Playground',
   '记忆翻牌：翻开两张相同图案配对，支持 4×4 与 5×4 牌桌，步数越少越好。':
     'Memory Match: flip two matching tiles on 4×4 or 5×4 boards. Fewer moves is better.',
+  '记忆翻牌：翻开两张相同图案配对，支持 4×4、5×4 与 6×4 牌桌与连击统计，步数越少越好。':
+    'Memory Match: flip pairs across 4×4, 5×4, and 6×4 boards with combo streaks. Fewer moves is better.',
 
   // ---- 2048 ----
   '玩法：': 'How to play: ',
@@ -409,24 +422,38 @@ window.I18N_EN = {
   '最少步数': 'Best',
   '4×4 轻松': '4×4 Easy',
   '5×4 标准': '5×4 Standard',
+  '6×4 挑战': '6×4 Challenge',
   '3×3 入门': '3×3 Intro',
   '3×3 经典': '3×3 Classic',
   '4×4 标准': '4×4 Standard',
+  '5×5 挑战': '5×5 Challenge',
+  '已归位 {placed}/{total}': 'In place: {placed}/{total}',
   '完成！': 'Solved!',
   '步数：0 · 用时：0s': 'Moves: 0 · Time: 0s',
   '同盘重试': 'Retry board',
   '按序还原数字': 'Sort the Tiles',
   '点击空位旁的方块，或用方向键把数字按顺序排好，把空位留在右下角。':
     'Tap a tile next to the empty space—or use Arrow keys—to order all numbers with the gap at bottom-right.',
+  '点击同行/同列方块可一次推动整排，或用划屏、方向键 / WASD 把数字按顺序排好。':
+    'Tap any tile in the blank row/column to slide a whole line, or swipe / use Arrows / WASD to sort all tiles.',
   '多种难度与重试': 'Difficulties & Retry',
   '新手可先试 3×3 入门，进阶挑战 4×4；不满意步数时可点「同盘重试」刷新纪录。':
     'Start with 3×3 Intro or tackle 4×4; use Retry board to beat your move count on the same shuffle.',
+  '提供 3×3 入门、3×3 经典、4×4 标准与 5×5 挑战；不满意步数可点「同盘重试」或按 R 重开。':
+    'Play 3×3 Intro, 3×3 Classic, 4×4 Standard, or 5×5 Challenge; press R to restart or Retry board on the same shuffle.',
   '点空位旁的方块，按顺序排好数字。空位留在右下角。':
     'Tap a tile beside the gap. Order the numbers, leaving the gap at bottom right.',
+  '点同行或同列方块可一次整排推动，空位留在右下角。':
+    'Tap any tile in the blank row or column to slide a line; leave the gap at bottom right.',
   '键盘也可用方向键移动。初次玩可选 3×3 入门。': 'Arrow keys also work. New to the game? Try 3×3 Intro.',
+  '支持划屏、方向键 / WASD 移动，按 R 重开；初次玩可选 3×3 入门。':
+    'Swipe, Arrows / WASD to slide, R to restart. New to the game? Try 3×3 Intro.',
   '重开本局': 'Restart this game',
   '切换模式': 'Switch mode',
   '切换模式会清除当前棋局进度。': 'Switching modes will reset the current board.',
+  '切换牌桌': 'Switch board',
+  '切换牌桌会清除当前翻牌进度。': 'Switching boards will clear your current game.',
+  '当前翻牌进度将被清除，确定重开吗？': 'Current game progress will be lost. Restart?',
   '切换模式会结束当前飞行。': 'Switching modes will end your current flight.',
   '切换': 'Switch',
   '重试': 'Retry',
@@ -440,18 +467,32 @@ window.I18N_EN = {
   '最少尝试': 'Fewest attempts',
   '预览牌面': 'Preview cards',
   '翻两张算一次尝试。找齐所有相同图案即可通关。': 'Each pair you flip counts as one attempt. Match every card to win.',
+  '翻两张算一次尝试；按 P 预览、R 重开，方向键移动选牌。':
+    'Flip two cards per turn; press P to preview, R to restart, Arrows to move selection.',
   ' 次': ' attempts',
   '记住牌面，预览即将结束。': 'Memorize the cards before they turn over.',
+  '记住牌面（{sec}s）...': 'Memorize cards ({sec}s)...',
   '翻牌找相同图案': 'Flip & Match Pairs',
   '每次翻开两张牌，图案相同即可配对消除；用更少尝试次数完成全盘。':
     'Flip two cards each turn to match identical icons and clear the board in fewer attempts.',
+  '翻牌与连击': 'Flip & Build Combos',
+  '每次翻开两张牌配对消除；连续配对会累计连击并提升清脆音效，不配对时直接点下一张即可继续。':
+    'Flip pairs to clear them; consecutive matches build combos with rising chimes, and on a mismatch you can tap the next card right away.',
   '牌面预览与尺寸': 'Board Sizes & Preview',
   '支持 4×4 与 5×4 牌桌。开局前可点「预览牌面」偷看 2 秒，使用预览的纪录单独计算。':
     'Choose 4×4 or 5×4. Peek for 2s before starting with Preview (tracked separately).',
+  '三种牌桌与预览': 'Three Boards & Preview',
+  '支持 4×4 轻松、5×4 标准与 6×4 挑战；开局前可按 P 或点「预览牌面」偷看 2 秒（纪录单独计算）。':
+    'Choose 4×4 Easy, 5×4 Standard, or 6×4 Challenge; press P or click Preview for a 2s peek (tracked separately).',
   '这两张牌不同。': 'These cards do not match.',
+  '这两张牌不同，点下一张可立即继续。': 'No match—tap any next card to continue right away.',
+  '已配对 {matches}/{pairs}': 'Matched {matches}/{pairs}',
+  '已配对 {matches}/{pairs} · 连击 ×{combo}': 'Matched {matches}/{pairs} · {combo}× Combo',
   '本局使用了预览，纪录单独计算。': 'Rounds with a preview have their own record.',
   '尝试 {moves} 次 · 用时 {elapsed}s · 新纪录！': '{moves} attempts · {elapsed}s · New record!',
   '尝试 {moves} 次 · 用时 {elapsed}s · 最少 {best} 次': '{moves} attempts · {elapsed}s · Best: {best}',
+  '尝试 {moves} 次（准确率 {accuracy}% · 最高连击 ×{combo}）· 用时 {elapsed}s · 最少 {best} 次':
+    '{moves} attempts ({accuracy}% accuracy · {combo}× max combo) · {elapsed}s · Best: {best}',
   '未翻开的牌': 'Hidden card',
   '已翻开，{icon}': 'Revealed, {icon}',
   '已配对，{icon}': 'Matched, {icon}',
@@ -466,6 +507,8 @@ window.I18N_EN = {
   '猕猴桃': 'Kiwi',
   '桃子': 'Peach',
   '椰子': 'Coconut',
+  '菠萝': 'Pineapple',
+  '梨子': 'Pear',
   '记忆翻牌牌桌': 'Memory board',
 
   // ---- 极速切水果 ----

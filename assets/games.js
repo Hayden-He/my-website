@@ -150,7 +150,7 @@ window.SITE_CONFIG = {
       preview: '/assets/previews/slide.webp',
       category: 'puzzle',
       categoryName: '益智休闲',
-      description: '滑动数字方块，把 1–8 / 1–15 按顺序排好；支持 3×3 与 4×4 棋盘，步数越少越好。',
+      description: '滑动数字方块，把 1–8 / 1–15 / 1–24 按顺序排好；支持整行整列滑动与 3×3、4×4、5×5 棋盘，步数越少越好。',
       url: '/games/slide/',
       storageKey: 'game_best_slide_3',
       bestPrefix: '3×3 最少步: ',
@@ -159,6 +159,7 @@ window.SITE_CONFIG = {
       records: [
         { mode: '3', key: 'game_best_slide_3', prefix: '3×3 最少步: ', suffix: ' 步' },
         { mode: '4', key: 'game_best_slide_4', prefix: '4×4 最少步: ', suffix: ' 步' },
+        { mode: '5', key: 'game_best_slide_5', prefix: '5×5 最少步: ', suffix: ' 步' },
         { mode: 'beginner', key: 'game_best_slide_beginner', prefix: '3×3 入门最少步: ', suffix: ' 步' },
       ],
     },
@@ -169,7 +170,7 @@ window.SITE_CONFIG = {
       preview: '/assets/previews/memory.webp',
       category: 'puzzle',
       categoryName: '益智休闲',
-      description: '翻开两张牌找相同图案。试试用更少次数配完全部。',
+      description: '翻开两张牌配对消除，支持 4×4、5×4 与 6×4 牌桌及连击统计。试试用更少次数配完全部。',
       url: '/games/memory/',
       storageKey: 'game_best_memory_4',
       bestPrefix: '4×4 最少尝试: ',
@@ -178,8 +179,11 @@ window.SITE_CONFIG = {
       records: [
         { mode: '4', key: 'game_best_memory_4', prefix: '4×4 最少尝试: ', suffix: ' 次' },
         { mode: '5', key: 'game_best_memory_5', prefix: '5×4 最少尝试: ', suffix: ' 次' },
+        { mode: '6', key: 'game_best_memory_6', prefix: '6×4 最少尝试: ', suffix: ' 次' },
         { mode: '4', key: 'game_best_memory_4_preview', prefix: '4×4 预览最少: ', suffix: ' 次' },
         { mode: '5', key: 'game_best_memory_5_preview', prefix: '5×4 预览最少: ', suffix: ' 次' },
+        { mode: '6', key: 'game_best_memory_6_preview', prefix: '6×4 预览最少: ', suffix: ' 次' },
+        { mode: 'combo', key: 'game_best_memory_combo', prefix: '最高连击: ', suffix: ' 连击' },
       ],
     },
     {

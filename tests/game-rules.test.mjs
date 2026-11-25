@@ -116,9 +116,15 @@ test('slide helpers and shuffleSlideBoard produce valid solvable boards', () => 
   assert.deepEqual(GameRules.solvedSlideBoard(3), [1, 2, 3, 4, 5, 6, 7, 8, 0]);
   assert.deepEqual(GameRules.slideNeighbors(3, 0), [3, 1]);
   assert.deepEqual(GameRules.slideNeighbors(3, 4), [1, 7, 3, 5]);
+  assert.deepEqual(GameRules.getSlideChain(4, 0, 3), [1, 2, 3]);
+  assert.deepEqual(GameRules.getSlideChain(4, 15, 3), [11, 7, 3]);
+  assert.deepEqual(GameRules.getSlideChain(4, 0, 5), []);
+  assert.deepEqual(GameRules.getSlideChain(4, 4, 4), []);
+  assert.equal(GameRules.countSlideInPlace([1, 2, 3, 5, 4, 6, 7, 8, 0]), 6);
+  assert.equal(GameRules.countSlideInPlace(GameRules.solvedSlideBoard(5)), 24);
 
   const rng = makeSeededRng(20261122);
-  for (const [size, beginner] of [[3, false], [3, true], [4, false], [4, true]]) {
+  for (const [size, beginner] of [[3, false], [3, true], [4, false], [4, true], [5, false]]) {
     const board = GameRules.shuffleSlideBoard(size, beginner, rng);
     assert.equal(board.length, size * size);
     assert.deepEqual([...board].sort((a, b) => a - b), Array.from({ length: size * size }, (_, i) => i));

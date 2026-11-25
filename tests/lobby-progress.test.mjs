@@ -304,6 +304,47 @@ test('getCardMetaText renders Minesweeper active mode best time and streak recor
   ]);
 });
 
+test('getCardMetaText renders Slide 5x5 and Memory 6x4 + combo records in zh and en', () => {
+  const harness = createLobbyHarness({
+    initialStorage: {
+      game_mode_slide: '5',
+      game_best_slide_3: '22',
+      game_best_slide_5: '94',
+      game_mode_memory: '6',
+      game_best_memory_4: '11',
+      game_best_memory_6: '18',
+      game_best_memory_combo: '5',
+    },
+  });
+  const slide = harness.SITE_CONFIG.games.find((g) => g.id === 'slide');
+  const memory = harness.SITE_CONFIG.games.find((g) => g.id === 'memory');
+
+  assert.equal(harness.SiteLobby.getCardMetaText(slide), '5×5 最少步: 94 步');
+  assert.deepEqual(harness.SiteLobby.getAllGameRecords(slide), [
+    '3×3 最少步: 22 步',
+    '5×5 最少步: 94 步',
+  ]);
+  assert.equal(harness.SiteLobby.getCardMetaText(memory), '6×4 最少尝试: 18 次');
+  assert.deepEqual(harness.SiteLobby.getAllGameRecords(memory), [
+    '4×4 最少尝试: 11 次',
+    '6×4 最少尝试: 18 次',
+    '最高连击: 5 连击',
+  ]);
+
+  harness.I18N.setLang('en');
+  assert.equal(harness.SiteLobby.getCardMetaText(slide), '5×5 fewest: 94 moves');
+  assert.deepEqual(harness.SiteLobby.getAllGameRecords(slide), [
+    '3×3 fewest: 22 moves',
+    '5×5 fewest: 94 moves',
+  ]);
+  assert.equal(harness.SiteLobby.getCardMetaText(memory), '6×4 fewest attempts: 18 attempts');
+  assert.deepEqual(harness.SiteLobby.getAllGameRecords(memory), [
+    '4×4 fewest attempts: 11 attempts',
+    '6×4 fewest attempts: 18 attempts',
+    'Best combo: 5x',
+  ]);
+});
+
 test('getCardMetaText renders Tank Maze cumulative win count in zh and en', () => {
   const harness = createLobbyHarness({
     initialStorage: {
