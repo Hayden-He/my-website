@@ -14,14 +14,24 @@ execFileSync(process.execPath, [path.join(root, 'scripts/check-i18n.mjs'), ...ar
 const config = readSiteConfig();
 const pages = [...sitePages(config), ...previews].map(({ file }) => file);
 
-const files = ['_headers', 'robots.txt', 'sitemap.xml', 'site.webmanifest', ...assetFiles('assets').sort()];
+const UNVERSIONED_ROOT_FILES = new Set(['_headers', 'robots.txt', 'sitemap.xml', 'site.webmanifest']);
+const FIXED_ASSET_FILES = new Set([
+  'assets/og-image.jpg',
+  'assets/icon.svg',
+  'assets/icons/icon-192.png',
+  'assets/icons/icon-512.png',
+  'assets/icons/apple-touch-icon.png',
+]);
+const files = [...UNVERSIONED_ROOT_FILES, ...assetFiles('assets').sort()];
 const version = createHash('sha256');
 // 构建脚本会改变产物（静态外壳），也要计入版本，否则「检查更新」发现不了。
 version.update(fs.readFileSync(path.join(root, 'scripts/build-site.mjs'))).update('\0');
+const sourceAssets = new Map();
 const content = new Map();
 for (const file of [...files, ...pages]) {
   const bytes = fs.readFileSync(path.join(root, file));
-  content.set(file, bytes);
+  if (file.startsWith('assets/')) sourceAssets.set(file, bytes);
+  if (!file.startsWith('assets/') || FIXED_ASSET_FILES.has(file)) content.set(file, bytes);
   version.update(file).update('\0').update(bytes).update('\0');
 }
 const modulePaths = new Map();
@@ -87,7 +97,7 @@ function write(relative, bytes) {
 
 function versionedAsset(file) {
   const original = file.slice(1);
-  const bytes = content.get(original);
+  const bytes = sourceAssets.get(original);
   if (!bytes) throw new Error('资源不存在：' + file);
   const hash = createHash('sha256').update(bytes).digest('hex').slice(0, 16);
   const relative = path.posix.join('assets', 'v', hash, original.slice('assets/'.length));
@@ -95,7 +105,16 @@ function versionedAsset(file) {
   return '/' + relative;
 }
 
-// ---- 构建时静态输出顶栏、游戏卡片与页脚（仅写入 dist，源码保持不变） ----
+const gamesConfigBytes = sourceAssets.get('assets/games.js');
+if (gamesConfigBytes) {
+  const rewrittenGamesConfig = gamesConfigBytes.toString('utf8').replace(
+    /(['"])(\/assets\/previews\/[a-z0-9-]+\.webp)\1/g,
+    (_, quote, assetPath) => quote + versionedAsset(assetPath) + quote
+  );
+  sourceAssets.set('assets/games.js', Buffer.from(rewrittenGamesConfig, 'utf8'));
+}
+
+// ---- 构建时静态输出顶栏、操作区、游戏卡片与页脚（仅写入 dist，源码保持不变） ----
 // 结构须与 assets/app.js 在浏览器里生成的 DOM 一致；浏览器端只补充本地数据，不重建图片。
 const esc = (value) => String(value).replace(/[&"<>]/g, (ch) =>
   ({ '&': '&amp;', '"': '&quot;', '<': '&lt;', '>': '&gt;' })[ch]);
@@ -103,6 +122,7 @@ const esc = (value) => String(value).replace(/[&"<>]/g, (ch) =>
 const EAGER_PREVIEW_COUNT = 4;
 const PLACEHOLDERS = {
   header: '<header id="site-header" class="site-header"></header>',
+  heroActions: '<div id="hero-actions" class="hero-actions"></div>',
   footer: '<footer id="site-footer" class="site-footer"></footer>',
   count: '<span id="games-count" class="section-count"></span>',
   grid: '<div id="games-grid" class="games-grid"></div>',
@@ -153,6 +173,13 @@ function cardHtml(game, index) {
     '</article>';
 }
 
+function heroActionsHtml() {
+  return '<button class="hero-action-btn primary" type="button" id="random-game-btn" ' +
+    'title="从当前列表中随机挑一款游戏开始" aria-label="从当前列表中随机挑一款游戏开始">随机来一局</button>' +
+    '<button class="hero-action-btn" type="button" id="records-overview-btn">' +
+    '<span>个人战绩</span><span class="hero-action-badge" hidden></span></button>';
+}
+
 function footerHtml(activeKey) {
   return '<div class="container"><div class="site-credit">© ' + new Date().getFullYear() +
     ' <span class="credit-site">' + esc(config.siteTitle) + '</span> · by ' +
@@ -183,6 +210,10 @@ function injectShell(file, html) {
   const activeKey = readSitePageKey(html);
   if (activeKey === null) return html; // 游戏页等不使用公共外壳渲染
   html = replaceOnce(file, html, PLACEHOLDERS.header, '<header id="site-header" class="site-header">' + headerHtml(activeKey) + '</header>');
+  if (html.includes(PLACEHOLDERS.heroActions)) {
+    html = replaceOnce(file, html, PLACEHOLDERS.heroActions,
+      '<div id="hero-actions" class="hero-actions">' + heroActionsHtml() + '</div>');
+  }
   html = replaceOnce(file, html, PLACEHOLDERS.footer, '<footer id="site-footer" class="site-footer">' + footerHtml(activeKey) + '</footer>');
   if (html.includes(PLACEHOLDERS.grid)) {
     const games = config.games.filter((g) => activeKey === 'all' || g.category === activeKey);
@@ -217,6 +248,11 @@ function verifyShell(file, html) {
   const navLinks = (html.match(/<a class="nav-link/g) || []).length;
   if (navLinks !== config.categories.length + 1) problems.push('顶栏导航数量不一致');
   if (!html.includes('data-theme-toggle')) problems.push('缺少主题切换按钮');
+  if (html.includes('id="hero-actions"')) {
+    if (!html.includes('id="random-game-btn"') || !html.includes('id="records-overview-btn"')) {
+      problems.push('缺少英雄区操作按钮静态输出');
+    }
+  }
   if (problems.length) throw new Error(file + '：静态外壳校验失败：' + problems.join('；'));
 }
 

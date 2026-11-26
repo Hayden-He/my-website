@@ -64,8 +64,8 @@
           <div class="hud-label" data-i18n="模式最高">模式最高</div>
           <div id="best-el" class="hud-value" style="color: var(--accent-text);">0</div>
         </div>
-        <button id="pause-btn" class="btn-small secondary">暂停</button>
-        <button id="restart-btn" class="btn-small" data-i18n="重开">重开</button>
+        <button id="pause-btn" class="btn-small secondary" type="button">暂停</button>
+        <button id="restart-btn" class="btn-small" type="button" data-i18n="重开">重开</button>
         <div class="slow-status" id="slow-status">
           <span id="slow-label" data-i18n="减速中">减速中</span>
           <progress id="slow-progress" aria-labelledby="slow-label" value="0"></progress>
@@ -74,13 +74,13 @@
 
       <div class="toolbar">
         <div class="mode-pills" role="group" aria-label="游戏模式" data-i18n-attr="aria-label:游戏模式">
-          <button id="mode-classic" class="mode-pill active" data-i18n="经典撞墙">经典撞墙</button>
-          <button id="mode-wrap" class="mode-pill" data-i18n="自由穿墙">自由穿墙</button>
+          <button id="mode-classic" class="mode-pill active" type="button" data-i18n="经典撞墙">经典撞墙</button>
+          <button id="mode-wrap" class="mode-pill" type="button" data-i18n="自由穿墙">自由穿墙</button>
         </div>
         <div class="btn-group">
           <button id="help-btn" class="btn-small secondary" type="button" title="查看玩法" data-i18n="玩法" data-i18n-attr="title:查看玩法">玩法</button>
           <button id="immersive-btn" class="btn-small secondary" type="button" data-i18n="沉浸模式" hidden>沉浸模式</button>
-          <button id="sound-btn" class="btn-small secondary">音效: 开</button>
+          <button id="sound-btn" class="btn-small secondary" type="button">音效: 开</button>
         </div>
       </div>
     </div>
@@ -92,7 +92,7 @@
           <div id="overlay" class="overlay" role="status" aria-live="polite">
             <h2 id="overlay-title">游戏结束</h2>
             <p id="overlay-desc">得分：0</p>
-            <button id="overlay-btn" class="overlay-btn" data-i18n="再来一局">再来一局</button>
+            <button id="overlay-btn" class="overlay-btn" type="button" data-i18n="再来一局">再来一局</button>
           </div>
         </div>
         <div class="dpad" role="group" aria-label="方向控制" data-i18n-attr="aria-label:方向控制">

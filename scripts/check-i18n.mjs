@@ -93,7 +93,7 @@ for (const file of [...pageFiles, ...sharedScripts, ...gameScripts]) {
   for (const match of source.matchAll(/<title>([^<]+)<\/title>/g)) addHtmlKey(match[1]);
   for (const match of source.matchAll(/<meta name="description" content="([^"]+)"/g)) addHtmlKey(match[1]);
 
-  for (const match of source.matchAll(/\bt\(\s*'([^']+)'/g)) addKey(match[1]);
+  for (const match of source.matchAll(/\bt\(\s*(?:'([^']+)'|"([^"]+)")/g)) addKey(match[1] ?? match[2]);
 }
 
 // games.js 会通过 I18N.t(...) 渲染到卡片上的文案

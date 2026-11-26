@@ -10,6 +10,9 @@
   <link rel="icon" type="image/svg+xml" href="/assets/icon.svg" />
   <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png" />
   <link rel="manifest" href="/site.webmanifest" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="小游乐场" />
   <script src="/assets/theme.js"></script>
   <link rel="stylesheet" href="/assets/style.css" />
   <link rel="stylesheet" href="/assets/game-shell.css" />
@@ -47,8 +50,8 @@
 
     <div class="toolbar">
       <div class="btn-group">
-        <button id="sound-btn" class="btn-small secondary">音效: 开</button>
-        <button id="restart-btn" class="btn-small" data-i18n="重开">重开</button>
+        <button id="sound-btn" class="btn-small secondary" type="button">音效: 开</button>
+        <button id="restart-btn" class="btn-small" type="button" data-i18n="重开">重开</button>
       </div>
     </div>
 
@@ -58,7 +61,7 @@
         <h2 data-i18n="完成！">完成！</h2>
         <p id="overlay-desc"></p>
         <div class="overlay-actions">
-          <button id="overlay-btn" class="overlay-btn" data-i18n="再来一局">再来一局</button>
+          <button id="overlay-btn" class="overlay-btn" type="button" data-i18n="再来一局">再来一局</button>
         </div>
       </div>
     </div>

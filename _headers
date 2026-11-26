@@ -1,10 +1,10 @@
 # Cloudflare Pages 响应头
-# 全站生产页面已清零内联脚本，启用严格 script-src 'self' CSP 策略。
+# 全站生产页面已清零内联脚本，启用 script-src 'self' 并精确放行 Cloudflare Web Analytics 统计。
 /*
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: geolocation=(), microphone=(), camera=()
-  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; font-src 'self'; manifest-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'
+  Content-Security-Policy: default-src 'self'; script-src 'self' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' https://cloudflareinsights.com; font-src 'self'; manifest-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'
 
 /assets/v/*
   Cache-Control: public, max-age=31536000, immutable

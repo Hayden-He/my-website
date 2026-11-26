@@ -13,7 +13,9 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import { root, siteUrl as SITE_URL, readSiteConfig, sitePages, escapeHtml } from './site-config.mjs';
+import {
+  root, siteUrl as SITE_URL, readSiteConfig, sitePages, escapeHtml, pageModuleDirectory, pageModuleFiles,
+} from './site-config.mjs';
 
 const errors = [];
 const warnings = [];
@@ -54,6 +56,23 @@ function checkFile(relativePath, label) {
 
 function checkContains(content, needle, label) {
   if (!content || !content.includes(needle)) fail(`${label} 缺少 ${needle}`);
+}
+
+function stripJsComments(source) {
+  return source
+    .replace(/\/\*[\s\S]*?\*\//g, ' ')
+    .replace(/(^|[^:\\])\/\/[^\n]*/g, '$1 ');
+}
+
+function checkPagePwaAndButtons(html, label) {
+  if (!html) return;
+  checkContains(html, 'name="apple-mobile-web-app-capable" content="yes"', label);
+  checkContains(html, 'name="apple-mobile-web-app-status-bar-style" content="default"', label);
+  checkContains(html, 'name="apple-mobile-web-app-title" content="小游乐场"', label);
+  checkContains(html, '<link rel="icon" type="image/svg+xml" href="/assets/icon.svg"', label);
+  if (/<button\b(?![^>]*\btype=)/i.test(html)) {
+    fail(`${label} 存在缺少 type 属性的 <button> 标签`);
+  }
 }
 
 const OG_IMAGE = SITE_URL + '/assets/og-image.jpg';
@@ -271,8 +290,26 @@ for (const game of games) {
   checkContains(page, 'game-' + game.icon, pagePath);
   if (game.id === 'snake' || game.id === 'basketball') {
     checkContains(page, 'role="img"', pagePath);
-    checkContains(page, 'assets/game-art.js', pagePath);
   }
+  const vendorDir = pageModuleDirectory(pagePath) + '/vendor/';
+  const gameScriptSources = pageModuleFiles(pagePath)
+    .filter((module) => /\.m?js$/i.test(module) && !module.startsWith(vendorDir))
+    .map((module) => stripJsComments(read(module) || ''))
+    .join('\n');
+  const needsRoundRect = /\.roundRect\s*\(/.test(gameScriptSources);
+  const hasPolyfill = page.includes('assets/canvas-polyfill.js');
+  if (needsRoundRect && !hasPolyfill) fail(`${pagePath} 调用了 roundRect()，但缺少 assets/canvas-polyfill.js`);
+  if (!needsRoundRect && hasPolyfill) fail(`${pagePath} 未调用 roundRect()，存在冗余的 assets/canvas-polyfill.js`);
+
+  const needsGameArt = /\bGameArt\b/.test(gameScriptSources);
+  const hasGameArt = page.includes('assets/game-art.js');
+  if (needsGameArt && !hasGameArt) fail(`${pagePath} 使用了 GameArt，但缺少 assets/game-art.js`);
+  if (!needsGameArt && hasGameArt) fail(`${pagePath} 未使用 GameArt，存在冗余的 assets/game-art.js`);
+
+  const needsGameRules = /\bGameRules\b/.test(gameScriptSources);
+  const hasGameRules = page.includes('assets/game-rules.js');
+  if (needsGameRules && !hasGameRules) fail(`${pagePath} 使用了 GameRules，但缺少 assets/game-rules.js`);
+  if (!needsGameRules && hasGameRules) fail(`${pagePath} 未使用 GameRules，存在冗余的 assets/game-rules.js`);
   checkSeoPage(page, {
     label: pagePath,
     urlPath: game.url,
@@ -356,12 +393,18 @@ if (ogTemplate) {
 }
 checkFile('sitemap.xml', 'sitemap.xml');
 checkFile('robots.txt', 'robots.txt');
-checkContains(read('_headers'), '/assets/v/*', '_headers');
-checkContains(read('_headers'), 'max-age=31536000, immutable', '_headers');
-checkContains(read('_headers'), '/version.json', '_headers');
-checkContains(read('_headers'), 'no-cache', '_headers');
-checkContains(read('_headers'), 'Content-Security-Policy:', '_headers');
-checkContains(read('_headers'), "script-src 'self'", '_headers');
+const headersText = read('_headers') || '';
+checkContains(headersText, '/assets/v/*', '_headers');
+checkContains(headersText, 'max-age=31536000, immutable', '_headers');
+checkContains(headersText, '/version.json', '_headers');
+checkContains(headersText, 'no-cache', '_headers');
+checkContains(headersText, 'Content-Security-Policy:', '_headers');
+checkContains(headersText, "script-src 'self' https://static.cloudflareinsights.com", '_headers');
+checkContains(headersText, "connect-src 'self' https://cloudflareinsights.com", '_headers');
+const scriptSrcMatch = headersText.match(/script-src\s+([^;]+)/);
+if (scriptSrcMatch && scriptSrcMatch[1].includes("'unsafe-inline'")) {
+  fail("_headers 的 script-src 不应包含 'unsafe-inline'");
+}
 const sitemap = read('sitemap.xml') || '';
 const robots = read('robots.txt') || '';
 const indexablePaths = [
@@ -411,6 +454,7 @@ for (const asset of [
 // ---------- 旧版 ?v= 参数与无内联脚本/样式 CSP 基线校验 ----------
 for (const { file: relative } of sitePages({ ...config, games, categories })) {
   const html = read(relative) || '';
+  checkPagePwaAndButtons(html, relative);
   if (/\?v=\d+/.test(html)) {
     fail(`${relative} 仍残留 ?v= 旧版资源查询参数`);
   }
@@ -435,6 +479,11 @@ if (manifestSource) {
   try {
     const manifest = JSON.parse(manifestSource);
     if (!Array.isArray(manifest.icons) || manifest.icons.length < 2) fail('site.webmanifest 缺少 192/512 图标');
+    for (const icon of manifest.icons || []) {
+      if (typeof icon.purpose === 'string' && /\bany\b/.test(icon.purpose) && /\bmaskable\b/.test(icon.purpose)) {
+        fail('site.webmanifest 图标 purpose 不应混用 any 与 maskable');
+      }
+    }
     if (manifest.display !== 'standalone') fail('site.webmanifest display 不是 standalone');
     if (!manifest.start_url) fail('site.webmanifest 缺少 start_url');
   } catch (error) {
@@ -460,6 +509,7 @@ if (!exists(templatePath)) {
   checkContains(template, '<h1', templatePath);
   checkFile('games/_template/modules/template.css', 'games/_template/modules/template.css');
   checkFile('games/_template/modules/main.js', 'games/_template/modules/main.js');
+  checkPagePwaAndButtons(template, templatePath);
   if (/\?v=\d+/.test(template || '')) fail(`${templatePath} 仍残留 ?v= 旧版资源查询参数`);
   if (/<script(?![^>]*\bsrc=)[^>]*>/i.test(template || '')) {
     fail(`${templatePath} 存在内联 <script>，违反 CSP script-src 'self' 基线`);

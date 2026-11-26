@@ -6,7 +6,7 @@ import {
 import { createFruitAudio } from './audio.js';
 import { createFruitRenderer } from './renderer.js';
 
-const t = (key, params) => window.I18N.t(key, params);
+const t = (key, params) => (window.I18N ? window.I18N.t(key, params) : key);
 const MODE_KEY = 'game_mode_fruit';
 const SKIN_KEY = 'game_skin_fruit';
 const AURORA_KEY = 'game_skin_fruit_aurora';

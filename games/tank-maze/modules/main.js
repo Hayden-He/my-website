@@ -4,8 +4,8 @@ import {
 import { createAI, AI_DIFFICULTIES } from './ai.js';
 import { arenaRatio, createRenderer, drawMapPreview, drawTankPreview } from './renderer.js';
 
-const { GameKit, SiteData, I18N } = window;
-const t = (key, params) => I18N.t(key, params);
+const { GameKit, SiteData } = window;
+const t = (key, params) => (window.I18N ? window.I18N.t(key, params) : key);
 const byId = (id) => document.getElementById(id);
 const SETTINGS_KEY = 'game_mode_tank-maze';
 const AI_SKIN_BY_DIFFICULTY = { easy: 'standard', normal: 'wedge', hard: 'cabin' };

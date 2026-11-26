@@ -3,7 +3,7 @@
 ## 新增游戏
 
 1. 在 `assets/games.js` 登记游戏。沿用现有条目的字段，给出小写短横线 `id`、标题、图标、分类、简介和 `/games/<id>/` 地址。有最高分的游戏填写独立的 `storageKey`；多模式游戏同时填写 `modeKey` 和 `records` 数组以便大厅优先展示对应模式纪录。分类名称须与分类定义一致。大厅、分类页与游戏间推荐会使用这份清单。
-2. 计分游戏可运行 `node scripts/new-game.mjs <id>`。脚本复制 `games/_template/index.html`，填入游戏资料、分类链接和纪录键，再同步站点元数据。已有同名页面时会拒绝覆盖。
+2. 计分游戏可运行 `node scripts/new-game.mjs <id>`。脚本复制 `games/_template/index.html` 与 `modules/`（生成 `modules/<id>.css` 和 `modules/main.js`），填入游戏资料、分类链接和纪录键，再同步站点元数据。已有同名页面时会拒绝覆盖。
 3. 在新页面实现棋盘、规则和操作，补齐 `assets/icons.svg` 中的 `game-<icon>` 图标，以及 `assets/i18n-en.js` 中的英文。新增游戏后，按需更新 `scripts/og-image.html` 并用 `node scripts/make-og-image.mjs` 导出共享分享图，该脚本需要本机 Chrome。
 4. 运行 `node scripts/sync-site.mjs /games/<id>/` 更新该页修改日期、SEO 与站点地图（图标会在构建时按页面裁剪并内联）。运行 `node scripts/build-site.mjs`，在 320px 窄屏、键盘和触屏上试玩。
 

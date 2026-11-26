@@ -338,3 +338,41 @@ test('dist rewrites ./modules/ assets for migrated classic games (slide, memory,
     );
   }
 });
+
+test('dist pre-renders hero-actions on lobby and category pages to avoid首屏 CLS', () => {
+  for (const rel of ['index.html', 'categories/arcade.html', 'categories/puzzle.html']) {
+    const html = fs.readFileSync(path.join(dist, rel), 'utf8');
+    assert.match(html, /<div id="hero-actions" class="hero-actions">[\s\S]*id="random-game-btn"[\s\S]*id="records-overview-btn"/, `${rel} should pre-render hero action buttons`);
+  }
+});
+
+test('dist deduplicates unversioned assets while keeping fixed-URL files and rewriting games.js previews', () => {
+  for (const redundant of [
+    'assets/app.js',
+    'assets/style.css',
+    'assets/i18n-en.js',
+    'assets/icons.svg',
+    'assets/previews/basketball.webp',
+  ]) {
+    assert.equal(fs.existsSync(path.join(dist, redundant)), false, `dist should omit redundant unversioned ${redundant}`);
+  }
+  for (const fixed of [
+    'assets/og-image.jpg',
+    'assets/icon.svg',
+    'assets/icons/icon-192.png',
+    'assets/icons/icon-512.png',
+    'assets/icons/apple-touch-icon.png',
+  ]) {
+    assert.equal(fs.existsSync(path.join(dist, fixed)), true, `dist should preserve fixed-URL ${fixed}`);
+  }
+
+  const indexHtml = fs.readFileSync(path.join(dist, 'index.html'), 'utf8');
+  const gamesJsMatch = indexHtml.match(/src="(\/assets\/v\/[0-9a-f]{16}\/games\.js)"/);
+  assert.ok(gamesJsMatch, 'index.html should reference hashed games.js');
+  const gamesJsSource = fs.readFileSync(path.join(dist, gamesJsMatch[1].slice(1)), 'utf8');
+  const previews = [...gamesJsSource.matchAll(/preview:\s*'(\/assets\/v\/([0-9a-f]{16})\/previews\/[a-z0-9-]+\.webp)'/g)];
+  assert.equal(previews.length, 12, 'hashed games.js should rewrite all 12 preview URLs to versioned paths');
+  for (const [, url] of previews) {
+    assert.equal(fs.existsSync(path.join(dist, url.slice(1))), true, `versioned preview ${url} should exist in dist`);
+  }
+});

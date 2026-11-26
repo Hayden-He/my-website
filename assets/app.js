@@ -540,32 +540,50 @@
     const container = document.getElementById('hero-actions');
     if (!container || !window.SITE_CONFIG) return;
 
-    const pageGames = getPageGames(activeKey);
+    const key = activeKey || 'all';
+    container.dataset.activeKey = key;
     const stats = getOverviewStats(window.SITE_CONFIG.games);
 
-    container.textContent = '';
-
-    const randomBtn = createEl('button', 'hero-action-btn primary', t('随机来一局'));
-    randomBtn.type = 'button';
-    randomBtn.id = 'random-game-btn';
+    let randomBtn = document.getElementById('random-game-btn');
+    if (!randomBtn) {
+      randomBtn = createEl('button', 'hero-action-btn primary');
+      randomBtn.type = 'button';
+      randomBtn.id = 'random-game-btn';
+      container.appendChild(randomBtn);
+    }
+    randomBtn.textContent = t('随机来一局');
     randomBtn.title = t('从当前列表中随机挑一款游戏开始');
     randomBtn.setAttribute('aria-label', t('从当前列表中随机挑一款游戏开始'));
-    randomBtn.addEventListener('click', () => launchRandomGame(pageGames));
-    container.appendChild(randomBtn);
+    if (!randomBtn.dataset.bound) {
+      randomBtn.dataset.bound = '1';
+      randomBtn.addEventListener('click', () => {
+        launchRandomGame(getPageGames(container.dataset.activeKey || 'all'));
+      });
+    }
 
-    const overviewBtn = createEl('button', 'hero-action-btn');
-    overviewBtn.type = 'button';
-    overviewBtn.id = 'records-overview-btn';
-    overviewBtn.appendChild(createEl('span', '', t('个人战绩')));
-    const badge = createEl(
-      'span',
-      'hero-action-badge',
-      `${stats.recordedGames}/${stats.totalGames}`
-    );
+    let overviewBtn = document.getElementById('records-overview-btn');
+    let labelEl = overviewBtn?.querySelector('span:not(.hero-action-badge)');
+    let badge = overviewBtn?.querySelector('.hero-action-badge');
+    if (!overviewBtn || !labelEl || !badge) {
+      if (overviewBtn) overviewBtn.remove();
+      overviewBtn = createEl('button', 'hero-action-btn');
+      overviewBtn.type = 'button';
+      overviewBtn.id = 'records-overview-btn';
+      labelEl = createEl('span', '');
+      badge = createEl('span', 'hero-action-badge');
+      overviewBtn.appendChild(labelEl);
+      overviewBtn.appendChild(badge);
+      container.appendChild(overviewBtn);
+    }
+    labelEl.textContent = t('个人战绩');
+    badge.textContent = `${stats.recordedGames}/${stats.totalGames}`;
     badge.hidden = stats.recordedGames === 0;
-    overviewBtn.appendChild(badge);
-    overviewBtn.addEventListener('click', () => openRecordsOverview(activeKey));
-    container.appendChild(overviewBtn);
+    if (!overviewBtn.dataset.bound) {
+      overviewBtn.dataset.bound = '1';
+      overviewBtn.addEventListener('click', () => {
+        openRecordsOverview(container.dataset.activeKey || 'all');
+      });
+    }
   }
 
   function openRecordsOverview(activeKey) {

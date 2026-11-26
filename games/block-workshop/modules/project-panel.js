@@ -1,7 +1,7 @@
 import { deleteProject, listProjects, readProject, readSession, rememberSession, renameProject, saveProject } from './projects.js';
 import { TEMPLATES, createTemplateWorld, createWorld } from './world.js';
 
-const t = (key, params) => window.I18N.t(key, params);
+const t = (key, params) => (window.I18N ? window.I18N.t(key, params) : key);
 
 export function bindProjects(replaceWorld, { onClear } = {}) {
   const library = document.querySelector('#workshop-library');

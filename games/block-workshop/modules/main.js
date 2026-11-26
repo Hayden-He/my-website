@@ -10,7 +10,7 @@ import {
 import { blockFinish, editFeedback } from './finishes.js';
 import { bindProjects } from './project-panel.js';
 
-const t = (key, params) => window.I18N.t(key, params);
+const t = (key, params) => (window.I18N ? window.I18N.t(key, params) : key);
 const MATERIAL_LABELS = {
   grass: '草地',
   stone: '石头',
